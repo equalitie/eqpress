@@ -15,18 +15,18 @@ phpfpm_max_requests: 32
 php_opcache_memory_size: 64
 
 # mysql
-mysql_root_db_pass: 'mLhccveBpvHo7k8jTXfqaZD'
+mysql_root_db_pass: 'enter password'
 mysql_innodb_buffer_pool_size: '512M'
 mysql_innodb_log_file_size: '32M'
 mysql_repl_creds:
   username: 'rep'
-  password: 'mLhccveBpvHo7k8jTXfqaZD'
+  password: 'enter password'
 
 mysql_admin_user:
     username: 'mysqladmin'
-    password: 'mLhccveBpvHo7k8jTXfqaZD'
+    password: 'enter password'
 
 mysql_webstats:
     db: 'swp_webstats'
     username: 'swp_webstats'
-    password: 'mLhccveBpvHo7k8jTXfqaZD'
+    password: 'enter password'
