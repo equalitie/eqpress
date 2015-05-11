@@ -114,12 +114,6 @@
     - restart fail2ban
   tags: [security, fail2ban]
 
-- name: Copy easyMail postfix mail.cf
-  template: src={{ files }}/etc/postfix/main.cf-easymail.j2 dest=/etc/postfix/main.cf-easymail owner=root group=root mode=0644
-  notify:
-    - restart postfix
-  tags: [email, main.cf, easymail]
-
 - name: Copy Mandrill postfix mail.cf
   template: src={{ files }}/etc/postfix/main.cf-mandrill.j2 dest=/etc/postfix/main.cf-mandrill owner=root group=root mode=0644
   notify:
