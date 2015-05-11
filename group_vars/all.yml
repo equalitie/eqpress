@@ -6,8 +6,8 @@ ssh_known_hosts_command: '/usr/bin/ssh-keyscan -H -T 10'
 ssh_known_hosts_file: '/root/.ssh/known_hosts'
 
 # mail
-mandrill_password: 'test'
-sendgrid_password: ''
+mandrill_password: 'enter password'
+sendgrid_password: 'enter password'
 mail_service: 'mandrill'
 
 # mysql
