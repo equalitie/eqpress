@@ -1,0 +1,12 @@
+---
+- name: restart nginx
+  service: name=nginx state=restarted
+
+- name: reload nginx
+  command: /usr/sbin/nginx -s reload
+
+- name: restart php-fpm
+  service: name=php5-fpm state=restarted
+
+- name: reload php-fpm
+  shell: kill -USR2 `cat /var/run/php5-fpm.pid`

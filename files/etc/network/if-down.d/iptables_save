@@ -1,0 +1,2 @@
+#!/bin/bash
+/sbin/iptables-save > /etc/iptables.up.rules

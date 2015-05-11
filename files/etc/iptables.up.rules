@@ -1,0 +1,95 @@
+#
+# iptables firewall
+#
+*filter
+
+# loopback is free
+-A INPUT -i lo -j ACCEPT
+-A OUTPUT -o lo -j ACCEPT
+
+# block the baddies
+-I INPUT -s 109.68.38.22 -j DROP
+
+# Accepts all established inbound connections
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allows all outbound traffic
+-A OUTPUT -j ACCEPT
+
+# Allows HTTP and HTTPS connections from anywhere (the normal ports for websites)
+-A INPUT -p tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp --dport 443 -j ACCEPT
+
+# block old servers
+-A INPUT -s 64.68.201.0/24 -j DROP
+
+# Allows SSH and mosh connections
+-A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
+-A INPUT -p udp --dport 60000:60020 -j ACCEPT
+
+# Allows MySQL
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 104.131.95.171 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 104.237.149.190 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 108.61.209.101 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 173.255.225.182 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 178.79.144.208 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 192.81.208.6 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 194.1.166.186 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 194.1.164.240 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 194.1.164.240 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 194.1.166.186 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 198.211.100.146 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 198.211.115.196 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 198.74.61.42 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 199.27.180.193 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 199.27.180.229 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 199.27.180.228 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 45.56.108.152 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 45.56.111.125 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 45.56.111.24 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport 3306 -s 45.56.118.161 -j ACCEPT
+
+# Allow ping
+-A OUTPUT -p icmp --icmp-type 0 -j ACCEPT
+-A INPUT -p icmp --icmp-type 0 -j ACCEPT
+-A FORWARD -p icmp --icmp-type 0 -j ACCEPT
+-A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
+
+# allow ICMP time exceeded (traceroute)
+-A INPUT -p icmp --icmp-type 11 -j ACCEPT
+-A OUTPUT -p icmp --icmp-type 11 -j ACCEPT
+-A FORWARD -p icmp --icmp-type 11 -j ACCEPT
+
+# allow ICMP destination unreachable
+-A INPUT -p icmp --icmp-type 3/4 -j ACCEPT
+-A OUTPUT -p icmp --icmp-type 3/4 -j ACCEPT
+-A FORWARD -p icmp --icmp-type 3/4 -j ACCEPT
+-A FORWARD -p icmp --icmp-type 3/3 -j ACCEPT
+-A OUTPUT -p icmp --icmp-type 3/3 -j ACCEPT
+-A INPUT -p icmp --icmp-type 3/3 -j ACCEPT
+-A FORWARD -p icmp --icmp-type 3/1 -j ACCEPT
+-A INPUT -p icmp --icmp-type 3/1 -j ACCEPT
+-A OUTPUT -p icmp --icmp-type 3/1 -j ACCEPT
+
+# allow ICMP source quench
+-A INPUT -p icmp --icmp-type 4 -j ACCEPT
+-A OUTPUT -p icmp --icmp-type 4 -j ACCEPT
+-A FORWARD -p icmp --icmp-type 4 -j ACCEPT
+
+# allow ICMP parameter problem
+-A INPUT -p icmp --icmp-type 12 -j ACCEPT
+-A OUTPUT -p icmp --icmp-type 12 -j ACCEPT
+-A FORWARD -p icmp --icmp-type 12 -j ACCEPT
+
+# allow SNMP from specific hosts
+-I INPUT -p udp --dport 161 -s 217.154.106.153 -j ACCEPT
+-I INPUT -p udp --dport 161 -s 217.154.106.134 -j ACCEPT
+
+# log iptables denied calls (access via 'dmesg' command)
+#-A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables denied: " --log-level 7
+
+# Reject all other inbound - default deny unless explicitly allowed policy:
+-A INPUT -j REJECT
+-A FORWARD -j REJECT
+
+COMMIT

@@ -1,0 +1,116 @@
+user www-data;
+worker_processes {{ nginx_worker_processes }};
+worker_priority -5;
+worker_rlimit_nofile 32768;
+pid /var/run/nginx.pid;
+error_log /var/log/nginx/nginx-error.log info;
+
+events {
+	worker_connections 16384;
+	multi_accept on;
+}
+
+http {
+        # Block IP addresses not playing nice.
+        include /etc/nginx/blacklist.conf;
+	limit_req_zone $binary_remote_addr zone=one:10m rate=10r/m;
+
+	##
+	# configure cache to store data about files and directories like
+	# open descriptors, sizes, mod times, directory lookups
+	## 
+
+	open_file_cache max=5000 inactive=300s;
+	open_file_cache_valid 360s;
+	open_file_cache_min_uses 2;
+	open_file_cache_errors on;
+
+        etag on;
+	sendfile on;
+	tcp_nopush off;
+	tcp_nodelay on;
+	keepalive_timeout 21 21;
+	types_hash_max_size 2048;
+	server_names_hash_max_size 4096;
+	server_names_hash_bucket_size 128;
+	server_tokens off;
+
+	include /etc/nginx/mime.types;
+	default_type application/octet-stream;
+	client_max_body_size 32M;
+
+	##
+	# default logs
+	##
+
+	access_log /var/log/nginx/access.log;
+	error_log /var/log/nginx/error.log;
+
+	##
+	# cache settings and locations
+	##
+
+	include /etc/nginx/cache.conf;
+
+	##
+	# Gzip Settings
+	##
+
+	gzip on;
+	gzip_vary off;
+	gzip_proxied any;
+	gzip_comp_level 6;
+	gzip_buffers 32 8k;
+	gzip_disable "msie6";
+	gzip_min_length 1400;
+	gzip_http_version 1.1;
+	gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript text/x-component text/richtext image/svg+xml text/xsd text/xsl image/x-icon;
+
+	##
+	# upstream app servers
+	##
+
+	index index.php index.html index.htm pw.php;
+	upstream php5-fpm-admin-sock {
+		server unix:/var/run/php5-fpm-admin.sock;
+	}
+	upstream php5-fpm-unix-sock {
+        	server unix:/var/run/php5-fpm.sock;
+	}
+	upstream php5-fpm-tcp-sock {
+        	server 127.0.0.1:9000;
+	}
+
+	##
+	# Catch-all server block - Be Happy
+	##
+	server {
+		listen 80 default_server;
+		server_name _;
+		access_log /var/log/nginx/catch-all.access.log;
+		error_log /var/log/nginx/catch-all.error.log;
+		server_name_in_redirect off;
+		root  /var/www/easypress.ca/catchall;
+ 	}
+	server {
+		listen 443 default_server;
+		server_name _;
+		access_log /var/log/nginx/catch-all.access.log;
+		error_log /var/log/nginx/catch-all.error.log;
+		server_name_in_redirect off;
+		root  /var/www/easypress.ca/catchall;
+		include /etc/nginx/common_easypress_ssl.conf;
+	}
+ 
+        ##
+        # Global SSL configuration
+        # Required because of http://trac.nginx.org/nginx/ticket/235
+        ##
+        ssl_session_cache shared:SSL:20m;
+
+	##
+	# Virtual Host Configs
+	##
+	include /etc/nginx/conf.d/*.conf;
+	include /etc/nginx/sites-enabled/*;
+}

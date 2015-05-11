@@ -1,0 +1,11 @@
+---
+- hosts: all
+  gather_facts: true
+  roles:
+     - common
+     - ssh-config
+     - easypress-ssl
+     - easypress-devops
+     - mysql-percona
+     - web-app
+     - easypress-console

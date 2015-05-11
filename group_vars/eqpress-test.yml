@@ -1,0 +1,32 @@
+---
+
+# eqPress - Initial Test
+
+# nginx
+easypress_server_id: 'eqPress-test'
+nginx_worker_processes: '2'
+
+# php-fpm
+phpfpm_max_children: 48
+phpfpm_start_servers: 16
+phpfpm_min_spare: 16
+phpfpm_max_spare: 16
+phpfpm_max_requests: 32
+php_opcache_memory_size: 64
+
+# mysql
+mysql_root_db_pass: ''
+mysql_innodb_buffer_pool_size: '512M'
+mysql_innodb_log_file_size: '32M'
+mysql_repl_creds:
+  username: 'rep'
+  password: ''
+
+mysql_admin_user:
+    username: 'mysqladmin'
+    password: ''
+
+mysql_webstats:
+    db: 'swp_webstats'
+    username: 'swp_webstats'
+    password: ''

@@ -1,0 +1,58 @@
+---
+# roles/ssh-config/tasks/main.yml
+
+- name: Ensure the hostname entry for master is available for the client.
+  lineinfile: dest=/etc/hosts regexp="{{ mysql_repl_master }}" line="{{ hostvars[mysql_repl_master].ansible_default_ipv4.address + " " + mysql_repl_master }}" state=present
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  tags: [mysql, repl]
+
+- name: Ensure the hostname entry for the slave is entered into hosts file
+  lineinfile: dest=/etc/hosts regexp="{{ item }}" line="{{ hostvars[item].ansible_default_ipv4.address + " " + item }}" state=present
+  with_items: mysql_repl_slave
+  when: mysql_repl_role == 'master' and mysql_repl_slave is defined
+  tags: [mysql, repl]
+
+- name: Generating RSA key for root
+  user: name=root generate_ssh_key=yes
+  tags: [ssh_config, ssh_pub_key]
+
+- name: Downloading slave's ssh pub key
+  fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/id_rsa_{{ inventory_hostname }}.pub flat=yes
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  tags: [ssh_config, ssh_pub_key]
+
+- name: Copying slave's ssh key to master
+  local_action: shell cat /tmp/id_rsa_{{ inventory_hostname }}.pub | ssh -oStrictHostKeyChecking=no root@{{ mysql_repl_master }} "cat >> /root/.ssh/authorized_keys"
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  tags: [ssh_config, ssh_pub_key]
+
+- name: Downloading master's ssh pub key
+  fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/id_rsa_{{ inventory_hostname }}.pub flat=yes
+  when: mysql_repl_role == 'master' and mysql_repl_slave is defined
+  tags: [ssh_config, ssh_pub_key]
+
+- name: Copying master's ssh key to slave
+  local_action: shell cat /tmp/id_rsa_{{ inventory_hostname }}.pub | ssh -oStrictHostKeyChecking=no root@{{ item }} "cat >> /root/.ssh/authorized_keys"
+  with_items: mysql_repl_slave
+  when: mysql_repl_role == 'master' and mysql_repl_slave is defined
+  tags: [ssh_config, ssh_pub_key]
+
+- name: Make sure the known hosts file exists
+  file: "path={{ ssh_known_hosts_file }} state=touch"
+  tags: [ssh_config, ssh_known_hosts]
+
+#- name: outut stuff
+#  debug: var=ssh_known_host_results_slave_{{ ansible_hostname }}
+#  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+#  tags: [ssh_known_hosts, ssh_config]
+
+- name: Scan the public key slave
+  shell: "{{ ssh_known_hosts_command }} {{ mysql_repl_master }} >> {{ ssh_known_hosts_file }}"
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  tags: [ssh_config, ssh_known_hosts]
+
+- name: Scan the public key master
+  shell: "{{ ssh_known_hosts_command }} {{ item }} >> {{ ssh_known_hosts_file }}"
+  with_items: mysql_repl_slave
+  when: mysql_repl_role == 'master' and mysql_repl_slave is defined
+  tags: [ssh_config, ssh_known_hosts]

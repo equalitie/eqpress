@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# backup_from_master.sh
+#
+#
+
+master={{ mysql_repl_master }}
+
+export PATH=/bin:/usr/bin
+if ping -c 1 ${master} > /dev/null 2>&1; then
+    rsync -av --delete \
+	    --exclude '*.zip' \
+	    --exclude '*.tar.gz' \
+	    --exclude '*.tgz' \
+	    --exclude '.git*' \
+	    --exclude '*.log' \
+	    --exclude '*.mp4' \
+	    --exclude 'easypress.ca/' \
+	    --exclude '.sessions/' \
+	    ${master}:/var/www /var
+    rsync -av --delete --exclude 'easypress.ca' ${master}:/etc/nginx /etc
+    rsync -av ${master}:/etc/ssl /etc
+else
+    echo "backup_to_${master}.sh: error, cant reach ${master}."
+fi

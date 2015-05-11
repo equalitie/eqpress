@@ -1,0 +1,170 @@
+<?php
+/**
+ * Web stats totals.
+ *
+ */
+$start = microtime( true );
+$dbh = new mysqli( 'localhost', 'swp_webstats', '{{ mysql_webstats.password }}', 'swp_webstats' );
+if ( $dbh->connect_error ) {
+	printf( "Connect failed: %s: %s\n", $dbh->connect_errno, $dbh->connect_error );
+	error_log( "Connect failed: " . $dbh->connect_errno . ": " . $dbh->connect_error );
+	exit();
+}
+
+//db_select_totals();
+db_select_monthly_totals();
+db_select_recent_daily_totals();
+$dbh->close();
+$end = microtime( true );
+$elapsed = $end - $start;
+//echo "Execution time: ". round( $elapsed, 5 ) . " seconds\n";
+
+/**
+ * get the totals from the DB
+ *
+ */
+function db_select_daily_totals() {
+	global $dbh;
+	$totals = $bigt = 0;
+	$yesterday = time() - ( 60 * 60 * 24 );
+	for ( ; ; ) {
+		$yymmdd = date( 'Y-m-d', $yesterday );
+		$q_select_id = "SELECT bytes_transfered FROM stats WHERE date LIKE '$yymmdd'";
+		$result = $dbh->query( $q_select_id );
+		$bytes = $result->fetch_all();
+		if ( empty( $bytes ) )
+			break;
+		$yesterday -= 86400;
+		for ($x = 0; $x < sizeof( $bytes ); $x++ )
+			$totals += $bytes[$x][0];
+		$bigt += $totals;
+		echo $yymmdd . " - " . bytes_to_size( $totals ) . "\n";
+		$totals = 0;
+	}	
+	echo "Total - " . bytes_to_size( $bigt ) . "\n";
+	return;
+}
+
+function db_select_recent_daily_totals() {
+	global $dbh;
+	$totals = $bigt = 0;
+	$yesterday = time() - ( 60 * 60 * 24 );
+	echo "PAST WEEK\n";
+	printf( "%-19s | %-16s | %-16s | %-16s | %-16s\n", "Day", "Hits", "Visits", "Uniques", "Bytes" );
+	echo str_repeat( "_", 86 ) . "\n";
+	for ( $y=0; $y!=8; $y++ ) {
+		$yymmdd = date( 'Y-m-d', $yesterday );
+		$dofw = date( 'l', $yesterday );
+		$mmdd = date( 'M/d', $yesterday );
+		$q_select_id = "SELECT hits, visits, unique_visitors, bytes_transfered FROM stats WHERE date LIKE '$yymmdd'";
+		$result = $dbh->query( $q_select_id );
+		$all_stats = $result->fetch_all();
+		$yesterday -= 86400;
+		$bytes = $hits = $visits = $uniques = 0;
+		for ($x = 0; $x < sizeof( $all_stats ); $x++ ) {
+			$hits += $all_stats[$x][0];
+			$visits += $all_stats[$x][1];
+			$uniques += $all_stats[$x][2];
+			$bytes += $all_stats[$x][3];
+		}
+		printf( "%-10s - %-5s | %-16s | %-16s | %-16s | %-16s\n", $dofw, $mmdd, $hits, $visits, $uniques, bytes_to_size( $bytes ) );
+	}	
+	//echo "Total - " . bytes_to_size( $bigt ) . "\n";
+	return;
+}
+
+function db_select_monthly_totals() {
+	global $dbh;
+	$days = 0;
+	$db_query = "SELECT date, hits, visits, unique_visitors, bytes_transfered, domain_id FROM stats ORDER BY date DESC";
+	if ( $db_results = $dbh->query( $db_query ) ) {
+		$all_stats = $db_results->fetch_all();
+//var_dump($all_stats);
+		if ( !empty( $all_stats ) ) {
+			echo "MONTHLY TOTALS\n";
+			printf( "%-7s | %-11s | %-11s | %-11s | %-11s | %-11s | %-8s| %-10s | %-10s\n",
+				   "Month", "Hits", "AvgHits/D", "Visits", "AvgVisits/D", "Unique Vis", "AvgUniq/D", "Trans", "AvgTrans/D" );
+			echo str_repeat( "_", 116 ) . "\n";
+			$avg_hits = $avg_visits = $avg_uniques = $avg_bytes = $total_bytes = $month_hits = $month_visits = $month_uniques = $month_bytes = 0;
+			$this_month = preg_replace( '/-[0-9][0-9]$/', '', $all_stats[0][0] );
+			foreach ( $all_stats as $stats ) {
+				$total_bytes += $stats[4];
+				$same_month = strpos( $stats[0], $this_month );
+				if ( $same_month === false ) {
+					if ( ( $month_hits > 0 ) && ( $days > 0 ) ) $avg_hits = round( $month_hits / $days );
+					if ( ( $month_visits > 0 ) && ( $days > 0 ) ) $avg_visits = round( $month_visits / $days );
+					if ( ( $month_uniques > 0 ) && ( $days > 0 ) ) $avg_uniques = round( $month_uniques / $days );
+					if ( ( $month_bytes > 0 ) && ( $days > 0 ) ) $avg_bytes = round( $month_bytes / $days );
+					printf( "%-7s | %-11s | %-11s | %-11s | %-11s | %-11s | %-8s | %-10s | %-10s\n",
+						   $this_month, $month_hits, $avg_hits,
+						   $month_visits, $avg_visits, $month_uniques, $avg_uniques,
+						   bytes_to_size( $month_bytes ), bytes_to_size( $avg_bytes ) );
+					$month_hits = $stats[1];
+					$month_visits = $stats[2];
+					$month_uniques = $stats[3];
+					$month_bytes = $stats[4];
+					$this_month = preg_replace( '/-[0-9][0-9]$/', '', $stats[0] );
+					$days = 0;
+				} else {
+					$month_hits += $stats[1];
+					$month_visits += $stats[2];
+					$month_uniques += $stats[3];
+					$month_bytes += $stats[4];
+				}
+				if ( $stats[5] == '6' ) $days++;
+			}
+			if ( $days != 0 ) {
+				$avg_hits = round( $month_hits / $days );
+				$avg_visits = round( $month_visits / $days );
+				$avg_uniques = round( $month_uniques / $days );
+				$avg_bytes = round( $month_bytes / $days );
+			}
+			printf( "%-7s | %-11s | %-11s | %-11s | %-11s | %-11s | %-8s | %-10s | %-10s\n",
+				   $this_month, $month_hits, $avg_hits,
+				   $month_visits, $avg_visits, $month_uniques, $avg_uniques,
+				   bytes_to_size( $month_bytes ), bytes_to_size( $avg_bytes ) );
+			echo str_repeat( "_", 116 );
+			echo "\nTotal Data Transfered: " . bytes_to_size( $total_bytes ) . "\n\n";
+			$days = 0;
+		} else {
+			echo "No stats yet.";
+		}
+	} else {
+		echo 'Results for query not found';
+	}
+	
+}
+
+function bytes_to_size($bytes, $precision = 2) {
+	$kilobyte = 1024;
+	$megabyte = $kilobyte * 1024;
+	$gigabyte = $megabyte * 1024;
+	$terabyte = $gigabyte * 1024;
+
+	if (($bytes >= 0) && ($bytes < $kilobyte))
+	{
+		return $bytes . ' B';
+	}
+	elseif (($bytes >= $kilobyte) && ($bytes < $megabyte))
+	{
+		return round($bytes / $kilobyte, $precision) . ' KB';
+	}
+	elseif (($bytes >= $megabyte) && ($bytes < $gigabyte))
+	{
+		return round($bytes / $megabyte, $precision) . ' MB';
+	}
+	elseif (($bytes >= $gigabyte) && ($bytes < $terabyte))
+	{
+		return round($bytes / $gigabyte, $precision) . ' GB';
+	}
+	elseif ($bytes >= $terabyte)
+	{
+		return round($bytes / $terabyte, $precision) . ' TB';
+	}
+	else
+	{
+		return $bytes . ' B';
+	}
+}
+
+?>

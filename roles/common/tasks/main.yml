@@ -1,0 +1,225 @@
+---
+# common/tasks/main.yml
+
+# this is here at the top just in case proxies are required which are set in .bashrc
+- name: Copy .bashrc
+  template: src={{ files }}/root/.bashrc.j2 dest=/root/.bashrc owner=root group=root mode=0600
+  tags: env
+
+- name: Copy the hostname file
+  template: src={{ files }}/etc/hostname dest=/etc owner=root group=root mode=0644
+  tags: hostname
+
+- name: Add the host entry to /etc/hosts
+  lineinfile: dest=/etc/hosts line="{{ ansible_default_ipv4.address }}  {{ inventory_hostname }}" state=present
+  tags: hostname
+
+- name: Set the hostname
+  command: /etc/init.d/hostname.sh start
+  tags: hostname
+
+- name: Update the apt-get cache
+  apt: update_cache=yes
+
+- name: Update all packages to the latest version
+  apt: upgrade=dist
+
+- name: Install common packages
+  action: apt pkg={{ item }} state=installed
+  with_items:
+    - bc
+    - buthead
+    - clamav
+    - cron
+    - curl
+    - dnsutils
+    - e2fslibs-dev
+    - fail2ban
+    - gawk
+    - git
+    - heirloom-mailx
+    - iotop
+    - less
+    - libncurses5-dev
+    - libpcre3-dev
+    - libreadline-dev
+    - libsasl2-dev
+    - libsasl2-modules
+    - libssl-dev
+    - locales
+    - logrotate
+    - lsof
+    - make
+    - monit
+    - mosh
+    - mtr-tiny
+    - nagios-plugins-basic
+    - nagios-plugins-common
+    - ntpdate
+    - openssl
+    - perl
+    - postfix
+    - python-dev
+    - python-pip
+    - python-apt
+    - python-mysqldb
+    - python-keyczar
+    - python-software-properties
+    - rcconf
+    - rng-tools
+    - rsync
+    - screen
+    - strace
+    - sudo
+    - tzdata
+    - unzip
+    - vim
+    - zip
+    - zlib1g-dev
+
+# zoneinfo exists on OS X in the same location as Debian. Neat.
+- name: Set /etc/localtime to {{ timezone }}
+  copy: src=/usr/share/zoneinfo/{{ timezone }}
+        dest=/etc/localtime
+        owner=root
+        group=root
+        mode=0644
+        backup=yes
+  #when: ansible_os_family == "Debian"
+  tags: [configuration,timezone]
+
+# tasks file for locale
+- name: set locale.gen file
+  locale_gen: name={{locale_lang}} state=present
+  when: ansible_os_family == "Debian"
+  tags: [configuration, locale]
+
+- name: set locale to {{ locale }}
+  template: src=files/etc/default/locale.j2 dest=/etc/default/locale
+  when: ansible_os_family == "Debian"
+  tags: [configuration, locale]
+
+- name: Set /etc/timezone to {{ timezone }}
+  template: src=files/etc/timezone.j2 dest=/etc/timezone
+  notify:
+    - update tzdata
+    - restart rsyslog
+    - restart ssh
+  #when: ansible_os_family == "Debian"
+  tags: [configuration,timezone]
+
+- name: Copy custom fail2ban jail.conf
+  copy: src={{ files }}/etc/fail2ban/jail.conf dest=/etc/fail2ban owner=root group=root mode=0644
+  notify:
+    - restart fail2ban
+  tags: [security, fail2ban]
+
+- name: Copy easyMail postfix mail.cf
+  template: src={{ files }}/etc/postfix/main.cf-easymail.j2 dest=/etc/postfix/main.cf-easymail owner=root group=root mode=0644
+  notify:
+    - restart postfix
+  tags: [email, main.cf, easymail]
+
+- name: Copy Mandrill postfix mail.cf
+  template: src={{ files }}/etc/postfix/main.cf-mandrill.j2 dest=/etc/postfix/main.cf-mandrill owner=root group=root mode=0644
+  notify:
+    - restart postfix
+  tags: [email, main.cf, mandrill]
+
+- name: Copy SendGrid postfix mail.cf
+  template: src={{ files }}/etc/postfix/main.cf-sendgrid.j2 dest=/etc/postfix/main.cf-sendgrid owner=root group=root mode=0644
+  notify:
+    - restart postfix
+  tags: [email, main.cf, sendgrid]
+
+- name: Backup default mail.cf
+  #shell: mv /etc/postfix/main.cf /etc/postfix/main.cf.{{ ansible_date_time.iso8601 }}
+  shell: mv /etc/postfix/main.cf /etc/postfix/main.cf.`date "+%Y%m%d%H%M%S"`
+  ignore_errors: yes
+  tags: [email, main.cf]
+
+- name: Symlink to postfix mail.cf
+  shell: ln -s main.cf-{{ mail_service }} main.cf
+  args:
+    chdir: /etc/postfix
+  notify:
+    - restart postfix
+  tags: [email, main.cf]
+
+- name: Copy iptables startup script
+  copy: src={{ files }}/etc/network/if-pre-up.d/iptables dest=/etc/network/if-pre-up.d owner=root group=root mode=0750
+  tags: [security, firewall]
+
+- name: Copy iptables shutdown script
+  copy: src={{ files }}/etc/network/if-down.d/iptables_save dest=/etc/network/if-down.d owner=root group=root mode=0750
+  tags: [security, firewall]
+
+- name: Copy iptables config
+  copy: src={{ files }}/etc/iptables.up.rules dest=/etc owner=root group=root mode=0640
+  notify:
+    - start firewall
+  tags: [security, firewall]
+
+- name: Copy ntpdate cron
+  copy: src={{ files }}/etc/cron.hourly/ntpdate dest=/etc/cron.hourly owner=root group=root mode=750
+  tags: [ntpdate]
+
+- name: Copy crontab to change default launch of daily tasks from 6am to 1am for nginx webstats
+  copy: src={{ files }}/etc/crontab dest=/etc owner=root group=root mode=0644
+  tags: [crontab]
+
+- name: Upload and apply network hardening rules.
+  copy: src={{ files }}/usr/local/sbin/harden_ip.sh dest=/usr/local/sbin owner=root group=root mode=750
+  notify:
+    - harden IP stack
+  tags: security
+
+- name: Set permissions on .ssh directory
+  file: path=/root/.ssh state=directory owner=root group=root mode=700
+  tags: [security, ssh]
+
+- name: Copy authorized_keys.
+  copy: src={{ files }}/root/.ssh/authorized_keys dest=/root/.ssh owner=root group=root mode=600
+  tags: [security, ssh]
+
+- name: Create sftponly group for chroot'ed logins
+  group: name=sftponly state=present
+  tags: security
+
+- name: copy sshd_config file containing sftponly subsystem for chroot'ed logins
+  copy: src={{ files }}/etc/ssh/sshd_config dest=/etc/ssh owner=root group=root mode=0644
+  notify:
+    - restart ssh
+  tags: [security, ssh, sshd_config]
+
+- name: copy limits.conf to increase open file limits for nginx and mysql
+  copy: src={{ files }}/etc/security/limits.conf dest=/etc/security owner=root group=root mode=0644
+  tags: [limits]
+
+#- name: copy mrtg monitoring scripts
+#  action: copy src={{ files }}/usr/local/bin/{{ item }} dest=/usr/local/bin owner=root group=staff mode=0770
+#  with_items:
+#    - checkdisk.sh
+#    - checkload.sh
+#    - currentconnections.sh
+#    - diskio.sh
+#    - swapio.sh
+#    - uptime.pl
+#  tags: [mrtg, monitor]
+#
+#- name: copy mrtg config template
+#  template: src={{ files }}/etc/mrtg.cfg.j2 dest=/etc/mrtg.cfg owner=root group=root mode=0600
+#  tags: [mrtg, monitor]
+#
+#- name: Copy passwd shadow group files
+#  action: copy src={{ item.name }} dest=/etc/ owner=root group={{ item.group }} mode={{ item.perms }}
+#  with_items:
+#    - { name: 'passwd', perms: '0644', group: 'root' }
+#    - { name: 'shadow', perms: '0640' , group: 'shadow'}
+#    - { name: 'group', perms: '0644' , group: 'root'}
+#  tags: users
+
+- name: reboot after installation
+  command: /sbin/init 6
+  when: reboot_after_install == "yes"
+  tags: reboot

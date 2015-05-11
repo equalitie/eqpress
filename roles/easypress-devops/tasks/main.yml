@@ -1,0 +1,176 @@
+---
+# roles/easypress-devops/tasks/main.yml
+
+- name: add .ssh dir to user skel
+  file: path=/etc/skel/.ssh owner=root group=root mode=0700 state=directory
+  tags: users
+
+- name: add authorized_key file to user skel
+  file: path=/etc/skel/.ssh/authorized_keys owner=root group=root mode=0644 state=touch
+  tags: users
+
+- name: create monitor group
+  group: name=monitor state=present
+  tags: users
+
+# required for monit lockdown script via ep-console
+- name: create wordpress group
+  group: name=wordpress state=present
+  tags: users
+
+- name: create admin users
+  action: user group={{ item.group }} shell=/bin/bash name={{ item.user }}
+  with_items:
+    - { user: "vmg", group: "staff" }
+    - { user: "monitor", group: "monitor" }
+    - { user: "wordpress", group: "wordpress" }
+  tags: users
+
+- name: copy user specific files (authorized_keys etc) to server
+  local_action: shell rsync -a {{ files }}/home root@{{ inventory_hostname }}:/
+  tags: users
+
+- name: reset users home directory ownerships
+  action: file path=/home/{{ item.user }} owner={{ item.user }} group={{ item.group }} state=directory recurse=yes
+  with_items:
+    - { user: "vmg", group: "staff" }
+    - { user: "monitor", group: "monitor" }
+    - { user: "wordpress", group: "wordpress" }
+  tags: users
+
+- name: copy sudoers file
+  copy: src={{ files }}/etc/sudoers dest=/etc owner=root group=root mode=0440
+  tags: [users, sudo]
+
+- name: remove setuid bit on sbin directory
+  command: /bin/chmod g-s /usr/local/sbin
+  tags: [ep-sbin]
+
+- name: set permissions on sbin directory
+  command: /bin/chmod 0755 /usr/local/sbin
+  tags: [ep-sbin]
+
+- name: copy all sbin easyPress admin scripts
+  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0755
+  with_items:
+    - chcustown
+    - check-mem.pl
+    - check_for_disk_usage.sh
+    - check_for_large_files.sh
+    - check_for_large_http_log_files.sh
+    - check_size_of_php_error_logs.sh
+    - chepown
+    - chwebown
+    - class-http-log-parser.php
+    - ep_admin_emails.sh
+    - ep_bruteprotect.sh
+    - ep_chpass.sh
+    - ep_deactivate_site.sh
+    - ep_deploy_must_use_plugins.sh
+    - ep_gen_api_key.php
+    - ep_get_sftp_user.sh
+    - ep_install_console.sh
+    - ep_install_cache_purge.sh
+    - ep_install_mu_plugins.sh
+    - ep_plugin_blacklist.php
+    - ep_purge_site.sh
+    - ep_purge_cache.sh
+    - ep_security_scan.sh
+    - ep_setperms
+    - ep_setup_replication.sh
+    - ep_unprovision.sh
+    - ep_update_wp.sh
+    - harden_ip.sh
+    - monit_check_mailq.sh
+    - monit_connections.sh
+    - monit_ep_console_lockdown.sh
+    - monit_ep_console_perms.sh
+    - monit_ep_console_reset_password.sh
+    - monit_php-fpm_procs.sh
+    - monitor_nginx.pl
+    - prtran.pl
+    - resident-ram
+    - top_ram_procs.sh
+    - field
+    - test_db.pl
+    - webstats_totals_wrapper.sh
+    - wp
+    - wpcli_woocommerce_disable_redirect.php
+    - wpcli_wordfence_no_scan.php
+    - wp-provision-stage2.sh
+    - wp_check_plugins.php
+    - wp_update.sh
+    - wp_update_plugins.sh
+  tags: ep-sbin
+
+- name: copy webstat script templates
+  action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
+  with_items:
+    - ep_api_webstats.php
+    - webstats.php
+    - webstats_totals.php
+  tags: [ep-sbin, webstats]
+
+- name: copy webstat index script template
+  action: template src={{ files }}/var/www/easypress.ca/webstats/index.php.j2 dest=/var/www/easypress.ca/webstats/index.php owner=www-data group=www-data mode=0644
+  ignore_errors: yes
+  tags: [webstats]
+
+- name: copy backup script templates
+  action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0750
+  with_items:
+    - backup_etc.sh
+    - backup_to_zfs.sh
+  tags: [ep-sbin, backup-scripts]
+
+- name: copy backup scripts
+  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0750
+  with_items:
+    - backup_to_slave.sh
+    - backup_with_tarsnap.sh
+    - wp_db_backup.sh
+  tags: [ep-sbin, backup-scripts]
+
+- name: copy failover script template to slave
+  template: src={{ files }}/usr/local/sbin/master_or_slave.sh.j2 dest=/usr/local/sbin/master_or_slave.sh owner=root group=staff mode=0750
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  tags: [ep-sbin, failover]
+
+- name: copy backup from master script to slave
+  template: src={{ files }}/usr/local/sbin/backup_from_master.sh.j2 dest=/usr/local/sbin/backup_from_master.sh owner=root group=staff mode=0750
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  tags: [ep-sbin, backup-scripts]
+
+- name: copy tarsnap config file
+  template: src={{ files }}/usr/local/etc/tarsnap.conf.j2 dest=/usr/local/etc/tarsnap.conf owner=root group=staff mode=0640
+  tags: [tarsnap]
+
+- name: stop monit process
+  service: name=monit state=stopped
+  ignore_errors: yes
+  tags: [ep-console, monit]
+
+- name: copy custom monit-10 config
+  copy: src={{ files }}/etc/monit/monitrc-10 dest=/etc/monit owner=root group=root mode=0600
+  notify:
+    - start monit
+  tags: [ep-console, monit, monit-config]
+
+- name: copy custom monit-60 config
+  copy: src={{ files }}/etc/monit/monitrc-60 dest=/etc/monit owner=root group=root mode=0600
+  notify:
+    - start monit
+  tags: [ep-console, monit, monit-config]
+
+- name: copy custom monit startup script
+  copy: src={{ files }}/etc/init.d/monit dest=/etc/init.d owner=root group=root mode=0750
+  notify:
+    - start monit
+  tags: [ep-console, monit]
+
+- name: copy compiled from source monit version
+  copy: src={{ files }}/usr/local/bin/monit dest=/usr/local/bin owner=root group=root mode=750
+  notify:
+    - start monit
+  tags: [ep-console, monit]
+

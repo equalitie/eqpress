@@ -1,0 +1,25 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+
+function tail_logs() {
+	tail -f /var/log/nginx/$1
+}
+alias um='u && top_ram_procs.sh && resident-ram'
+alias gh='wp option get home'
+alias sr='wp search-replace'
+alias tl='tail_logs'
+alias ls='ls -AF'
+alias u='uptime'
+alias ns='netstat -an|egrep ":80|:443"|grep tcp|grep ESTAB|wc -l'
+alias nsn='netstat -an|egrep ":80|:443"|grep tcp|grep ESTAB'
+alias nst='netstat -tan|awk "{print $6}"|sort|uniq -c'
+alias lnt='ls -lrtch /var/log/nginx/|tail -30'
+alias lns='ls -lrSh /var/log/nginx/|tail -30'
+alias wp='wp --allow-root'
+
+export HISTIGNORE="&:ls:[bf]g:exit:shutdown:reboot:sshd stop:rm:rm -rf:halt"
+
+#alias rsync='ionice -c 3 rsync --rsync-path="ionice -c3 rsync"'
+TITLEBAR='\[\033]0; \u@\h: \w \007\]'
+export PS1="${TITLEBAR}\n\t \d\n[\u@\h \W]# "
+{{ bashrc_proxy_http }}
+{{ bashrc_proxy_ftp }}
