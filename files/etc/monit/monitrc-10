@@ -1,0 +1,21 @@
+###############################################################################
+## Global section
+###############################################################################
+set daemon 10
+set expectbuffer 20 kb
+set logfile /var/log/monit.log
+set statefile /var/run/monit-10.state
+set pidfile /var/run/monit-10.pid
+set idfile /var/run/monit-10.id
+set mailserver localhost
+set alert vmg@boreal321.com with mail-format { subject: monit-10 $SERVICE $EVENT }
+#
+# Check for new nginx config files created by WordPress provision system
+#
+#check program newjersey-provision with path /usr/local/sbin/wp-provision-stage2.sh
+	#if status != 0 then alert
+#
+# Check for new uploaded files vi vsftpd
+#
+#check directory vsftpd path /srv/ftp/pub/incoming
+	#if changed timestamp then alert

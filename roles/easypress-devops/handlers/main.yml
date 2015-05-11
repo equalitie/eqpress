@@ -1,0 +1,12 @@
+---
+- name: restart nginx
+  service: name=nginx state=reloaded
+
+- name: restart php-fpm
+  service: name=php5-fpm state=restarted
+
+- name: restart monit
+  service: name=monit state=restarted
+
+- name: start monit
+  service: name=monit state=started

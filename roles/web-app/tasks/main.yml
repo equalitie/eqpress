@@ -1,0 +1,168 @@
+---
+# web-app/tasks/main.yml
+
+- name: ensure /var/www exists and is owned by root
+  file: path=/var/www state=directory owner=root group=root mode=0755
+  tags: [var-www-root]
+
+- name: Add apt keys required for dotdeb
+  apt_key: url='http://www.dotdeb.org/dotdeb.gpg'
+  tags: [nginx, php]
+
+- name: Add repos from dotdeb
+  apt_repository: repo='deb http://packages.dotdeb.org wheezy all'
+  tags: [nginx, php]
+
+- name: Add PHP 5.5 repos from dotdeb
+  apt_repository: repo='deb http://packages.dotdeb.org wheezy-php55 all'
+  tags: php
+
+- name: Update the apt-get cache
+  apt: update_cache=yes
+
+- name: Install packages
+  action: apt pkg={{ item }} state=installed
+  with_items:
+    - nginx-extras
+    - nginx-common
+    - php5
+    - php5-cli
+    - php5-curl
+    - php5-dev
+    - php5-fpm
+    - php5-gd
+    - php5-http
+    - php5-imagick
+    - php5-json
+    - php5-mcrypt
+    - php5-memcached
+    - php5-mysqlnd
+    - php5-redis
+    - php5-ssh2
+  tags: [nginx, php]
+
+- name: ensure nginx will start at boot
+  service: name=nginx enabled=yes
+  tags: [nginx]
+
+- name: ensure php5-fpm will start at boot
+  service: name=php5-fpm enabled=yes
+  tags: [php]
+
+- name: ensure nginx is stopped during initial config install
+  service: name=nginx state=stopped
+  tags: [nginx]
+
+- name: ensure php5-fpm is stopped during initial config install
+  service: name=php5-fpm state=stopped
+  tags: [php]
+
+- name: remove default nginx config
+  file: path=/etc/nginx/sites-available/default state=absent
+  ignore_errors: True
+  tags: nginx
+
+- name: remove default nginx config symlink
+  file: path=/etc/nginx/sites-enabled/default state=absent
+  ignore_errors: True
+  tags: nginx
+
+- name: copy the nginx create cache script
+  copy: src={{ files }}/etc/init.d/nginx-create-cachedir dest=/etc/init.d owner=root group=root mode=0750
+  tags: nginx
+
+- name: run the nginx create cache script
+  command: /etc/init.d/nginx-create-cachedir start creates=/run/cache
+  tags: nginx
+
+- name: create rc.d links to nginx create cache script
+  command: update-rc.d nginx-create-cachedir defaults 1 1
+  tags: nginx
+
+- name: create links from file system to ramdisk for nginx cache
+  file: src=/run/cache/nginx dest=/var/cache/nginx owner=root group=root state=link
+  tags: nginx
+
+- name: copy nginx config files
+  action: copy src={{ files }}/etc/nginx/{{ item }} dest=/etc/nginx owner=root group=staff mode=0664
+  with_items:
+    - common_adminer.conf
+    - common_easypress_ssl.conf
+    - common_location.conf
+    - common_location_ep.conf
+    - common_login_limiter.conf
+    - common_multisite_3.5.conf
+    - common_phpmyadmin.conf
+    - common_w3tc.conf
+    - lua_block_post_noreferrer.lua
+    - lua_block_post_noreferrer_on.lua
+    - lua_block_wplogin_noreferrer.lua
+  notify:
+    - reload nginx
+  tags: [nginx, nginx_config]
+
+- name: copy nginx cache config only during initial install
+  copy: src={{ files }}/etc/nginx/cache.conf dest=/etc/nginx owner=root group=staff mode=0664
+  tags: [nginx, nginx_cache]
+
+- name: copy nginx blacklist
+  copy: src={{ files }}/etc/nginx/blacklist.conf dest=/etc/nginx owner=root group=staff mode=0664
+  notify:
+    - reload nginx
+  tags: [nginx, nginx_config, nginx_blacklist]
+
+- name: copy nginx fastcgi config template
+  template: src={{ files }}/etc/nginx/common_fastcgi.conf.j2 dest=/etc/nginx/common_fastcgi.conf owner=root group=staff mode=0664
+  notify:
+    - reload nginx
+  tags: [nginx, nginx_config, nginx_fastcgi]
+
+- name: copy nginx.conf as template
+  template: src={{ files }}/etc/nginx/nginx.conf.j2 dest=/etc/nginx/nginx.conf owner=root group=staff mode=0664
+  notify:
+    - reload nginx
+  tags: [nginx, nginx_config, nginx_dot_conf]
+
+- name: copy nginx easypress.ca config template
+  template: src={{ files }}/etc/nginx/sites-available/easypress.ca.j2 dest=/etc/nginx/sites-available/easypress.ca owner=root group=staff mode=0664
+  notify:
+    - reload nginx
+  tags: [nginx, nginx_config, nginx_config_easypress]
+
+- name: copy custom logrotate config for nginx access logs
+  copy: src={{ files }}/etc/logrotate.d/nginx dest=/etc/logrotate.d owner=root group=root mode=0644
+  tags: [nginx, logrotate]
+
+- name: update nginx open file limits using ulimit in default file
+  copy: src={{ files }}/etc/default/nginx dest=/etc/default owner=root group=root mode=0644
+  tags: [nginx, limits]
+
+- name: start nginx
+  service: name=nginx state=started
+  tags: [nginx]
+
+- name: create PHP opcache error log
+  file: path=/var/log/php-opcache-errors.log owner=root group=www-data mode=0660 state=touch
+  tags: [php, opcache, php-config]
+
+- name: create PHP session directory
+  file: dest=/var/tmp/php_sessions owner=www-data group=root mode=0750 state=directory
+  tags: [php, php-config]
+
+- name: copy php config
+  action: template src={{ files }}/etc/php5/{{ item.templ }} dest=/etc/php5/{{ item.file }} owner=root group=www-data mode=0640
+  with_items:
+    - { templ: "cli/php.ini.j2", file: "cli/php.ini" }
+    - { templ: "fpm/php.ini.j2", file: "fpm/php.ini" }
+    - { templ: "fpm/php-fpm.conf.j2", file: "fpm/php-fpm.conf" }
+    - { templ: "fpm/pool.d/www.conf.j2", file: "fpm/pool.d/www.conf" }
+    - { templ: "fpm/pool.d/easypress-admin.conf.j2", file: "fpm/pool.d/easypress-admin.conf" }
+    - { templ: "mods-available/opcache.ini.j2", file: "mods-available/opcache.ini" }
+  notify:
+    - reload php-fpm
+  tags: [php, php-config]
+
+- name: start php5-fpm
+  service: name=php5-fpm state=started
+  tags: [php]
+

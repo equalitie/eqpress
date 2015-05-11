@@ -1,0 +1,7 @@
+---
+
+# mysql
+mysql_server_id: '1000'
+mysql_is_read_only: '0'
+mysql_repl_role: 'master'
+mysql_repl_slave: 'eqpress-test2.boreal321.com'

@@ -1,0 +1,65 @@
+<?php
+/**
+ * Log web stats to the database.
+ *
+ */
+$start = microtime( true );
+
+include '/usr/local/sbin/class-http-log-parser.php';
+
+$dbh = new mysqli( 'localhost', 'swp_webstats', '{{ mysql_webstats.password }}', 'swp_webstats' );
+if ( $dbh->connect_error ) {
+	printf( "Connect failed: %s: %s\n", $dbh->connect_errno, $dbh->connect_error );
+	error_log( "Connect failed: " . $dbh->connect_errno . ": " . $dbh->connect_error );
+	exit();
+}
+$shellout = exec( '/bin/ls -1 /var/log/nginx/*.access.log.1 2>&1', $out, $status );
+if ( $status != 0 ) {
+	$message .= var_export( $out, true );
+	echo $message;
+	error_log( $message );
+	exit();
+}
+foreach ( $out as $access_log ) {
+	$domain = preg_replace( array( '~/var/log/nginx/~sDx', '~\.access\.log\.1~sDx' ), array( '', '' ), $access_log );
+	$hlp = new HTTP_Log_Parser();
+	$hlp->set_log( $domain, '.access.log.1' );
+	$stats = $hlp->visitors();
+	// DEBUG
+	//error_log( http_build_query( $stats ) );
+	db_insert_stats( $domain, $stats );
+}
+$dbh->close();
+
+$end = microtime( true );
+$elapsed = $end - $start;
+echo('swp_webstats execution time: ' . round( $elapsed, 5 ) . " seconds" );
+error_log('swp_webstats execution time: ' . round( $elapsed, 5 ) . " seconds" );
+/**
+ * Insert the collected stats into the DB. Add the domain if it's not
+ * already in the DB.
+ *
+ */
+function db_insert_stats( $domain, $stats ) {
+	global $dbh;
+	$hits = $stats['hits'];
+	$visits = $stats['visits'];
+	$visitors = $stats['visitors'];
+	$bytes_transfered = $stats['bytes_transfered'];
+	$yesterday = time() - ( 60 * 60 * 24 );
+	$yymmdd = date( 'Y-m-d', $yesterday );
+	$q_select_id = "SELECT ID FROM domains WHERE domain LIKE '$domain'";
+	$result = $dbh->query( $q_select_id );
+	$domain_id = $result->fetch_all();
+	if ( empty( $domain_id ) ) {
+		$q_insert_domain = "INSERT INTO domains (`ID`, `domain`) VALUES (NULL, '$domain')";
+		$result = $dbh->query( $q_insert_domain );
+		$result = $dbh->query( $q_select_id );
+		$domain_id = $result->fetch_all();
+	}
+	$d_id = $domain_id[0][0];
+	$q_insert_stats = "INSERT INTO stats (`ID`, `date`, `domain_id`, `hits`, `visits`, `unique_visitors`, `bytes_transfered`) VALUES (NULL, '$yymmdd', '$d_id', '$hits', '$visits', '$visitors', '$bytes_transfered')";
+	$result = $dbh->query( $q_insert_stats );
+}
+
+?>

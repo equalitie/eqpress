@@ -1,0 +1,21 @@
+---
+- hosts: all
+  gather_facts: true
+
+  vars:
+    users:
+    - name: rich
+      authorized:
+        - "{{ files }}/authorized_keys/rich"
+
+  tasks:
+  - name: add user 
+    user: name={{ item.name }} shell=/bin/bash groups=www-data,wordpress
+    with_items: users
+
+  - name: Copy authorized_keys
+    authorized_key: user={{ item.0.name }} key="{{ lookup('file', item.1) }}"
+    with_subelements:
+     - users
+     - authorized
+

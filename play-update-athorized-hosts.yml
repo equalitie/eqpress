@@ -1,0 +1,11 @@
+---
+- hosts: production
+  gather_facts: true
+  tasks:
+  - name: create admin users
+    action: user name={{ item.user }} state=absent remove=yes
+    with_items:
+      - { user: "bpower", group: "staff" }
+      - { user: "ted", group: "staff" }
+      - { user: "subin", group: "staff" }
+      - { user: "rahul", group: "staff" }

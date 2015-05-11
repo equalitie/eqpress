@@ -1,0 +1,136 @@
+---
+# roles/mysql-enable-replication/tasks/main.yml
+
+#- name: outut stuff
+#  debug: var=ssh_known_host_results
+#  tags: [ssh_known_hosts]
+
+- name: stop the mysql server on the slave
+  service: name=mysql state=stopped
+  when: mysql_repl_role == 'slave'
+  tags: mysql
+
+- name: get the date
+  shell: date "+%Y%m%d%H%M%S"
+  register: the_date_time
+  tags: mysql
+
+- name: rename the mysql directory
+  shell: mv /var/lib/mysql /var/lib/mysql.{{ the_date_time.stdout }}
+  when: mysql_repl_role == 'slave'
+  ignore_errors: yes
+  tags: mysql
+
+- name: create temp directory for transferring master snapshot
+  file: path=/var/lib/mysql_master_snapshot state=directory owner=root group=root mode=700
+  when: mysql_repl_role == 'slave'
+  tags: mysql
+
+- name: Create the replication user on the master
+  mysql_user: name={{ mysql_repl_creds.username }}  host="{{ item }}" password={{ mysql_repl_creds.password|default("password") }} priv=*.*:"REPLICATION SLAVE" state=present
+  with_items:
+    - "{{ mysql_repl_slave }}"
+    - "{{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}"
+  when: mysql_repl_role == 'master'
+  tags: [mysql, repl, myuser]
+
+- name: Create the mysqladmin user for replication monitoring on master
+  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER, PROCESS" state=present
+  with_items:
+    - "{{ mysql_repl_slave }}"
+    - "{{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}"
+  when: mysql_repl_role == 'master'
+  tags: [mysql, repl, mysqladmin_user]
+
+- name: add firewall rule to allow slave to connect to master
+  command: /sbin/iptables -I INPUT -s {{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}/32 -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT
+  when: mysql_repl_role == 'master'
+  tags: [mysql, repl]
+
+- name: save new firewall rule
+  shell: /sbin/iptables-save > /etc/iptables.up.rules
+  when: mysql_repl_role == 'master'
+  tags: [mysql, repl]
+
+- name: copy replication check scipt
+  template: src={{ files }}/usr/local/sbin/check_mysql_replication_status.sh.j2 dest=/usr/local/sbin/check_mysql_replication_status.sh owner=root group=staff mode=0750
+  when: mysql_repl_role == 'slave'
+  tags: [mysql, repl, mysqladmin_user, repl_check_replication]
+
+- name: run innobackupex to create the database snapshot and apply the log
+  command: /usr/local/sbin/ep_setup_replication.sh
+  #async: 3600
+  #poll: 10
+  register: path_to_snapshot
+  when: mysql_repl_role == 'master'
+  tags: [mysql, repl, innobackupex]
+
+- name: outut stuff
+  debug: var=path_to_snapshot
+  when: mysql_repl_role == 'master'
+  tags: [mysql, repl, innobackupex]
+
+- name: reset permissions on SSL key
+  file: path=/etc/ssl/easypress/{{ inventory_hostname}}.key owner=root group=mysql mode=0640
+  when: mysql_repl_role == 'slave'
+  tags: [mysql, ssl]
+
+- name: transfer snapshot from master to slave
+  shell: tar cfz - {{ path_to_snapshot.stdout }} | ssh {{ mysql_repl_slave }} "tar xfz - -C /var/lib/mysql_master_snapshot"
+  when: mysql_repl_role == 'master'
+  tags: [mysql, new_replica]
+
+- name: rename snapshot directory to mysql
+  command: mv /var/lib/mysql_master_snapshot{{ hostvars[mysql_repl_master].path_to_snapshot.stdout }} /var/lib/mysql
+  when: mysql_repl_role == 'slave'
+  tags: mysql
+
+- name: copy auto.cnf to ensure unique mysql UUID
+  command: cp /var/lib/mysql.{{ the_date_time.stdout }}/auto.cnf /var/lib/mysql
+  when: mysql_repl_role == 'slave'
+  tags: mysql
+
+- name: create debian flag to avoid downgrades
+  command: touch /var/lib/mysql/debian-5.6.flag
+  when: mysql_repl_role == 'slave'
+  tags: mysql
+
+- name: copy debian specific mysql config
+  command: scp {{ mysql_repl_master }}:/etc/mysql/debian.cnf /etc/mysql
+  when: mysql_repl_role == 'slave'
+  tags: mysql
+
+- name: reset permissions on mysql directory
+  shell: find /var/lib/mysql -type f -exec chmod 660 {} \; && find /var/lib/mysql -type d -exec chmod 700 {} \; && chown -R mysql:mysql /var/lib/mysql
+  when: mysql_repl_role == 'slave'
+  tags: mysql
+
+- name: get the binlog file name
+  shell: cat /var/lib/mysql/xtrabackup_binlog_info | awk '{print $1}'
+  register: mysql_binlog_file
+  when: mysql_repl_role == 'slave'
+  tags: [mysql, repl, slaveon]
+
+- name: get the binlog position
+  shell: cat /var/lib/mysql/xtrabackup_binlog_info | awk '{print $2}'
+  register: mysql_binlog_position
+  when: mysql_repl_role == 'slave'
+  tags: [mysql, repl, slaveon]
+
+- name: start mysql on the replica
+  service: name=mysql state=started
+  when: mysql_repl_role == 'slave'
+  ignore_errors: yes
+  tags: [mysql, repl, slaveon]
+
+- name: Change the master in slave to start the replication
+  mysql_replication: mode=changemaster master_host={{ mysql_repl_master }} master_log_file={{ mysql_binlog_file.stdout }} master_log_pos={{ mysql_binlog_position.stdout }} master_user={{ mysql_repl_creds.username }} master_password={{ mysql_repl_creds.password }} master_ssl=1 master_ssl_ca=/etc/ssl/easypress/root_CA.pem master_ssl_cert=/etc/ssl/easypress/{{ inventory_hostname }}.pem master_ssl_key=/etc/ssl/easypress/{{ inventory_hostname }}.key
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  ignore_errors: yes
+  tags: [mysql, repl, slaveon]
+
+- name: Start slave
+  mysql_replication: mode=startslave
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  tags: [mysql, repl, slaveon]
+

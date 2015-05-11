@@ -1,0 +1,16 @@
+---
+- hosts: all
+  gather_facts: true
+  roles:
+     - common
+     - ssh-config
+     - easypress-ssl
+     - easypress-devops
+     - mysql-percona-replication
+     - mysql-enable-replication
+     - web-app
+     - easypress-console
+
+#  tasks:
+#    - name: reboot
+#      command: reboot

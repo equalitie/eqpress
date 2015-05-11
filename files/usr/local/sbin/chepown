@@ -1,0 +1,6 @@
+#!/bin/bash
+chown root:root $1
+chmod 755 $1
+chown -R root:root $1/wordpress/wp-content/mu-plugins/easypress*
+find $1/wordpress/wp-content/mu-plugins/easypress* -type d -exec chmod 755 {} \;
+find $1/wordpress/wp-content/mu-plugins/easypress* -type f -exec chmod 644 {} \;
