@@ -12,12 +12,12 @@ phpfpm_start_servers: 16
 phpfpm_min_spare: 16
 phpfpm_max_spare: 16
 phpfpm_max_requests: 32
-php_opcache_memory_size: 64
+php_opcache_memory_size: 32
 
 # mysql
 mysql_root_db_pass: 'enter password'
-mysql_innodb_buffer_pool_size: '512M'
-mysql_innodb_log_file_size: '32M'
+mysql_innodb_buffer_pool_size: '256M'
+mysql_innodb_log_file_size: '16M'
 mysql_repl_creds:
   username: 'rep'
   password: 'enter password'
