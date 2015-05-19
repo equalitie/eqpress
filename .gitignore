@@ -1,1 +1,9 @@
+.idea/
 *.key
+*.pem
+*.csr
+*.txt.attr
+*.txt.old
+files/etc/ssl/easypress/index.txt
+host_vars/
+group_vars/

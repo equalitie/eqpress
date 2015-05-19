@@ -32,12 +32,12 @@
     - { name: 'root_CA.pem', perms: '0644' }
   tags: ssl
 
-- name: Copy boreal321 SSL keys and certs.
-  action: copy src={{ files }}/etc/ssl/boreal321/{{ item.name }} dest=/etc/ssl owner=root group=root mode={{ item.perms }}
-  with_items:
-    - { name: 'boreal321.com-rootCA.crt', perms: '0644' }
-    - { name: 'boreal321.com-rootCA.key', perms: '0644' }
-    - { name: 'boreal321.com.crt', perms: '0644' }
-    - { name: 'boreal321.com.key', perms: '0600' }
-  tags: ssl
+#- name: Copy boreal321 SSL keys and certs.
+#  action: copy src={{ files }}/etc/ssl/boreal321/{{ item.name }} dest=/etc/ssl owner=root group=root mode={{ item.perms }}
+#  with_items:
+#    - { name: 'boreal321.com-rootCA.crt', perms: '0644' }
+#    - { name: 'boreal321.com-rootCA.key', perms: '0644' }
+#    - { name: 'boreal321.com.crt', perms: '0644' }
+#    - { name: 'boreal321.com.key', perms: '0600' }
+#  tags: ssl
 

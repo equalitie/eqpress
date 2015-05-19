@@ -1,36 +1,4 @@
 server {
-        listen 80;
-        server_name www.easypress.ca;
-        server_name easypress.co;
-        server_name easypress.ca;
-        server_name www.easypress.co;
-        return 301 https://easypress.ca$request_uri;
-}
-
-server {
-        listen 443 spdy;
-        server_name easypress.ca;
-        root /var/www/easypress.ca/wordpress;
-        access_log /var/log/nginx/easypress.ca.access.log;
-        error_log /var/log/nginx/easypress.ca.error.log;
-
-        include /etc/nginx/common_easypress_ssl.conf;
-        include /etc/nginx/common_location.conf;
-
-        location / {
-                try_files $uri $uri/ /index.php?$args;
-        }
-
-        location ~ \.php$ {
-                include /etc/nginx/common_fastcgi.conf;
-                fastcgi_cache easypress.ca;
-        }
-
-        include /etc/nginx/common_adminer.conf;
-        include /etc/nginx/common_phpmyadmin.conf;
-}
-
-server {
 	listen 80;
 	server_name {{ inventory_hostname }};
 	root /var/www/easypress.ca;
@@ -43,24 +11,6 @@ server {
                 allow 127.0.0.1;
                 allow {{ ansible_default_ipv4.address }};
                 allow 198.211.100.146;
-                deny all;
-        }
-
-	location ~* /mrtg/.* {
-                allow 127.0.0.1;
-                allow 217.154.106.0/24;
-                allow 217.154.104.106;
-                allow 205.204.94.50;
-                allow 198.211.100.146;
-		deny all;
-	}
-
-        location ~ ^/(apc_stats.php)$ {
-                include fastcgi_params;
-                fastcgi_pass php5-fpm-unix-sock;
-                fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
-                allow 198.211.100.146;
-                allow 127.0.0.1;
                 deny all;
         }
 
