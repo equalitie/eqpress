@@ -13,4 +13,4 @@ cat >> ${HTML} <<EOMM
 </pre></div></body></html>
 EOMM
 
-echo "Today's webstats" | mail -s "easyPress web stats" -a /var/tmp/webstats.html victor.granic@easypress.ca
+echo "Today's webstats" | mail -s "easyPress web stats" -a /var/tmp/webstats.html {{ monitoring_email }}

@@ -1,26 +1,69 @@
-### Setting Up the Ansible Environment
+### Installing
+A host with a working Ansible installation is required. Clone this repo:
 
-	source ~/Development/ansible/hacking/env-setup
+	git clone https://github.com/equalitie/eqpress.git
 
-### Full Replicated Deployment
+#### Environment Initialization
+Initializing the ansible environment is required before any other playbooks can be executed. Run the following commands in the directory where the repo was cloned:
+
+	cd eqpress
+	ansible-playbook -i hosts play-init-env.yml -v
+
+The following settings can be specified. Accepting the defaults are enough to configure the environment so the other playbooks will work but making them unique to your environment is best.
+
+* Enter organization name
+* Root certificate country
+* Root certificate state/province
+* Root certificate city
+* Root certificate orginazational unit
+* Root certificate common name
+* Root certificate email address
+* Mandrill username - sign up for an account [here](https://mandrill.com/signup/). Free plan allows 12,000 sent emails per month.
+* Mandrill password
+* Sendgrid username - sign up for a free account [here](https://sendgrid.com/user/signup). Free plan allows 400 sent emails per day.
+* Sendgrid password
+* Default email service
+* Monitoring email address
+* Timezone
+
+#### Server Configuration Initialization
+To build a redundant pair of servers there are some ansible variables that need to be set for the playbooks to work. Run the initialization playbook to create the group and host variables:
+
+	ansible-playbook -i hosts play-init-servers.yml -v
+
+The following settings must be specified:
+
+* Nginx worker processes (n) - n should equal c - 2 where c is number of CPU cores. If c is < 4 then n should equal 2
+* PHP-FPM max children - default is typically fine
+* PHP-FPM start servers - default is typically fine
+* PHP-FPM min spare - default is typically fine
+* PHP-FPM max spare - default is typically fine
+* PHP-FPM max requests - default prevents processes from eating too much RAM. Increase to 64 if server is very busy.
+* PHP-FPM opcache memory size - increase default if more than 20 sites are hosted on the same server
+* MySQL root user password - [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new) 
+* MySQL InnoDB buffer pool size - default good for servers with RAM <= 1GB. Set to 1536M for servers with 4GB RAM. Don't forget the K, M or G after the number
+* MySQL InnoDB log file size - default is fine for servers < 4GB RAM
+* MySQL replication user password - [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
+* MySQL Admin user password - mysqladmin user has process rights for monitoring replication status. [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
+* MySQL webstats user password - webstats user writes to webstats DB to store HTTP access log data. [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
+* MySQL Server ID for master - must be unique, don't accept the default
+* MySQL Server ID for slave - must be unique, don't accept the default
+* Master server hostname - using a fully qualified domain name is best.
+* Slave server hostname - using a fully qualified domain name is best.
+* Ansible group name - the group that these hosts will be uniquely identified by within the hosts file and variables stored in a file in the group_vars directory
+
+
+
+### Building a Replicated Pair of Servers
 
 #### Minimum Requirements
 ##### Managed Nodes
-* The servers that will be used for creating the replicated pair must be running Debian 7.
+* The servers that will be used for creating the replicated pair must be running Debian 7 (Wheezy).
 * The debian packages python and python-simplejson must be installed for ansible to work.
 
-##### Management Node
-The easypress-ssl role requires a root key and cert to be located in the following directory
 
-	files/etc/ssl/easypress
-
-They should be named root\_CA.key and root\_CA.pem. The following script and accompanying configuration file can be used to generate the self signed root certificate:
-
-	files/etc/ssl/easypress/genRootCA.sh
-	files/etc/ssl/easypress/genRootCA.conf
-
-#### Host and Group Configuration
-Create an alias in the ansible hosts file with the names of the new server pairs below:
+#### Manual Host and Group Configuration
+You can build the host and group files manually instead of running the play-init-servers.yml playbook. Create an alias in the ansible hosts file with the names of the new server pairs below:
 
 	[eqpress-test]
 	eqpress-test1.boreal321.com  

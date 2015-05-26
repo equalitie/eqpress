@@ -1,3 +1,6 @@
+[local]
+localhost
+
 [production]
 eqpress-test1.boreal321.com
 eqpress-test2.boreal321.com
@@ -11,3 +14,4 @@ eqpress-test2.boreal321.com
 [eqpress-test]
 eqpress-test1.boreal321.com
 eqpress-test2.boreal321.com
+
