@@ -6,5 +6,5 @@
 *.txt.attr
 *.txt.old
 files/etc/ssl/easypress/index.txt
-host_vars/*.yml
-group_vars/*.yml
+host_vars/
+group_vars/
