@@ -1,0 +1,9 @@
+---
+# roles/gen-root-cert/tasks/main.yml
+
+- name: Generate openssl configuration.
+  local_action: template src=genRootCA.conf.j2 dest={{ ssl_dir }}/genRootCA.conf
+
+- name: Generate root certificate.
+  local_action: command chdir={{ ssl_dir }} creates=root_CA.key ./genRootCA.sh
+

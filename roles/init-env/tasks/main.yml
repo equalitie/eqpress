@@ -1,0 +1,6 @@
+---
+# roles/initialize/tasks/main.yml
+
+- name: Create the main variables file.
+  local_action: template src=all.yml.j2 dest=group_vars/test-all.yml
+

@@ -1,0 +1,11 @@
+---
+# roles/initialize/tasks/main.yml
+
+- name: Create the group_vars file.
+  local_action: template src=group.yml.j2 dest=group_vars/{{ ansible_group_name }}.yml
+
+- name: Create the master host_vars file.
+  local_action: template src=master.yml.j2 dest=group_vars/{{ master_hostname }}.yml
+
+- name: Create the slave host_vars file.
+  local_action: template src=slave.yml.j2 dest=group_vars/{{ slave_hostname }}.yml
