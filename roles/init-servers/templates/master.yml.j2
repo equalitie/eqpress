@@ -1,0 +1,7 @@
+---
+
+# mysql
+mysql_server_id: "{{ mysql_server_id_master }}"
+mysql_is_read_only: "0"
+mysql_repl_role: "master"
+mysql_repl_slave: "{{ slave_hostname }}"

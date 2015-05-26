@@ -1,0 +1,30 @@
+---
+
+# nginx
+easypress_server_id: "{{ org_name }}"
+nginx_worker_processes: "{{ nginx_worker_processes }}"
+
+# php-fpm
+phpfpm_max_children: "{{ phpfpm_max_children }}"
+phpfpm_start_servers: "{{ phpfpm_start_servers }}"
+phpfpm_min_spare: "{{ phpfpm_min_spare }}"
+phpfpm_max_spare: "{{ phpfpm_max_spare }}"
+phpfpm_max_requests: "{{ phpfpm_max_requests }}"
+php_opcache_memory_size: "{{ php_opcache_memory_size }}"
+
+# mysql
+mysql_root_db_pass: "{{ mysql_root_db_pass }}"
+mysql_innodb_buffer_pool_size: "{{ mysql_innodb_buffer_pool_size }}"
+mysql_innodb_log_file_size: "{{ mysql_innodb_log_file_size }}"
+mysql_repl_creds:
+  username: "rep"
+  password: "{{ mysql_repl_creds_password }}"
+
+mysql_admin_user:
+    username: "mysqladmin"
+    password: "{{ mysql_admin_user_password }}"
+
+mysql_webstats:
+    db: "swp_webstats"
+    username: "swp_webstats"
+    password: "{{ swp_webstats_password }}"
