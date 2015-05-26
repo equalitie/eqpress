@@ -72,7 +72,7 @@ fi
 
 if [ $ERROR_COUNT -gt 0 ]
 then
-    EMAIL=victor.granic@easypress.ca
+    EMAIL={{ monitoring_email }}
     SUBJECT="ERRORS in mysql database replication"
     BODY=''
     CNT=0

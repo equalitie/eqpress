@@ -10,5 +10,5 @@ smtp_sasl_security_options = noanonymous
 smtp_tls_security_level = may
 smtp_tls_mandatory_protocols=!SSLv2,!SSLv3
 smtpd_tls_mandatory_protocols=!SSLv2,!SSLv3
-smtp_sasl_password_maps = static:victor.granic@easypress.ca:{{ mandrill_password }}
+smtp_sasl_password_maps = static:{{ mandrill_username }}:{{ mandrill_password }}
 relayhost = [smtp.mandrillapp.com]:587

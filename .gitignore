@@ -1,6 +1,7 @@
 .idea/
 *.key
 *.pem
+*.der
 *.csr
 *.txt.attr
 *.txt.old

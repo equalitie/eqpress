@@ -1,23 +1,18 @@
 ---
 # roles/easypress-ssl/tasks/main.yml
 
-- name: copy easyPress certs and keys for public site and mutual auth connections
+- name: copy certs and keys for public site and mutual auth connections
   #synchronize: src={{ files }}/etc/ssl dest=/etc recursive=no owner=no group=no checksum=yes
   local_action: command rsync -d {{ files }}/etc/ssl/ root@{{ inventory_hostname }}:/etc/ssl/
   tags: ssl
 
-- name: Create easyPress SSL directory.
+- name: Create SSL directory.
   file: path=/etc/ssl/easypress state=directory owner=root group=root mode=755
   tags: ssl
 
 - name: Generate SSL CSR and key for secure replication connection.
-  local_action: command chdir={{ ssl_dir }} creates={{ inventory_hostname }}.key openssl req -new -newkey rsa:2048 -nodes -out {{ inventory_hostname }}.csr -keyout {{ inventory_hostname }}.key -subj "/C=CA/ST=Ontario/L=Toronto/O=easyPress/CN={{ inventory_hostname }}"
+  local_action: command chdir={{ ssl_dir }} creates={{ inventory_hostname }}.key openssl req -new -newkey rsa:2048 -nodes -out {{ inventory_hostname }}.csr -keyout {{ inventory_hostname }}.key -subj "/C={{ root_cert_country }}/ST={{ root_cert_state }}/L={{ root_cert_city }}/O={{ org_name }}/CN={{ inventory_hostname }}"
   tags: ssl
-
-#- name: Remove old PEM
-#  local_action: file path={{ ssl_dir }}/{{ inventory_hostname }}.pem state=absent
-#  ignore_errors: yes
-#  tags: ssl
 
 - name: Sign the new CSR
   local_action: command chdir={{ ssl_dir }} creates={{ inventory_hostname }}.pem ./sign_webserver.sh {{ inventory_hostname }}
@@ -31,13 +26,3 @@
     - { name: '{{ inventory_hostname }}.key', perms: '0644' }
     - { name: 'root_CA.pem', perms: '0644' }
   tags: ssl
-
-#- name: Copy boreal321 SSL keys and certs.
-#  action: copy src={{ files }}/etc/ssl/boreal321/{{ item.name }} dest=/etc/ssl owner=root group=root mode={{ item.perms }}
-#  with_items:
-#    - { name: 'boreal321.com-rootCA.crt', perms: '0644' }
-#    - { name: 'boreal321.com-rootCA.key', perms: '0644' }
-#    - { name: 'boreal321.com.crt', perms: '0644' }
-#    - { name: 'boreal321.com.key', perms: '0600' }
-#  tags: ssl
-
