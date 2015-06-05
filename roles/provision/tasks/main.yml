@@ -1,0 +1,14 @@
+---
+# file: roles/provision/tasks/main.yml
+
+- name: deploy provision scripts
+  local_action: command rsync -vrlD {{ files }}/var/www/easypress.ca/provision/ {{ inventory_hostname }}:/var/www/easypress.ca/provision
+  tags: provision
+
+- name: deploy monit script
+  copy: src={{ files }}/usr/local/sbin/monit_ep_provision.sh dest=/usr/local/sbin mode=0750 owner=root group=staff
+  tags: provision
+
+- name: deploy ansible hosts file
+  copy: src={{ files }}/etc/ansible/hosts dest=/etc/ansible mode=0644 owner=root group=staff
+  tags: provision-testing
