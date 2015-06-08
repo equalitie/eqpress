@@ -1,0 +1,12 @@
+---
+# roles/init-auto-provision/tasks/main.yml
+
+- name: Create group_vars directory.
+  local_action: file path=group_vars state=directory mode=0755
+
+- name: Create host_vars directory.
+  local_action: file path=host_vars state=directory mode=0755
+
+- name: Create the main variables file.
+  local_action: template src=auto-provision.yml.j2 dest=group_vars/auto-provision.yml
+
