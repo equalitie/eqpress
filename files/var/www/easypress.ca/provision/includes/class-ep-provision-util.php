@@ -403,7 +403,7 @@ class EP_Provision_Util {
      */
     public function create_wp_config() {
         global $params, $mustache;
-        $ep_secret_key = $params['domain'] . $_SERVER['API_KEY_SECRET'];
+        $ep_secret_key = $params['domain'] . $_SERVER['CONSOLE_API_KEY_SECRET'];
         $params['ep_api_key'] = md5( $ep_secret_key );
         $keysalts = $this->generate_keysalts();
         $params['db_prefix'] = $this->random( 8 ) . "_";
