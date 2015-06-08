@@ -153,3 +153,4 @@ Update a specific plugin on all master servers
 
 *   ansible -i hosts masters -m command -a "/usr/local/sbin/wp_update_plugins.sh wordpress-seo" -u root -v
 
+###[Auto-Provision Documentation](https://github.com/equalitie/eqpress/tree/master/roles/init-auto-provision#wordpress-auto-provision-system)
