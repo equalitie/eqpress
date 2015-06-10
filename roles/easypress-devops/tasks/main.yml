@@ -18,7 +18,7 @@
   group: name=wordpress state=present
   tags: users
 
-- name: create admin users
+- name: create users
   action: user group={{ item.group }} shell=/bin/bash name={{ item.user }}
   with_items:
     - { user: "vmg", group: "staff" }
@@ -115,13 +115,6 @@
   action: template src={{ files }}/var/www/easypress.ca/webstats/index.php.j2 dest=/var/www/easypress.ca/webstats/index.php owner=www-data group=www-data mode=0644
   ignore_errors: yes
   tags: [webstats]
-
-- name: copy backup script templates
-  action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0750
-  with_items:
-    - backup_etc.sh
-    - backup_to_zfs.sh
-  tags: [ep-sbin, backup-scripts]
 
 - name: copy backup scripts
   action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0750
