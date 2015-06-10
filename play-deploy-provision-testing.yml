@@ -2,4 +2,4 @@
 - hosts: provision
   gather_facts: false
   roles:
-     - provision-testing
+     - auto-provision-testing

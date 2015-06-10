@@ -3,12 +3,7 @@
   gather_facts: true
   roles:
      - common
-     - ssh-config
      - easypress-ssl
      - easypress-devops
      - web-app
-     - easypress-console
-
-#  tasks:
-#    - name: reboot
-#      command: reboot
+     - install-ansible
