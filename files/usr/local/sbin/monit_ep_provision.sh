@@ -40,7 +40,7 @@ if [ ! -z "$sites" ]; then
         cd ${processed}
         tar cfz ${site}.tar.gz ./${site}
         rm -rf ${site}
-        gpg -e -r support --trust-model always ${site}.tar.gz
+        gpg -e -r {{ auto_provision_gpg_id }} --trust-model always ${site}.tar.gz
         rm -f ${site}.tar.gz
     done
 
