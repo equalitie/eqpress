@@ -11,20 +11,25 @@ Initializing the ansible environment is required before any other playbooks can 
 
 The following settings can be specified. Accepting the defaults are enough to configure the environment so the other playbooks will work but making them unique to your environment is best.
 
-* Enter organization name
-* Root certificate country
-* Root certificate state/province
-* Root certificate city
-* Root certificate orginazational unit
-* Root certificate common name
-* Root certificate email address
-* Mandrill username - sign up for an account [here](https://mandrill.com/signup/). Free plan allows 12,000 sent emails per month.
-* Mandrill password
-* Sendgrid username - sign up for a free account [here](https://sendgrid.com/user/signup). Free plan allows 400 sent emails per day.
-* Sendgrid password
-* Default email service
-* Monitoring email address
-* Timezone
+SSL/TLS certificate attributes are required to generate the self-signed certificates used for MySQL replication.
+
+* **Enter organization name**
+* **Root certificate country**
+* **Root certificate state/province**
+* **Root certificate city**
+* **Root certificate orginazational unit**
+* **Root certificate common name**
+* **Root certificate email address**
+
+Mandrill and Sendgrid are email delivery services offering free accounts for moderate levels of email traffic. These are not required but recommended for reliable email delivery.
+
+* **Mandrill username** - Sign up for an account [here](https://mandrill.com/signup/). Free plan allows 12,000 sent emails per month.
+* **Mandrill password**
+* **Sendgrid username** - Sign up for a free account [here](https://sendgrid.com/user/signup). Free plan allows 400 sent emails per day.
+* **Sendgrid password**
+* **Default email service**
+* **Monitoring email address** - Where all alerts are sent to.
+* **Timezone**
 
 #### Server Configuration Initialization
 To build a redundant pair of servers there are some ansible variables that need to be set for the playbooks to work. Run the initialization playbook to create the group and host variables:
@@ -33,24 +38,24 @@ To build a redundant pair of servers there are some ansible variables that need 
 
 The following settings must be specified:
 
-* Nginx worker processes (n) - n should equal c - 2 where c is number of CPU cores. If c is < 4 then n should equal 2
-* PHP-FPM max children - default is typically fine
-* PHP-FPM start servers - default is typically fine
-* PHP-FPM min spare - default is typically fine
-* PHP-FPM max spare - default is typically fine
-* PHP-FPM max requests - default prevents processes from eating too much RAM. Increase to 64 if server is very busy.
-* PHP-FPM opcache memory size - increase default if more than 20 sites are hosted on the same server
-* MySQL root user password - [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new) 
-* MySQL InnoDB buffer pool size - default good for servers with RAM <= 1GB. Set to 1536M for servers with 4GB RAM. Don't forget the K, M or G after the number
-* MySQL InnoDB log file size - default is fine for servers < 4GB RAM
-* MySQL replication user password - [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
-* MySQL Admin user password - mysqladmin user has process rights for monitoring replication status. [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
-* MySQL webstats user password - webstats user writes to webstats DB to store HTTP access log data. [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
-* MySQL Server ID for master - must be unique, don't accept the default
-* MySQL Server ID for slave - must be unique, don't accept the default
-* Master server hostname - using a fully qualified domain name is best.
-* Slave server hostname - using a fully qualified domain name is best.
-* Ansible group name - the group that these hosts will be uniquely identified by within the hosts file and variables stored in a file in the group_vars directory
+* **Nginx worker processes** - Should equal c - 2 where c is number of CPU cores. If c is < 4 then worker procs should equal 2.
+* **PHP-FPM max children** - default is typically fine
+* **PHP-FPM start servers** - default is typically fine
+* **PHP-FPM min spare** - default is typically fine
+* **PHP-FPM max spare** - default is typically fine
+* **PHP-FPM max requests** - default prevents processes from eating too much RAM. Increase to 64 if server is very busy.
+* **PHP-FPM opcache memory size** - increase default if more than 20 sites are hosted on the same server
+* **MySQL root user password** - [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new) 
+* **MySQL InnoDB buffer pool size** - default good for servers with RAM <= 1GB. Set to 1536M for servers with 4GB RAM. Don't forget the K, M or G after the number
+* **MySQL InnoDB log file size** - default is fine for servers < 4GB RAM
+* **MySQL replication user password - [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
+* **MySQL Admin user password** - mysqladmin user has process rights for monitoring replication status. [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
+* **MySQL webstats user password** - webstats user writes to webstats DB to store HTTP access log data. [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
+* **MySQL Server ID for master** - must be unique, don't accept the default
+* **MySQL Server ID for slave** - must be unique, don't accept the default
+* **Master server hostname** - using a fully qualified domain name is best.
+* **Slave server hostname** - using a fully qualified domain name is best.
+* **Ansible group name** - the group that these hosts will be uniquely identified by within the hosts file and variables stored in a file in the group_vars directory
 
 
 
