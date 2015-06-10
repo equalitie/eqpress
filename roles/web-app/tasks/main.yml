@@ -162,6 +162,13 @@
     - reload php-fpm
   tags: [php, php-config]
 
+- name: copy auto-provision php config
+  action: template src={{ files }}/etc/php5/fpm/pool.d/auto-provision.conf.j2 dest=/etc/php5/fpm/pool.d/auto-provision.conf owner=root group=www-data mode=0640
+  when: auto_provision_host
+  notify:
+    - reload php-fpm
+  tags: [php, php-config, auto-provision]
+
 - name: start php5-fpm
   service: name=php5-fpm state=started
   tags: [php]
