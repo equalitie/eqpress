@@ -5,6 +5,8 @@
  */
 $start = microtime( true );
 
+$today = date("Ymd");
+
 include '/usr/local/sbin/class-http-log-parser.php';
 
 $dbh = new mysqli( 'localhost', 'swp_webstats', '{{ mysql_webstats.password }}', 'swp_webstats' );
@@ -13,7 +15,7 @@ if ( $dbh->connect_error ) {
 	error_log( "Connect failed: " . $dbh->connect_errno . ": " . $dbh->connect_error );
 	exit();
 }
-$shellout = exec( '/bin/ls -1 /var/log/nginx/*.access.log.1 2>&1', $out, $status );
+$shellout = exec( "/bin/ls -1 /var/log/nginx/*.access.log-$today 2>&1", $out, $status );
 if ( $status != 0 ) {
 	$message .= var_export( $out, true );
 	echo $message;
@@ -21,9 +23,9 @@ if ( $status != 0 ) {
 	exit();
 }
 foreach ( $out as $access_log ) {
-	$domain = preg_replace( array( '~/var/log/nginx/~sDx', '~\.access\.log\.1~sDx' ), array( '', '' ), $access_log );
+	$domain = preg_replace( array( '~/var/log/nginx/~sDx', "~\.access\.log\-$today~sDx" ), array( '', '' ), $access_log );
 	$hlp = new HTTP_Log_Parser();
-	$hlp->set_log( $domain, '.access.log.1' );
+	$hlp->set_log( $domain, ".access.log-$today" );
 	$stats = $hlp->visitors();
 	// DEBUG
 	//error_log( http_build_query( $stats ) );
