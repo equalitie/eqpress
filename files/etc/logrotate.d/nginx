@@ -3,6 +3,7 @@
 	missingok
 	rotate 14 
 	compress
+	dateext
 	delaycompress
 	ifempty
 	create 0640 www-data adm
