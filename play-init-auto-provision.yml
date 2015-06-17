@@ -8,7 +8,7 @@
       default: "localhost"
       private: no
     
-    - name: "auto_provsion_base_directory"
+    - name: "auto_provision_base_directory"
       prompt: "Auto-provision base directory"
       default: "/var/www/easypress.ca/provision"
       private: no
