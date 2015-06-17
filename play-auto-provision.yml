@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: auto-provision
   gather_facts: true
   roles:
      - common

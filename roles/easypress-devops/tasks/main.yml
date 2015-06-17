@@ -109,11 +109,13 @@
     - ep_api_webstats.php
     - webstats.php
     - webstats_totals.php
+  when: mysql_webstats is defined
   tags: [ep-sbin, webstats, webstats_scripts]
 
 - name: copy webstat index script template
   action: template src={{ files }}/var/www/easypress.ca/webstats/index.php.j2 dest=/var/www/easypress.ca/webstats/index.php owner=www-data group=www-data mode=0644
   ignore_errors: yes
+  when: mysql_webstats is defined
   tags: [webstats]
 
 - name: copy backup scripts

@@ -118,12 +118,14 @@
   template: src={{ files }}/etc/postfix/main.cf-mandrill.j2 dest=/etc/postfix/main.cf-mandrill owner=root group=root mode=0644
   notify:
     - restart postfix
+  when: mandrill_username is defined
   tags: [email, main.cf, mandrill]
 
 - name: Copy SendGrid postfix mail.cf
   template: src={{ files }}/etc/postfix/main.cf-sendgrid.j2 dest=/etc/postfix/main.cf-sendgrid owner=root group=root mode=0644
   notify:
     - restart postfix
+  when: sendgrid_username is defined
   tags: [email, main.cf, sendgrid]
 
 - name: Backup default mail.cf

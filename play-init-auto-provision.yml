@@ -65,7 +65,7 @@
 
     - name: "auto_provision_ansible_version"
       prompt: "Version of Ansible to checkout"
-      default: "1.8"
+      default: "v1.7.2"
       private: no
 
   roles:

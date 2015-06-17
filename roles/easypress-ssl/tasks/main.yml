@@ -1,6 +1,10 @@
 ---
 # roles/easypress-ssl/tasks/main.yml
 
+- name: touch the serial file
+  local_action: shell touch {{ ssl_dir }}/serial.txt
+  tags: ssl
+
 - name: copy certs and keys for public site and mutual auth connections
   #synchronize: src={{ files }}/etc/ssl dest=/etc recursive=no owner=no group=no checksum=yes
   local_action: command rsync -d {{ files }}/etc/ssl/ root@{{ inventory_hostname }}:/etc/ssl/

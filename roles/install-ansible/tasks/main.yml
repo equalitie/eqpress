@@ -2,15 +2,16 @@
 # roles/install-ansible/tasks/main.yml
 
 - name: ensure the provision directory exists
-  file: state=directory path={{ auto_provision_base_directory }} wner=www-data group=www-data mode=0775
-  when: auto_provision_host
-  tags: auto-provision
+  file: state=directory path={{ auto_provision_base_directory }} owner=www-data group=www-data mode=0775
+  when: auto_provision_host is defined
+  tags: [auto-provision, install-ansible]
 
 - name: clone the ansible repository
   git: repo=git://github.com/ansible/ansible.git
        dest={{ auto_provision_base_directory }}
        recursive=yes
        version={{ auto_provision_ansible_version }}
-  when: auto_provision_host
-  tags: auto-provision
+       accept_hostkey=yes
+  when: auto_provision_host is defined
+  tags: [auto-provision, install-ansible]
 
