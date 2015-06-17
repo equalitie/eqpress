@@ -17,6 +17,8 @@ The following settings can be specified:
 * **Auto-provision default database collation** - Default database collation for a newly installed WordPress instance.
 * **Auto-provison random number device** - Random number generation is required for passwords, keys and salts and this setting points to a local or remote device.
 * **Auto-provision Console API secret key** - The secret key used for generating the API key for each site used by the console proxy for authenticating console requests.
+* **Email or keyID of GPG account for encrypting logs** - A GPG key is required for encrypting the incoming provision request and logs.
+* **Version of Ansible to checkout** - The version number of Ansible to checkout after cloning the repository.
 
 Optional settings when using a API for automatic DNS updates. These should be specified when sites will be installed in development mode using a unique domain name. e.g. example.com.wp.equalit.ie
 
@@ -31,7 +33,6 @@ Add the server acting as the auto-provision server to the ansible hosts file und
 
 	[auto-provision]
 	provision.equalit.ie
-
 
 
 ## PHP Config
