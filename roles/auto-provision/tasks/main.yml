@@ -2,7 +2,7 @@
 # file: roles/provision/tasks/main.yml
 
 - name: deploy provision scripts
-  local_action: command rsync -vrlD {{ files }}/var/www/easypress.ca/provision/ {{ inventory_hostname }}:/var/www/easypress.ca/provision
+  local_action: command rsync -vrlD {{ files }}/var/www/{{ auto_provision_base_directory }}/provision/ {{ inventory_hostname }}:/var/www/{{ auto_provision_base_directory }}/provision
   tags: provision
 
 - name: deploy monit script
