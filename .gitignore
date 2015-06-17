@@ -8,5 +8,6 @@
 *.txt.attr
 *.txt.old
 files/etc/ssl/easypress/index.txt
+hosts
 host_vars/
 group_vars/
