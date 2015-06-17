@@ -109,7 +109,7 @@
     - ep_api_webstats.php
     - webstats.php
     - webstats_totals.php
-  tags: [ep-sbin, webstats]
+  tags: [ep-sbin, webstats, webstats_scripts]
 
 - name: copy webstat index script template
   action: template src={{ files }}/var/www/easypress.ca/webstats/index.php.j2 dest=/var/www/easypress.ca/webstats/index.php owner=www-data group=www-data mode=0644
@@ -166,4 +166,10 @@
   notify:
     - start monit
   tags: [ep-console, monit]
+
+- name: install auto-provision GPG key
+  shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ auto_provision_gpg_id }}
+  when: auto_provision_host
+  ignore_errors: yes
+  tags: auto-provision
 
