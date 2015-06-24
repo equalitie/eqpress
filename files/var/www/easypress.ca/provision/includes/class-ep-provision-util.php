@@ -115,7 +115,7 @@ class EP_Provision_Util {
         if ( $username == 'equalit-test' ) {
             if ( hash('sha256', $password ) == 'ef4bc1f71c4eed44075d41af78a8e6df1c8fee30fd2077884b8d34063b711e44' ) {
                 $params['location'] = 'equalit-test';
-                $params['org_name'] = 'Equalit.ie Hosting';
+                $params['org_name'] = 'eQualit.ie Hosting';
                 $params['org_email'] = 'support@equalit.ie';
                 $params['org_twitter'] = '@equalitie';
             } else {

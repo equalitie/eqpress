@@ -1,16 +1,16 @@
 <?php
 /*
-Plugin Name: easyPress Console
-Text Domain: easypress
-Description: The easyPress console.
-Author: easyPress.ca
-Author URI: http://easypress.ca
-Plugin URI: http://easypress.ca
+Plugin Name: The Console
+Text Domain: Console
+Description: The Console.
+Author: eQualit.ie
+Author URI: http://equalit.ie
+Plugin URI: http://equalit.ie
 Version: 1.4.1
 */
 
 
-class Easy_Press_Console {
+class The_Console {
 	
     static function init() {
         if ( current_user_can( 'manage_options' ) )  {
@@ -30,25 +30,25 @@ class Easy_Press_Console {
 	static function add_sidebar_menu() {
 		//global $hook_suffix;
 		
-		add_menu_page( 'easyPress Console', 'easyPress', 'manage_options', 'ep_dashboard', array( __CLASS__, 'easypress_console_mainpage' ), plugins_url( 'img/easypress-bolt.png', __FILE__ ), 1 );
+		add_menu_page( 'The Console', 'Console', 'manage_options', 'ep_dashboard', array( __CLASS__, 'easypress_console_mainpage' ), 'dashicons-desktop', 1 );
 		
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Overview', 'Overview', 'manage_options', 'ep_dashboard' );
+		add_submenu_page( 'ep_dashboard', 'The Console - Overview', 'Overview', 'manage_options', 'ep_dashboard' );
 
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Website Stats', 'Website Stats', 'manage_options', 'ep_webstats', array( __CLASS__, 'easypress_console_webstats' ) );
+		add_submenu_page( 'ep_dashboard', 'The Console - Website Stats', 'Website Stats', 'manage_options', 'ep_webstats', array( __CLASS__, 'easypress_console_webstats' ) );
 		
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Manage Cache', 'Manage Cache', 'manage_options', 'ep_cache', array( __CLASS__, 'easypress_console_cache' ) );
+		add_submenu_page( 'ep_dashboard', 'The Console - Manage Cache', 'Manage Cache', 'manage_options', 'ep_cache', array( __CLASS__, 'easypress_console_cache' ) );
 		
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Logs', 'View Logs', 'manage_options', 'ep_logs', array( __CLASS__, 'easypress_console_logs' ) );
+		add_submenu_page( 'ep_dashboard', 'The Console - Logs', 'View Logs', 'manage_options', 'ep_logs', array( __CLASS__, 'easypress_console_logs' ) );
 		
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Permissions', 'File Permissions', 'manage_options', 'ep_perms', array( __CLASS__, 'easypress_console_perms' ) );
+		add_submenu_page( 'ep_dashboard', 'The Console - Permissions', 'File Permissions', 'manage_options', 'ep_perms', array( __CLASS__, 'easypress_console_perms' ) );
 		
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Lockdown', 'Security Lockdown', 'manage_options', 'ep_lockdown', array( __CLASS__, 'easypress_console_lockdown' ) );
+		add_submenu_page( 'ep_dashboard', 'The Console - Lockdown', 'Security Lockdown', 'manage_options', 'ep_lockdown', array( __CLASS__, 'easypress_console_lockdown' ) );
 		
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Reset Password', 'Reset Password', 'manage_options', 'ep_sftp', array( __CLASS__, 'easypress_console_sftp_stuff' ) );
+		add_submenu_page( 'ep_dashboard', 'The Console - Reset Password', 'Reset Password', 'manage_options', 'ep_sftp', array( __CLASS__, 'easypress_console_sftp_stuff' ) );
 		
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Administration Over SSL', 'Admin Over SSL', 'manage_options', 'ep_ssl', array( __CLASS__, 'easypress_console_wpadmin_ssl' ) );
+		add_submenu_page( 'ep_dashboard', 'The Console - Administration Over SSL', 'Admin Over SSL', 'manage_options', 'ep_ssl', array( __CLASS__, 'easypress_console_wpadmin_ssl' ) );
 		
-		add_submenu_page( 'ep_dashboard', 'easyPress Console - Plugin and Theme Editor', 'Code Editor', 'manage_options', 'ep_editor', array( __CLASS__, 'easypress_console_editor' ) );
+		add_submenu_page( 'ep_dashboard', 'The Console - Plugin and Theme Editor', 'Code Editor', 'manage_options', 'ep_editor', array( __CLASS__, 'easypress_console_editor' ) );
 		
 		//add_action('admin_print_scripts-' . $hook_suffix, 'my_plugin_admin_scripts');
 	}
@@ -66,7 +66,7 @@ class Easy_Press_Console {
 	}
 	
 	/**
-	 * easyPress Console dashboard page
+	 * The Console dashboard page
 	 *
 	 */
 	static function easypress_console_mainpage( ) {
@@ -77,8 +77,8 @@ class Easy_Press_Console {
 		echo '<div class="wrap">'; //cmohr
 		echo '<div id="easy-edit-icon" class="icon32"><img src="' . self::easypress_console_logo_url() . '">';
 		echo '<br /></div>';
-		echo '<h2>easyPress Console</h2>';
-		echo '<h3>This page provides an overview of the easyPress Console.</h3>';
+		echo '<h2>The Console</h2>';
+		echo '<h3>This page provides an overview of the The Console.</h3>';
 		//echo "<p><strong>The hook suffix is $hook_suffix</strong></p>";
 		ep_console_docs_website_stats();
 		ep_console_docs_manage_cache();
@@ -92,7 +92,7 @@ class Easy_Press_Console {
 	}
 	
 	/**
-	 * easyPress Console Website Stats page
+	 * The Console Website Stats page
 	 *
 	 */
 	static function easypress_console_webstats() {
@@ -125,7 +125,7 @@ EOW;
 	}
 	
 	/**
-	 * easyPress Console cache management page
+	 * The Console cache management page
 	 *
 	 */
 	static function easypress_console_cache() {
@@ -150,7 +150,7 @@ EOW;
 	}
 	
 	/**
-	 * easyPress Console website and PHP logs
+	 * The Console website and PHP logs
 	 *
 	 */
 	static function easypress_console_logs() {
@@ -418,4 +418,4 @@ EOW;
 
 }
 	
-add_action( 'plugins_loaded', array( 'Easy_Press_Console',	'init' ) );
+add_action( 'plugins_loaded', array( 'The_Console',	'init' ) );
