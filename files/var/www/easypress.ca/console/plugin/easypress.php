@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: easyPress Console
-Text Domain: easypress
-Description: The easyPress Console.
-Author: easyPress.ca
-Author URI: http://easypress.ca
-Plugin URI: http://easypress.ca
+Plugin Name: The Console
+Text Domain: Console
+Description: The Console.
+Author: eQualit.ie
+Author URI: http://equalit.ie
+Plugin URI: http://equalit.ie
 Version: 1.3
 */
 
@@ -15,7 +15,7 @@ add_filter( 'got_rewrite', '__return_true' );
 // Set error reporting level
 error_reporting( E_COMPILE_ERROR|E_RECOVERABLE_ERROR|E_ERROR|E_CORE_ERROR );
 
-// easyPress console plugin
+// Console plugin
 require dirname(__FILE__) . '/easypress-console/easypress-console.php';
 
 /**
@@ -68,7 +68,7 @@ function ep_db_read_only_message() {
         echo '<div class="error">
                  <p>*****************************************************************************************************</p>
                  <p><h3>We are performing server maintenance. All edit capabilities are currently disabled.</h3></p>
-                 <p>Sorry for the inconvenience. <i>--The easyPress Team</i></p>
+                 <p>Sorry for the inconvenience.</p>
                  <p>*****************************************************************************************************</p>
                </div>';
     }
