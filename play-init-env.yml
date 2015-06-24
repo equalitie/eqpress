@@ -13,6 +13,11 @@
       default: "support@equalit.ie"
       private: no
     
+    - name: "org_support_url"
+      prompt: "Enter organization support website address"
+      default: "eqpress.equalit.ie"
+      private: no
+    
     - name: "root_cert_country"
       prompt: "Root certificate country"
       default: "CA"
