@@ -186,7 +186,7 @@ function ep_console_docs_wpadmin_ssl() {
 								<li>Enable SSL for logging in only.</li>	
 								<li>Disable SSL.</li>	
 							</ol></p>
-							<p>Please note that if you enable SSL you will be using the our SSL certificates therefore you will encounter SSL warnings the first time you visit your admin screens. You can read more about the warnings you will encounter on the help page titled <a href="http://eqpress.equalit.ie/security-warning-for-wp-admin-and-ssl-certificates/" target="_blank" title="Security warning for wp-admin and SSL certificates">Security warning for wp-admin and SSL certificates.</a> If you have your own SSL certificates please get in touch with <a href="mailto:{{ org_support_email }}">Support</a> and we will install them for you.</p>
+							<p>Please note that if you enable SSL you will be using the our SSL certificates therefore you will encounter SSL warnings the first time you visit your admin screens. You can read more about the warnings you will encounter on the help page titled <a href="http://{{ org_support_url }}/security-warning-for-wp-admin-and-ssl-certificates/" target="_blank" title="Security warning for wp-admin and SSL certificates">Security warning for wp-admin and SSL certificates.</a> If you have your own SSL certificates please get in touch with <a href="mailto:{{ org_support_email }}">Support</a> and we will install them for you.</p>
 							<p>You can read more about <a href="http://codex.wordpress.org/Administration_Over_SSL" target="_blank" title="Administration Over SSL for WordPress">Administration Over SSL</a> on the WordPress Codex</p>	
 					</div> <!-- .inside -->
 					</div> <!-- .postbox -->
