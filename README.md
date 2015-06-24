@@ -72,7 +72,7 @@ You can build the host and group files manually instead of running the play-init
 
 	[eqpress-test]
 	eqpress-test1.boreal321.com  
-	eqpress-test1.boreal321.com
+	eqpress-test2.boreal321.com
 
 Create a group YAML file in the group_vars directory (copy an existing one). Name the group file the same as the alias entered in the ansible hosts file:
 
