@@ -1,5 +1,5 @@
 ---
-# roles/initialize/tasks/main.yml
+# roles/init-env/tasks/main.yml
 
 - name: Create group_vars directory.
   local_action: file path=group_vars state=directory mode=0755
