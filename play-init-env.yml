@@ -50,22 +50,22 @@
 
     - name: "mandrill_username"
       prompt: "Mandrill username"
-      default: "default"
+      default: ""
       private: no
 
     - name: "mandrill_password"
       prompt: "Mandrill password"
-      default: "default"
+      default: ""
       private: yes
 
     - name: "sendgrid_username"
       prompt: "Sendgrid username"
-      default: "default"
+      default: ""
       private: no
 
     - name: "sendgrid_password"
       prompt: "Sendgrid password"
-      default: "default"
+      default: ""
       private: yes
 
     - name: "email_service"
