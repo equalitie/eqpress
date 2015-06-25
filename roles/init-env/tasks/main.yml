@@ -7,6 +7,6 @@
 - name: Create host_vars directory.
   local_action: file path=host_vars state=directory mode=0755
 
-- name: Create the main variables file.
+- name: Create the main variables file (group_vars/all.yml).
   local_action: template src=all.yml.j2 dest=group_vars/all.yml
 
