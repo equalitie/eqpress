@@ -171,7 +171,7 @@
 
 - name: install auto-provision GPG key
   shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ auto_provision_gpg_id }}
-  when: auto_provision_host
+  when: auto_provision_host is defined
   ignore_errors: yes
   tags: auto-provision
 
