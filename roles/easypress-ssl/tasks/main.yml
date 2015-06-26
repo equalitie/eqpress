@@ -3,6 +3,12 @@
 
 - name: touch the serial file
   local_action: shell touch {{ ssl_dir }}/serial.txt
+  run_once: true
+  tags: ssl
+
+- name: touch the index file
+  local_action: shell touch {{ ssl_dir }}/index.txt
+  run_once: true
   tags: ssl
 
 - name: copy certs and keys for public site and mutual auth connections
