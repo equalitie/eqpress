@@ -174,10 +174,6 @@
   file: path=/root/.ssh state=directory owner=root group=root mode=700
   tags: [security, ssh]
 
-- name: Copy authorized_keys.
-  copy: src={{ files }}/root/.ssh/authorized_keys dest=/root/.ssh owner=root group=root mode=600
-  tags: [security, ssh]
-
 - name: Create sftponly group for chroot'ed logins
   group: name=sftponly state=present
   tags: security
