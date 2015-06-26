@@ -16,25 +16,18 @@
   user: name=root generate_ssh_key=yes
   tags: [ssh_config, ssh_pub_key]
 
-- name: Downloading slave's ssh pub key
+- name: Downloading generated SSH public keys
   fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/id_rsa_{{ inventory_hostname }}.pub flat=yes
-  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
   tags: [ssh_config, ssh_pub_key]
 
 - name: Copying slave's ssh key to master
-  local_action: shell cat /tmp/id_rsa_{{ inventory_hostname }}.pub | ssh -oStrictHostKeyChecking=no root@{{ mysql_repl_master }} "cat >> /root/.ssh/authorized_keys"
-  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
-  tags: [ssh_config, ssh_pub_key]
-
-- name: Downloading master's ssh pub key
-  fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/id_rsa_{{ inventory_hostname }}.pub flat=yes
+  authorized_key: user=root state=present key="{{ lookup('file', '/tmp/id_rsa_' + mysql_repl_slave + '.pub') }}"
   when: mysql_repl_role == 'master' and mysql_repl_slave is defined
   tags: [ssh_config, ssh_pub_key]
 
 - name: Copying master's ssh key to slave
-  local_action: shell cat /tmp/id_rsa_{{ inventory_hostname }}.pub | ssh -oStrictHostKeyChecking=no root@{{ item }} "cat >> /root/.ssh/authorized_keys"
-  with_items: mysql_repl_slave
-  when: mysql_repl_role == 'master' and mysql_repl_slave is defined
+  authorized_key: user=root state=present key="{{ lookup('file', '/tmp/id_rsa_' + mysql_repl_master + '.pub') }}"
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
   tags: [ssh_config, ssh_pub_key]
 
 - name: Make sure the known hosts file exists
