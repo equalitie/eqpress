@@ -78,7 +78,7 @@
     - zlib1g-dev
 
 # zoneinfo exists on OS X in the same location as Debian. Neat.
-- name: Set /etc/localtime to {{ timezone }}
+- name: Set /etc/localtime according to configuration
   copy: src=/usr/share/zoneinfo/{{ timezone }}
         dest=/etc/localtime
         owner=root
@@ -94,12 +94,12 @@
   when: ansible_os_family == "Debian"
   tags: [configuration, locale]
 
-- name: set locale to {{ locale }}
+- name: Set /etc/default/locale according to our configuration
   template: src=files/etc/default/locale.j2 dest=/etc/default/locale
   when: ansible_os_family == "Debian"
   tags: [configuration, locale]
 
-- name: Set /etc/timezone to {{ timezone }}
+- name: Set /etc/timezone according to our configuration
   template: src=files/etc/timezone.j2 dest=/etc/timezone
   notify:
     - update tzdata
