@@ -50,11 +50,11 @@
     - localhost
   tags: mysql
 
-- name: Copy .my.cnf file
+- name: Copy .my.cnf file to /root/
   template: src={{ files }}/root/.my.cnf.j2 dest=/root/.my.cnf mode=0600
   tags: [mysql, mysql_config]
 
-- name: Copy .my.cnf-mysqladmin file
+- name: Copy .my.cnf-mysqladmin file to /root/
   template: src={{ files }}/root/.my.cnf-mysqladmin.j2 dest=/root/.my.cnf-mysqladmin mode=0600
   tags: [mysql, mysql_config, mysqladmin_user]
 
