@@ -88,7 +88,7 @@
 #  tags: [mysql, repl]
 
 - name: Create the mysqladmin user mysql server monitoring on slave
-  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER, PROCESS" state=present
+  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
   # comment out line above and uncomment line below to change the mysqladmin user password
   #mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password }}
   with_items:
@@ -99,7 +99,7 @@
   tags: [mysql, repl, mysqladmin_user]
 
 - name: Create the mysqladmin user for replication monitoring on master
-  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER, PROCESS" state=present
+  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
   # comment out line above and uncomment line below to change the mysqladmin user password
   #mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password }}
   with_items:
