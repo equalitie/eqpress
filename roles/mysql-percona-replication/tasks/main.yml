@@ -31,9 +31,9 @@
   tags: [mysql, apt-mysql]
   register: pkg_install
 
-- name: outut stuff
-  debug: var=pkg_install
-  tags: [mysql, apt-mysql]
+#- name: outut stuff
+#  debug: var=pkg_install
+#  tags: [mysql, apt-mysql]
 
 - name: remove existing .my.cnf files for initial install
   file: path=/root/.my.cnf state=absent
