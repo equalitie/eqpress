@@ -8,7 +8,7 @@ mandrill_password: "{{ mandrill_password }}"
 mandrill_username: "{{ mandrill_username }}"
 sendgrid_password: "{{ sendgrid_password }}"
 sendgrid_username: "{{ sendgrid_username }}"
-mail_service: "{{ mail_service }}"
+mail_service: "{{ email_service }}"
 monitoring_email: "{{ monitoring_email }}"
 
 # SSL/TLS
@@ -25,6 +25,6 @@ ssh_known_hosts_file: '/root/.ssh/known_hosts'
 
 # misc
 timezone: "{{ timezone }}"
-files: ./files
-ssl_dir: ./files/etc/ssl/easypress
+files: "{{ playbook_dir }}/files"
+ssl_dir: "{{ playbook_dir }}/files/etc/ssl/easypress"
 wp_latest: /home/easypress/latest.tar.gz
