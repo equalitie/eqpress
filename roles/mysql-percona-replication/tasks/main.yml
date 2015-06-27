@@ -37,7 +37,6 @@
 
 - name: remove existing .my.cnf files for initial install
   file: path=/root/.my.cnf state=absent
-  ignore_errors: yes
   when: pkg_install.changed == true
   tags: [mysql, apt-mysql]
 
