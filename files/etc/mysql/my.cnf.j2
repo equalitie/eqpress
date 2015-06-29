@@ -3,9 +3,9 @@
 # CLIENT #
 port                           = 3306
 socket                         = /var/run/mysqld/mysqld.sock
-ssl_ca                         = /etc/ssl/easypress/root_CA.pem
-ssl_cert                       = /etc/ssl/easypress/{{ inventory_hostname }}.pem
-ssl_key                        = /etc/ssl/easypress/{{ inventory_hostname }}.key
+ssl-ca                         = /etc/ssl/easypress/root_CA.pem
+ssl-cert                       = /etc/ssl/easypress/{{ inventory_hostname }}.pem
+ssl-key                        = /etc/ssl/easypress/{{ inventory_hostname }}.key
 
 
 [mysqld]
@@ -78,7 +78,7 @@ general_log                    = 0
 general_log_file               = /var/log/mysql/mysql.log
 
 # SSL #
-ssl_ca                         = /etc/ssl/easypress/root_CA.pem
-ssl_cert                       = /etc/ssl/easypress/{{ inventory_hostname }}.pem
-ssl_key                        = /etc/ssl/easypress/{{ inventory_hostname }}.key
+ssl-ca                         = /etc/ssl/easypress/root_CA.pem
+ssl-cert                       = /etc/ssl/easypress/{{ inventory_hostname }}.pem
+ssl-key                        = /etc/ssl/easypress/{{ inventory_hostname }}.key
 
