@@ -105,7 +105,7 @@ Create a group YAML file in the group_vars directory (copy an existing one). Nam
 
 	group_vars/eqpress-test.yml
 
-Edit this new group file and minmally change the following variables:
+Edit this new group file and minimally change the following variables:
 
 	easypress_server_id
 	mysql_root_db_pass
