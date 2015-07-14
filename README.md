@@ -9,6 +9,28 @@ Initializing the ansible environment is required before any other playbooks can 
 	cd eqpress 
 	touch hosts
 	vi hosts (add your target hosts including localhost)
+
+Example inventory
+	
+	[local]
+	localhost
+
+	[production]
+	eqwp1.equalit.ie
+	eqwp2.equalit.ie
+
+	[masters]
+	eqwp1.equalit.ie
+
+	[slaves]
+	eqwp2.equalit.ie
+
+	[eqwp]
+	eqwp1.equalit.ie
+	eqwp2.equalit.ie
+	
+Play to run
+	
 	ansible-playbook -i hosts play-init-env.yml -v
 
 The following settings can be specified. Accepting the defaults are enough to configure the environment so the other playbooks will work but making them unique to your environment is best.
@@ -68,13 +90,16 @@ The following settings must be specified:
 * The servers that will be used for creating the replicated pair must be running Debian 7 (Wheezy).
 * The debian packages python and python-simplejson must be installed for ansible to work.
 
+Play to run
+
+	ansible-playbook -i hosts play-go-live.yml -u root -l eqwp
 
 #### Manual Host and Group Configuration
 You can build the host and group files manually instead of running the play-init-servers.yml playbook. Create an alias in the ansible hosts file with the names of the new server pairs below:
 
 	[eqpress-test]
-	eqpress-test1.boreal321.com  
-	eqpress-test2.boreal321.com
+	eqpress-test1.equalit.ie  
+	eqpress-test2.equalit.ie
 
 Create a group YAML file in the group_vars directory (copy an existing one). Name the group file the same as the alias entered in the ansible hosts file:
 
@@ -90,8 +115,8 @@ Edit this new group file and minmally change the following variables:
 	
 Create a host YAML file in the host_vars directory (copy an existing primary and replica). Name the host files the same as what was entered in the ansible hosts file:
 
-	host_vars/eqpress-test1.boreal321.com.yml
-	host_vars/eqpress-test2.boreal321.com.yml
+	host_vars/eqpress-test1.equalit.ie.yml
+	host_vars/eqpress-test2.equalit.ie.yml
 
 Edit these new host files and minmally change the following variables:
 
