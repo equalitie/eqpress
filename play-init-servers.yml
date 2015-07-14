@@ -41,7 +41,7 @@
 
     - name: "mysql_root_db_pass"
       prompt: "MySQL root user password"
-      default: "enter password"
+      default: "enter_password"
       private: yes
 
     - name: "mysql_innodb_buffer_pool_size"
@@ -56,17 +56,17 @@
 
     - name: "mysql_repl_creds_password"
       prompt: "MySQL replication user password"
-      default: "enter password"
+      default: "enter_password"
       private: yes
 
     - name: "mysql_admin_user_password"
       prompt: "MySQL Admin user password"
-      default: "enter password"
+      default: "enter_password"
       private: yes
 
     - name: "swp_webstats_password"
       prompt: "MySQL webstats user password"
-      default: "enter password"
+      default: "enter_password"
       private: yes
 
     - name: "mysql_server_id_master"
