@@ -4,9 +4,11 @@ A host with a working Ansible installation is required. Clone this repo:
 	git clone https://github.com/equalitie/eqpress.git
 
 #### Environment Initialization
-Initializing the ansible environment is required before any other playbooks can be executed. Run the following commands in the directory where the repo was cloned:
+Initializing the ansible environment is required before any other playbooks can be executed. Change into the equpress directory, create the inventory file and then run the init playbook:
 
-	cd eqpress
+	cd eqpress 
+	touch hosts
+	vi hosts (add your target hosts including localhost)
 	ansible-playbook -i hosts play-init-env.yml -v
 
 The following settings can be specified. Accepting the defaults are enough to configure the environment so the other playbooks will work but making them unique to your environment is best.

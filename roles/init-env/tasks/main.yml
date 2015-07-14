@@ -2,10 +2,10 @@
 # roles/init-env/tasks/main.yml
 
 - name: Create group_vars directory.
-  local_action: file path=group_vars state=directory mode=0755
+  local_action: file path={{ playbook_dir }}/group_vars state=directory mode=0755
 
 - name: Create host_vars directory.
-  local_action: file path=host_vars state=directory mode=0755
+  local_action: file path={{ playbook_dir }}/host_vars state=directory mode=0755
 
 - name: Create the main variables file (group_vars/all.yml).
   local_action: template src=all.yml.j2 dest="{{ playbook_dir }}/group_vars/all.yml"
