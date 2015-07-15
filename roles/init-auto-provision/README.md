@@ -2,8 +2,6 @@
 
 ## Initialzing the Auto-Provision Sever
 
-### Automatic Steps
-
 Run the playbook
 
 	ansible-playbook -i hosts play-init-auto-provision.yml -v
@@ -28,13 +26,13 @@ Optional settings when using a API for automatic DNS updates. These should be sp
 * **Auto-provision DNS API password** - DNS API password.
 
 
-### Manual Steps
+## Edit the Inventory File
 Add the server acting as the auto-provision server to the ansible hosts file under a group named "auto-provision"
 
 	[auto-provision]
 	provision.equalit.ie
 
-### Building the Auto-Provision Server
+## Building the Auto-Provision Server
 
 	ansible-playbook -i hosts play-auto-provision.yml -u root -l auto-provision
 
