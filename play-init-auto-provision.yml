@@ -48,10 +48,10 @@
       default: "default"
       private: no
 
-    - name: "auto_provision_dns_api_username"
-      prompt: "Auto-provision DNS API username"
+    - name: "auto_provision_dns_api_password"
+      prompt: "Auto-provision DNS API password"
       default: "default"
-      private: no
+      private: yes
 
     - name: "auto_provision_console_api_key_secret"
       prompt: "Auto-provision Console API secret key"
