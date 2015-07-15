@@ -68,6 +68,10 @@
   local_action: command rsync -a {{ files }}/var/www/easypress.ca root@{{inventory_hostname}}:/var/www
   tags: [ep-console]
 
+- name: copy catchall index
+  template: src={{ files }}/var/www/easypress.ca/catchall/index.html.j2 dest=/var/www/easypress.ca/catchall/index.html owner=www-data group=www-data mode=0664
+  tags: ep-console
+
 - name: create mrtg directory
   file: path=/var/www/easypress.ca/mrtg state=directory owner=www-data group=www-data mode=0775
   tags: [ep-console, mrtg]
