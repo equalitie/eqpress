@@ -14,3 +14,20 @@ auto_provision_easydns_api_password: "{{ auto_provision_easydns_api_password }}"
 auto_provision_console_api_key_secret: "{{ auto_provision_console_api_key_secret }}"
 auto_provision_ansible_version: "{{ auto_provision_ansible_version }}"
 auto_provision_gpg_id: "{{ auto_provision_gpg_id }}"
+
+# nginx
+easypress_server_id: "{{ org_name }}"
+nginx_worker_processes: "{{ nginx_worker_processes }}"
+
+# php-fpm
+phpfpm_max_children: "{{ phpfpm_max_children }}"
+phpfpm_start_servers: "{{ phpfpm_start_servers }}"
+phpfpm_min_spare: "{{ phpfpm_min_spare }}"
+phpfpm_max_spare: "{{ phpfpm_max_spare }}"
+phpfpm_max_requests: "{{ phpfpm_max_requests }}"
+php_opcache_memory_size: "{{ php_opcache_memory_size }}"
+
+# mysql
+mysql_root_db_pass: "{{ mysql_root_db_pass }}"
+mysql_innodb_buffer_pool_size: "{{ mysql_innodb_buffer_pool_size }}"
+mysql_innodb_log_file_size: "{{ mysql_innodb_log_file_size }}"

@@ -68,5 +68,56 @@
       default: "v1.7.2"
       private: no
 
+    - name: "nginx_worker_processes"
+      prompt: "Nginx worker processes"
+      default: "2"
+      private: no
+
+    - name: "phpfpm_max_children"
+      prompt: "PHP-FPM max children"
+      default: "48"
+      private: no
+
+    - name: "phpfpm_start_servers"
+      prompt: "PHP-FPM start servers"
+      default: "16"
+      private: no
+
+    - name: "phpfpm_min_spare"
+      prompt: "PHP-FPM min spare"
+      default: "16"
+      private: no
+
+    - name: "phpfpm_max_spare"
+      prompt: "PHP-FPM max spare"
+      default: "16"
+      private: no
+
+    - name: "phpfpm_max_requests"
+      prompt: "PHP-FPM max requests"
+      default: "32"
+      private: no
+
+    - name: "php_opcache_memory_size"
+      prompt: "PHP-FPM opcache memory size"
+      default: "128"
+      private: no
+
+    - name: "mysql_root_db_pass"
+      prompt: "MySQL root user password"
+      default: "enter_password"
+      private: yes
+
+    - name: "mysql_innodb_buffer_pool_size"
+      prompt: "MySQL InnoDB buffer pool size"
+      default: "256M"
+      private: no
+
+    - name: "mysql_innodb_log_file_size"
+      prompt: "MySQL InnoDB log file size"
+      default: "32M"
+      private: no
+
   roles:
      - init-auto-provision
+
