@@ -87,7 +87,6 @@
   action: copy src={{ files }}/etc/nginx/{{ item }} dest=/etc/nginx owner=root group=staff mode=0664
   with_items:
     - common_adminer.conf
-    - common_easypress_ssl.conf
     - common_location.conf
     - common_location_ep.conf
     - common_login_limiter.conf
@@ -100,6 +99,12 @@
   notify:
     - reload nginx
   tags: [nginx, nginx_config]
+
+- name: copy nginx common ssl config template
+  template: src={{ files }}/etc/nginx/common_easypress_ssl.conf.j2 dest=/etc/nginx/common_easypress_ssl.conf owner=root group=staff mode=0664
+  notify:
+    - reload nginx
+  tags: [nginx, nginx_config, nginx_ssl]
 
 - name: copy nginx cache config only during initial install
   copy: src={{ files }}/etc/nginx/cache.conf dest=/etc/nginx owner=root group=staff mode=0664
