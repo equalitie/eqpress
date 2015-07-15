@@ -33,26 +33,6 @@
       default: "/dev/urandom"
       private: no
 
-    - name: "auto_provision_dns_api_host"
-      prompt: "Auto-provision DNS API hostname"
-      default: "rest.easydns.net"
-      private: no
-
-    - name: "auto_provision_dns_api_url"
-      prompt: "Auto-provision DNS API URL"
-      default: "https://rest.easydns.net/zones/records/add/wp.example.com/cname"
-      private: no
-
-    - name: "auto_provision_dns_api_username"
-      prompt: "Auto-provision DNS API username"
-      default: "default"
-      private: no
-
-    - name: "auto_provision_dns_api_password"
-      prompt: "Auto-provision DNS API password"
-      default: "default"
-      private: yes
-
     - name: "auto_provision_console_api_key_secret"
       prompt: "Auto-provision Console API secret key"
       default: "default"
