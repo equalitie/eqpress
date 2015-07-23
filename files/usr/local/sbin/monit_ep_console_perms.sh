@@ -1,7 +1,8 @@
 #!/bin/bash
 export PATH=/bin:/usr/bin:/usr/local/sbin
 CONFS=/var/www/easypress.ca/console/perms
-if cd $CONFS; then
+if [ -d $CONFS ]; then
+	cd $CONFS
 	CF=`/usr/bin/find . -type f -exec /usr/bin/basename {} \;`
 	if [ "$CF" != "" ]; then
 		for DOMAIN in $CF; do
@@ -21,6 +22,6 @@ if cd $CONFS; then
 		exit 0
 	fi
 else
-	echo "Error: Could not change into $CONF"
+	echo "Error: Could not change into $CONFS"
 	exit 1
 fi
