@@ -1,2 +1,1 @@
-13 4 * * *      root    /usr/local/sbin/backup_with_tarsnap.sh
 26 3,7,11,15,19,23      * * *   root    /usr/local/sbin/backup_from_master.sh > /dev/null
