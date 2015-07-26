@@ -14,6 +14,7 @@ if cd $LOCKS; then
 					chepown /var/www/${DOMAIN} # make all easyPress console files owned by root
 					chwebown /var/www/$DOMAIN/wordpress/wp-content/uploads # make uploads writable by web server user
 					chwebown /var/www/$DOMAIN/wordpress/.sessions # make PHP sessions dir writable by web server user
+					chwebown /var/www/$DOMAIN/wordpress/php-errors.log
 					echo "$DOMAIN has been locked down"
 				else
 					echo "Error: $DOMAIN is not installed"
