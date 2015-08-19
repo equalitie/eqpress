@@ -18,6 +18,11 @@
       default: "eqpress.equalit.ie"
       private: no
     
+    - name: "org_pwpush_url"
+      prompt: "Enter the URL for the password pusher web app"
+      default: "https://provision.deflect.ca/pwpush/pwpusher_public/pw.php"
+      private: no
+    
     - name: "root_cert_country"
       prompt: "Root certificate country"
       default: "CA"
