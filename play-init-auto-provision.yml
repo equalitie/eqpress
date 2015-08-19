@@ -13,6 +13,21 @@
       default: "/var/www/easypress.ca/provision"
       private: no
 
+    - name: "auto_provision_tmp_directory"
+      prompt: "Auto-provision temp directory"
+      default: "/var/tmp"
+      private: no
+
+    - name: "auto_provision_web_server_user"
+      prompt: "Auto-provision web server user account"
+      default: "www-data"
+      private: no
+
+    - name: "auto_provision_web_server_group"
+      prompt: "Auto-provision web server group account"
+      default: "www-data"
+      private: no
+
     - name: "auto_provision_log_file"
       prompt: "Auto-provision log file name (relative to base directory)"
       default: "ep-provision.log"

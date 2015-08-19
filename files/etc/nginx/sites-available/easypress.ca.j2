@@ -83,9 +83,9 @@ server {
 ##
 server {
 	listen 127.0.0.1:80;
-	server_name console.easypress.ca;
-	access_log /var/log/nginx/console.easypress.ca.access.log;
-	error_log /var/log/nginx/console.easypress.ca.error.log;
+	server_name console.localdomain;
+	access_log /var/log/nginx/console.localdomain.access.log;
+	error_log /var/log/nginx/console.localdomain.ca.error.log;
 	root /var/www/easypress.ca/console;
 
 	location / {

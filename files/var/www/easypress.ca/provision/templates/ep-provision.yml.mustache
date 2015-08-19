@@ -2,7 +2,7 @@
 - hosts: {{server}}
 {{=<% %>=}}
   vars:
-    contents: "{{ lookup('file', '<%prov_dir%>processing/<% domain %>/ep-welcome-email.txt') }}"
+    contents: "{{ lookup('file', '<%prov_dir%>processing/<% domain %>/welcome-email.txt') }}"
 <%={{ }}=%>
 
   tasks:
@@ -38,11 +38,6 @@
 
   - name: Install WordPress using WP-CLI # must be after console so WP doesn't send its email
     command: chdir=/var/www/{{domain}}/wordpress /usr/local/sbin/wp --allow-root core install --url=http://{{domain}}/ --admin_user={{wpadmin_user}} --admin_password={{wpadmin_pass}} --admin_email={{wpadmin_email}} --title="Just another easyPress site"
-
-  - name: Install BruteProtect as must-use plugins for {{domain}}
-    command: /usr/local/sbin/ep_bruteprotect.sh {{domain}} creates=/var/www/{{domain}}/wordpress/wp-content/mu-plugins/bruteprotect.php
-    ignore_errors: yes
-
 
 {{switch_to_dev}}
 

@@ -375,7 +375,7 @@ EOW;
 	 *
 	 */
 	static function easypress_console_logo_url() {
-		return plugins_url('img/easyPress-logo.png', __FILE__);
+		return plugins_url('img/logo.png', __FILE__);
 	}
 
 	/**
@@ -392,7 +392,7 @@ EOW;
 		try {
 			$mych = new CurlRequest;
 			$params = array( 'url' => 'http://localhost/proxy/easypress-console-proxy.php',
-							'host' => 'console.easypress.ca',
+							'host' => 'console.localdomain',
 							'header' => '',
 							'method' => 'POST',
 							'referer' => '',

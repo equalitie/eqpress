@@ -112,17 +112,12 @@ class EP_Provision_Util {
      */
     public function authenticate( $username, $password, $source ){
         global $params;
-        if ( $username == 'equalit-test' ) {
+        if ( $username == 'equalitie' ) {
             if ( hash('sha256', $password ) == 'ef4bc1f71c4eed44075d41af78a8e6df1c8fee30fd2077884b8d34063b711e44' ) {
-                $params['location'] = 'equalit-test';
-                $params['org_name'] = 'eQualit.ie Hosting';
-                $params['org_email'] = 'support@equalit.ie';
-                $params['org_twitter'] = '@equalitie';
+                $params['location'] = 'eqpress1';
+                $params['org_name'] = '{{ org_name }}';
+                $params['org_email'] = '{{ org_support_email }}';
             } else {
-                $this->process_errors( 'Incorrect password.', true );
-            }
-        } else if ( $username == 'vmg') {
-            if ( hash( 'sha256', $password ) != 'a21ebacd945e297ffbe849a95cfd7c3a7d9ac000ab45326f00c2821af0abd4e3' ) {
                 $this->process_errors( 'Incorrect password.', true );
             }
         } else {
@@ -353,29 +348,6 @@ class EP_Provision_Util {
     }
 
     /**
-     * Add a CNAME to the wp.easypress.ca zone via the easyDNS API.
-     *
-     */
-    public function add_cname( $domain ) {
-        global $params;
-        $req = array ();
-
-        $req['timeout'] = 60;
-        $req['method'] = 'PUT';
-        $req['host'] = $_SERVER['DNS_API_HOST'];
-        $req['url'] = $_SERVER['DNS_API_URL'];
-        $req['username'] = $_SERVER['DNS_API_USERNAME'];
-        $req['password'] = $_SERVER['DNS_API_PASSWORD'];
-        $data = array( 'host' => $domain, 'rdata' => $params['nodes'][$params['location']]['cname'] );
-        $json_data = json_encode( $data );
-        $req['post_fields'] = $json_data;
-        $req['header'] = array( 'Content-Type: application/json; charset=utf-8', 'Content-Length: ' . strlen( $json_data ) );
-        $response = $this->http_req( $req );
-        error_log( var_export( $response, true ) );
-    }
-
-
-    /**
      * Create the tmp directory to hold the configuration files.
      *
      */
@@ -490,7 +462,7 @@ EOLUA;
         $console = '';
         $domain = $params['domain'];
         $domain_cname = $params['domain_cname'];
-        $from_email = 'support@boreal321.com (Boreal321 Hosting Support)';
+        $from_email = '{{ org_support_email }} ({{ org_name }} Support)';
         $subject = "Your WordPress site for $domain is ready!";
 
         if ( $params['multisite'] !== false ) {
@@ -539,18 +511,11 @@ EOD;
         }
 
         $console = <<<EOE
-  - name: Install easyPress Console as must-use plugins for $domain
+  - name: Install Console as must-use plugins for $domain
     command: /usr/local/sbin/ep_install_console.sh $domain creates=/var/www/$domain/wordpress/wp-content/mu-plugins/easypress.php
     ignore_errors: yes
 
 EOE;
-
-        // eQualit.ie settings
-        if ( $params['location'] == 'equalit.ie' ) {
-            $params['bcc_email'] = 'support@equalit.ie, vmg@boreal321.com';
-            $from_email = 'support@equalit.ie (eQualit.ie Support)';
-            $subject = "Your WordPress site for $domain is ready!";
-        }
 
         // Get the name of the server that ansible will use to install the site.
         $server = $params['nodes'][$params['location']]['hostname'];
@@ -595,16 +560,11 @@ EOE;
     public function create_welcome_email() {
         global $params, $mustache;
         $domain = $params['domain'];
-        $welcome_email_template = 'ep-welcome-email.txt.mustache';
+        $welcome_email_template = 'welcome-email.txt.mustache';
 
         // If the site is for development then send the development domain.
         if ( $params['is_dev'] == 1 ) {
             $domain = $params['domain_cname'];
-        }
-
-        // Use another welcome email template for eQualit.ie customers.
-        if ( $params['location'] == 'eQualit.ie' ) {
-            $welcome_email_template = 'eq-welcome-email.txt.mustache';
         }
 
         // Get the IP address of the server.
@@ -628,11 +588,10 @@ EOE;
             'server_ip'     => $server_ip,
             'org_name'      => $params['org_name'],
             'org_email'     => $params['org_email'],
-            'org_twitter'   => $params['org_twitter']
         ) );
 
         // Save the parsed template to a file to be read by ansible process.
-        $file = EP_TMP_DIR . '/ep-welcome-email.txt';
+        $file = EP_TMP_DIR . '/welcome-email.txt';
         if ( !file_put_contents( $file, $out ) )
             $this->process_errors( "Could not create $file", true );
     }
@@ -645,15 +604,10 @@ EOE;
      */
     public function http_req( $request = array() ) {
         global $params;
-        $host = 'provision.boreal321.com';
-        if ( $params['location'] == 'equalit.ie' ) {
-            $host = 'eqpress.equalit.ie';
-        }
-        $url = 'https://' . $host . '/pwpush/pwpusher_public/pw.php';
+        $url = '{{ org_pwpush_url }}';
         $response = array();
         $defaults = array(
             'url'       => $url,
-            'host'      => $host,
             'method'    => 'POST',
             'timeout'   => 30,
             'verbose'   => 0,

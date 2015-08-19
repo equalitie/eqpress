@@ -555,9 +555,7 @@ function surf( $post_params ) {
 	require_once ( dirname(__FILE__) . '/../plugin/easypress-console/inc/class-curl-request.php' );
 	try {
 		$mych = new CurlRequest;
-		$params = array( //'url' => 'https://easypress.ca/pwpush/pwpusher_public/pw.php',
-                        'url' => 'https://www.getpendeo.com/pwpush/pwpusher_public/pw.php',
-						'host' => 'www.getpendeo.com',
+		$params = array('url' => '{{ org_pwpush_url }}',
 						'header' => '',
 						'method' => 'POST',
 						'referer' => '',

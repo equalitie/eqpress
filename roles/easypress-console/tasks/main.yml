@@ -1,19 +1,25 @@
 ---
 # roles/easypress-console/tasks/main.yml
 
-- name: copy ep-console install script
-  copy: src={{ files }}/usr/local/sbin/ep_install_console.sh dest=/usr/local/sbin owner=root group=staff mode=0750
+- name: copy console install script
+  copy: src={{ files }}/usr/local/sbin/ep_install_console.sh dest=/usr/local/sbin owner=root group=staff mode=0755
   tags: [ep-console, ep_install_console.sh]
 
 
-- name: copy ep-console monit scripts
-  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0750
+- name: copy console monit scripts
+  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0755
   with_items:
     - monit_ep_console_lockdown.sh
     - monit_ep_console_perms.sh
     - monit_ep_console_reset_password.sh
     - monit_connections.sh
   tags: [ep-console, console_monit_scripts, monit]
+
+- name: copy console monit templates
+  action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
+  with_items:
+    - monit_ep_console_reset_password.sh
+  tags: [ep-sbin, ep-sbin-templates]
 
 #- name: rsync easypress.ca docroot containing the easyPress Console
 #  synchronize: src={{ files }}/var/www/easypress.ca dest=/var/www

@@ -21,7 +21,6 @@
 - name: create users
   action: user group={{ item.group }} shell=/bin/bash name={{ item.user }}
   with_items:
-    - { user: "vmg", group: "staff" }
     - { user: "monitor", group: "monitor" }
     - { user: "wordpress", group: "wordpress" }
   tags: users
@@ -33,7 +32,6 @@
 - name: reset users home directory ownerships
   action: file path=/home/{{ item.user }} owner={{ item.user }} group={{ item.group }} state=directory recurse=yes
   with_items:
-    - { user: "vmg", group: "staff" }
     - { user: "monitor", group: "monitor" }
     - { user: "wordpress", group: "wordpress" }
   tags: users
@@ -64,7 +62,6 @@
     - class-http-log-parser.php
     - ep_admin_emails.sh
     - ep_bruteprotect.sh
-    - ep_chpass.sh
     - ep_deactivate_site.sh
     - ep_deploy_must_use_plugins.sh
     - ep_gen_api_key.php
@@ -85,7 +82,6 @@
     - monit_connections.sh
     - monit_ep_console_lockdown.sh
     - monit_ep_console_perms.sh
-    - monit_ep_console_reset_password.sh
     - monit_php-fpm_procs.sh
     - monitor_nginx.pl
     - prtran.pl
@@ -102,6 +98,13 @@
     - wp_update.sh
     - wp_update_plugins.sh
   tags: ep-sbin
+
+- name: copy sbin script templates
+  action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
+  with_items:
+    - ep_chpass.sh
+    - monit_ep_console_reset_password.sh
+  tags: [ep-sbin, ep-sbin-templates]
 
 - name: copy webstat script templates
   action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755

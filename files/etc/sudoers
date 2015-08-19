@@ -13,7 +13,6 @@ Defaults	secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/b
 # Host alias specification
 
 # User alias specification
-User_Alias	TIER2 = victor
 User_Alias      GITOLITE = git
 
 # Cmnd alias specification
