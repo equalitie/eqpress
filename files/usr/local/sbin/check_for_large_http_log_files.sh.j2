@@ -10,6 +10,6 @@ for big in `find /var/log/nginx/*.log -type f -size +30000k -mmin 1 -exec ls -lh
 done
 dif=`diff ${f0} ${f1}`
 if [ ! -z "$dif" ]; then
-	cat ${f0} | mail -s "Big nginx log files exist on $(hostname)" vmg-alerts@easypress.ca
+	cat ${f0} | mail -s "Big nginx log files exist on $(hostname)" {{ org_support_email }}
 fi
 mv ${f0} ${f1}

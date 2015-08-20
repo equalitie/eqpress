@@ -54,8 +54,6 @@
     - chcustown
     - check-mem.pl
     - check_for_disk_usage.sh
-    - check_for_large_files.sh
-    - check_for_large_http_log_files.sh
     - check_size_of_php_error_logs.sh
     - chepown
     - chwebown
@@ -89,7 +87,6 @@
     - top_ram_procs.sh
     - field
     - test_db.pl
-    - webstats_totals_wrapper.sh
     - wp
     - wpcli_woocommerce_disable_redirect.php
     - wpcli_wordfence_no_scan.php
@@ -104,6 +101,9 @@
   with_items:
     - ep_chpass.sh
     - monit_ep_console_reset_password.sh
+    - check_for_large_files.sh
+    - check_for_large_http_log_files.sh
+    - webstats_totals_wrapper.sh
   tags: [ep-sbin, ep-sbin-templates]
 
 - name: copy webstat script templates

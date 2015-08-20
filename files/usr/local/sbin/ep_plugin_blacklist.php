@@ -29,7 +29,7 @@ $evil_plugins = array (
 'the-codetree-backup',
 'toolspack',
 'tweet-blender',
-//'w3-total-cache',
+'w3-total-cache',
 'wordpress-backup-to-dropbox',
 'wordpress-gzip-compression',
 'wp-cache',

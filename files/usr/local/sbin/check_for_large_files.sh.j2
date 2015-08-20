@@ -13,6 +13,6 @@ done
 
 dif=`diff ${f0} ${f1}`
 if [ ! -z "$dif" ]; then
-	echo "$dif" | mail -s "Big files exist on $(hostname)" vmg@easypress.ca
+	echo "$dif" | mail -s "Big files exist on $(hostname)" {{ org_support_email }}
 fi
 mv ${f0} ${f1}

@@ -431,7 +431,7 @@ function do_editor( $domain, $edits ) {
  *
  */
 function validate_api_key ( $api_key, $domain ) {
-	$ep_secret_key = $domain . '6kwiyk768g7gy2PVhhzFEUu';
+	$ep_secret_key = $domain . '{{ console_secret_key }}';
 	$ep_api_key = md5( $ep_secret_key );
 	if ( $ep_api_key === $api_key )
 		return true;
@@ -555,7 +555,7 @@ function surf( $post_params ) {
 	require_once ( dirname(__FILE__) . '/../plugin/easypress-console/inc/class-curl-request.php' );
 	try {
 		$mych = new CurlRequest;
-		$params = array('url' => '{{ org_pwpush_url }}',
+		$params = array('url' => '{{ pwpush_url }}',
 						'header' => '',
 						'method' => 'POST',
 						'referer' => '',

@@ -11,7 +11,6 @@ if cd $LOCKS; then
 				rm $DOMAIN
 				if [ -d /var/www/${DOMAIN} ]; then
 					chcustown ${DOMAIN}	# change ownership to customer's username	
-					chepown /var/www/${DOMAIN} # make all easyPress console files owned by root
 					chwebown /var/www/$DOMAIN/wordpress/wp-content/uploads # make uploads writable by web server user
 					chwebown /var/www/$DOMAIN/wordpress/.sessions # make PHP sessions dir writable by web server user
 					chwebown /var/www/$DOMAIN/wordpress/php-errors.log
@@ -35,7 +34,6 @@ if cd $UNLOCKS; then
 				rm $DOMAIN
 				if [ -d /var/www/$DOMAIN ]; then
 					chwebown /var/www/$DOMAIN/wordpress # make everything writable by web server user
-					chepown /var/www/$DOMAIN # make easyPress console files owned by root
 					echo "$DOMAIN has been unlocked"
 				else
 					echo "Error: $DOMAIN is not installed"
