@@ -2,8 +2,9 @@
 
 ## Initialzing the Auto-Provision Sever
 
-Run the playbook
+Run the following playbooks
 
+	ansible-playbook -i hosts play-init-env.yml -v
 	ansible-playbook -i hosts play-init-auto-provision.yml -v
 
 The following settings can be specified:
