@@ -19,7 +19,6 @@ User_Alias      GITOLITE = git
 
 # User privilege specification
 root	ALL=(ALL:ALL) ALL
-vmg	ALL=(ALL:ALL) ALL
 
 # Tier 2 Support
 TIER2	ALL = /usr/local/sbin/ep_chpass.sh [A-Za-z0-9]*
