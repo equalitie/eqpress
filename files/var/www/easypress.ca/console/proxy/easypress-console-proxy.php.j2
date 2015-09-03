@@ -223,7 +223,7 @@ function do_stats_month( $domain ) {
 			FROM domains
 			WHERE domain LIKE '$domain')
 		ORDER BY date DESC";
-	$dbh = new mysqli( 'localhost', 'swp_webstats', 'c3hXyH2jhrW7YL7w26qRU', 'swp_webstats' );
+	$dbh = new mysqli( 'localhost', 'swp_webstats', '{{ swp_webstats_password }}', 'swp_webstats' );
 	if ( $dbh->connect_error ) {
 		process_errors( "Connect failed to swp_webstats for domain $domain: " . $dbh->connect_errno . ' : ' . $dbh->connect_error, true );
 	}
