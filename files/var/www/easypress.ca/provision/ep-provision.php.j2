@@ -79,9 +79,7 @@ switch($step) {
         $util->validate_post_parameters();
 
         // Authenticate the request
-        if ( $params['location'] != 'uk' ) {
-            $util->authenticate( $_POST['username'], $_POST['password'], $_POST['api_key'] );
-        }
+        $util->authenticate( $_POST['username'], $_POST['password'], $_POST['api_key'] );
 
         // More constants for paths
         if (!empty($_SERVER['TMP'])) {
