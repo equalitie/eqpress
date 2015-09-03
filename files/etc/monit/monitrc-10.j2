@@ -8,7 +8,7 @@ set statefile /var/run/monit-10.state
 set pidfile /var/run/monit-10.pid
 set idfile /var/run/monit-10.id
 set mailserver localhost
-set alert vmg@boreal321.com with mail-format { subject: monit-10 $SERVICE $EVENT }
+set alert {{ monitoring_email }} with mail-format { subject: monit-10 $SERVICE $EVENT }
 #
 # Check for new nginx config files created by WordPress provision system
 #

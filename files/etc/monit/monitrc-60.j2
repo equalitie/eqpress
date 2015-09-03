@@ -8,7 +8,7 @@ set statefile /var/run/monit-60.state
 set pidfile /var/run/monit-60.pid
 set idfile /var/run/monit-60.id
 set mailserver localhost
-set alert vmg@boreal321.com with mail-format { subject: monit-60 $SERVICE $EVENT }
+set alert {{ monitoring_email }} with mail-format { subject: monit-60 $SERVICE $EVENT }
 #
 # easyPress console monitoring
 #
