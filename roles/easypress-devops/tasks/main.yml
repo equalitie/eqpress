@@ -90,7 +90,6 @@
     - wp
     - wpcli_woocommerce_disable_redirect.php
     - wpcli_wordfence_no_scan.php
-    - wp-provision-stage2.sh
     - wp_check_plugins.php
     - wp_update.sh
     - wp_update_plugins.sh
