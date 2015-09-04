@@ -85,6 +85,10 @@
     - proxy
   tags: [ep-console]
 
+- name: copy easypress-console-proxy.php from template
+  template: src={{ files }}/var/www/easypress.ca/console/proxy/easypress-console-proxy.php.j2 dest=/var/www/easypress.ca/console/proxy/easypress-console-proxy.php owner=root group=www-data mode=0644
+  tags: [ep-console]
+
 - name: copy catchall index
   template: src={{ files }}/var/www/easypress.ca/catchall/index.html.j2 dest=/var/www/easypress.ca/catchall/index.html owner=www-data group=www-data mode=0664
   tags: ep-console
