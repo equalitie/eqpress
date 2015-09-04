@@ -83,6 +83,7 @@
     - log
     - password
     - perms
+    - proxy
   tags: [ep-console]
 
 - name: copy catchall index
