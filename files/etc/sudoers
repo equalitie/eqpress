@@ -12,9 +12,6 @@ Defaults	secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/b
 
 # Host alias specification
 
-# User alias specification
-User_Alias      GITOLITE = git
-
 # Cmnd alias specification
 
 # User privilege specification
@@ -35,9 +32,6 @@ TIER2	ALL = /usr/sbin/nginx -t
 TIER2	ALL = /usr/sbin/nginx -s reload
 TIER2	ALL = /usr/local/bin/tarsnap
 TIER2	ALL = /usr/bin/rsync
-
-# Gitolite requirements
-GITOLITE        ALL = NOPASSWD: /usr/local/sbin/chwebown /var/www/[A-Za-z0-9]*/[A-Za-z0-9]*
 
 
 # Allow members of group sudo to execute any command
