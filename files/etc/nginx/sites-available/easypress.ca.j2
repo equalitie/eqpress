@@ -10,7 +10,6 @@ server {
                 access_log off;
                 allow 127.0.0.1;
                 allow {{ ansible_default_ipv4.address }};
-                allow 198.211.100.146;
                 deny all;
         }
 
@@ -18,7 +17,6 @@ server {
                 include fastcgi_params;
                 fastcgi_pass php5-fpm-unix-sock;
                 fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
-                allow 198.211.100.146;
                 allow 127.0.0.1;
                 deny all;
         }
