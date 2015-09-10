@@ -86,11 +86,11 @@
     - resident-ram
     - top_ram_procs.sh
     - field
-    - test_db.pl
     - wp
     - wpcli_woocommerce_disable_redirect.php
     - wpcli_wordfence_no_scan.php
     - wp_check_plugins.php
+    - wp_db_backup.sh
     - wp_update.sh
     - wp_update_plugins.sh
   tags: ep-sbin
@@ -119,14 +119,6 @@
   ignore_errors: yes
   when: mysql_webstats is defined
   tags: [webstats]
-
-- name: copy backup scripts
-  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0750
-  with_items:
-    - backup_to_slave.sh
-    - backup_with_tarsnap.sh
-    - wp_db_backup.sh
-  tags: [ep-sbin, backup-scripts]
 
 - name: copy failover script template to slave
   template: src={{ files }}/usr/local/sbin/master_or_slave.sh.j2 dest=/usr/local/sbin/master_or_slave.sh owner=root group=staff mode=0750
