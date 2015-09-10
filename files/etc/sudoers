@@ -12,33 +12,10 @@ Defaults	secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/b
 
 # Host alias specification
 
-# User alias specification
-User_Alias      GITOLITE = git
-
 # Cmnd alias specification
 
 # User privilege specification
 root	ALL=(ALL:ALL) ALL
-
-# Tier 2 Support
-TIER2	ALL = /usr/local/sbin/ep_chpass.sh [A-Za-z0-9]*
-TIER2	ALL = /usr/bin/php /usr/local/sbin/ep_gen_api_key.php [A-Za-z0-9]*
-TIER2	ALL = /usr/bin/passwd [A-Za-z0-9]*, !/usr/bin/passwd root
-TIER2	ALL = /usr/sbin/chpasswd [A-Za-z0-9]*, !/usr/bin/chpasswd root
-TIER2	ALL = /usr/local/sbin/chwebown /var/www/[A-Za-z0-9]*/[A-Za-z0-9]*
-TIER2   ALL = /usr/local/sbin/ep_install_mu_plugins.sh [A-Za-z0-9]*
-TIER2   ALL = /usr/local/sbin/ep_install_cache_purge.sh [A-Za-z0-9]*
-TIER2	ALL = /usr/local/sbin/ep_install_console.sh [a-zA-Z0-9]*
-TIER2   ALL = /usr/local/sbin/ep_bruteprotect.sh [A-Za-z0-9]*
-TIER2	ALL = /usr/local/sbin/ep_unprovision.sh [A-Za-z0-9]*
-TIER2	ALL = /usr/sbin/nginx -t
-TIER2	ALL = /usr/sbin/nginx -s reload
-TIER2	ALL = /usr/local/bin/tarsnap
-TIER2	ALL = /usr/bin/rsync
-
-# Gitolite requirements
-GITOLITE        ALL = NOPASSWD: /usr/local/sbin/chwebown /var/www/[A-Za-z0-9]*/[A-Za-z0-9]*
-
 
 # Allow members of group sudo to execute any command
 # %adm	ALL=(ALL:ALL) ALL

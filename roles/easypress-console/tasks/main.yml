@@ -5,7 +5,6 @@
   copy: src={{ files }}/usr/local/sbin/ep_install_console.sh dest=/usr/local/sbin owner=root group=staff mode=0755
   tags: [ep-console, ep_install_console.sh]
 
-
 - name: copy console monit scripts
   action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0755
   with_items:
@@ -83,6 +82,11 @@
     - log
     - password
     - perms
+    - proxy
+  tags: [ep-console]
+
+- name: copy easypress-console-proxy.php from template
+  template: src={{ files }}/var/www/easypress.ca/console/proxy/easypress-console-proxy.php.j2 dest=/var/www/easypress.ca/console/proxy/easypress-console-proxy.php owner=root group=www-data mode=0644
   tags: [ep-console]
 
 - name: copy catchall index
