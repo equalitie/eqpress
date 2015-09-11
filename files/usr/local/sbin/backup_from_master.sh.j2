@@ -21,5 +21,5 @@ if ping -c 1 ${master} > /dev/null 2>&1; then
     rsync -av --delete --exclude 'easypress.ca' ${master}:/etc/nginx /etc
     rsync -av ${master}:/etc/ssl /etc
 else
-    echo "backup_to_${master}.sh: error, cant reach ${master}."
+    echo "${0}: error, cant reach ${master}."
 fi
