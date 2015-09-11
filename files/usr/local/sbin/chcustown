@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Change the ownership and permssions for a WordPress docroot.
+# Change the ownership and permissions for a WordPress docroot.
 # Used by the lockdown option in easyPress console. If the user
-# does not exist then user the wordpress user.
+# does not exist then use the wordpress user.
 #
 export PATH=/bin:/usr/bin:/usr/local/bin:/usr/sbin:/sbin:/usr/local/sbin
 
