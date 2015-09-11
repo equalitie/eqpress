@@ -11,5 +11,5 @@ done
 WARNPARTS=${WARNPARTS%??}
 
 if [ -n "$WARNPARTS" ]; then
-  df -h | mail -s "Partitions with low disk space on $(hostname): $WARNPARTS" sysadmin@easypress.ca
+  df -h | mail -s "Partitions with low disk space on $(hostname): $WARNPARTS" {{ monitoring_email }}
 fi
