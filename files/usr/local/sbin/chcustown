@@ -13,7 +13,7 @@ if [ -d ${DOCROOT} ]; then
 	USER_INFO=($(grep DB_USER ${DOCROOT}/wp-config.php |tr "'" '\n'))
 	USER=${USER_INFO[3]}
 
-	if ! grep ${USER} /etc/passwd > /dev/null; then
+	if ! getent passwd "$USER" >/dev/null; then
 		USER=wordpress
 	fi
 
