@@ -11,6 +11,6 @@ for big in `find /var/log/nginx/*.log -type f -size +$THRESHOLD -mmin 1 -exec ls
 done
 dif=`diff ${f0} ${f1}`
 if [ ! -z "$dif" ]; then
-	cat ${f0} | mail -s "Big nginx log files exist on $(hostname)" {{ org_support_email }}
+	cat ${f0} | mail -s "Big nginx log files exist on $(hostname)" {{ monitoring_email }}
 fi
 mv ${f0} ${f1}
