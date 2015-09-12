@@ -8,14 +8,11 @@ export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
 MAX=15000000
 RETURN=0
-for LOG in `find /var/www -maxdepth 3 -name php-errors.log`; do
-	SIZE=`du -b ${LOG}|cut -f 1`
-	if [ "$MAX" -lt "$SIZE" ]; then
-		if [ 0 -eq "$RETURN" ]; then
-			echo Size of log file should not exceed: $MAX bytes
-		fi
-		ls -lh ${LOG}
-		RETURN=1
-	fi
-done
+BIGLOG=$(find /var/www -maxdepth 3 -name php-errors.log -size +$MAX -exec ls -lh {} \;)
+
+if [ -n "$BIGLOG" ]; then
+  echo Size of log file should not exceed $MAX bytes
+  echo $BIGLOG
+  RETURN=1
+fi
 exit $RETURN
