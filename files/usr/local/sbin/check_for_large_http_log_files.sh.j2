@@ -6,7 +6,7 @@ f1=/var/tmp/biglogfiles.1
 touch ${f0}
 touch ${f1}
 IFS=$'\n'
-for big in `find /var/log/nginx/*.log -type f -size +$THRESHOLD -mmin 1 -exec ls -lh {} \; | awk '{ print $9 }'`; do
+for big in `find /var/log/nginx/ -name '*.log' -type f -size +$THRESHOLD -mmin 1`; do
 	echo ${big} >> ${f0}
 done
 dif=`diff ${f0} ${f1}`
