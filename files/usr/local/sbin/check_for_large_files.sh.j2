@@ -13,7 +13,7 @@ for big in `find /var/www -type f -size +$THRESHOLD -printf '%p - %s\n'`; do
 done
 
 dif=`diff ${f0} ${f1}`
-if [ ! -z "$dif" ]; then
+if [ -n "$dif" ]; then
 	echo "$dif" | mail -s "Big files exist on $(hostname)" {{ monitoring_email }}
 fi
 mv ${f0} ${f1}
