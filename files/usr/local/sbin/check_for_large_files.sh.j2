@@ -8,7 +8,7 @@ touch ${f1}
 # change the internal field separator to a newline to capture the ouput in a single line
 IFS='
 '
-for big in `find /var/www -type f -size +$THRESHOLD -exec ls -lh {} \; | awk '{ print $9 " - " $5 }'`; do
+for big in `find /var/www -type f -size +$THRESHOLD -printf '%p - %s\n'`; do
 	echo ${big} >> ${f0}
 done
 
