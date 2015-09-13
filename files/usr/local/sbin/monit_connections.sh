@@ -2,7 +2,7 @@
 export PATH=/bin:/usr/bin
 hostname=`hostname`
 
-conn=`netstat -an|egrep ':80|:443'|grep tcp|grep ESTAB|wc -l`
+conn=`ss -n -t state established '( dport = :80 or dport = :443 )'|tail +2|wc -l`
 if [ $conn -gt 200 ]; then
 	echo
 	echo ${hostname} has ${conn} active connections
