@@ -5,9 +5,9 @@ LOCKS=/var/www/easypress.ca/console/lockdown/lock
 UNLOCKS=/var/www/easypress.ca/console/lockdown/unlock
 if cd $LOCKS; then
 	CF=`/usr/bin/find -type f -printf '%f\n'`
-	if [ "$CF" != "" ]; then
+	if [ -n "$CF" ]; then
 		for DOMAIN in $CF; do
-			if [ "$DOMAIN" != "" ]; then
+			if [ -n "$DOMAIN" ]; then
 				rm $DOMAIN
 				if [ -d /var/www/${DOMAIN} ]; then
 					chcustown ${DOMAIN}	# change ownership to customer's username	
@@ -28,9 +28,9 @@ fi
 
 if cd $UNLOCKS; then
 	CF=`/usr/bin/find -type f -printf '%f\n'`
-	if [ "$CF" != "" ]; then
+	if [ -n "$CF" ]; then
 		for DOMAIN in $CF; do
-			if [ "$DOMAIN" != "" ]; then
+			if [ -n "$DOMAIN" ]; then
 				rm $DOMAIN
 				if [ -d /var/www/$DOMAIN ]; then
 					chwebown /var/www/$DOMAIN/wordpress # make everything writable by web server user
