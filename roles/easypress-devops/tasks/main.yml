@@ -84,7 +84,6 @@
     - prtran.pl
     - resident-ram
     - top_ram_procs.sh
-    - field
     - wp
     - wpcli_woocommerce_disable_redirect.php
     - wpcli_wordfence_no_scan.php

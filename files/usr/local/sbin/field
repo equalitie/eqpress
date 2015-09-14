@@ -1,3 +1,0 @@
-#!/bin/bash
-
-awk "{print `while [ -n "$*" ]; do echo -n '$'$1''; shift; [ -n "$*" ] && echo -n , ; done; echo`}"
