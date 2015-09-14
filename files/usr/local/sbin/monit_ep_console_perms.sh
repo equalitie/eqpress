@@ -3,7 +3,7 @@ export PATH=/bin:/usr/bin:/usr/local/sbin
 CONFS=/var/www/easypress.ca/console/perms
 if [ -d $CONFS ]; then
 	cd $CONFS
-	CF=`/usr/bin/find . -type f -exec /usr/bin/basename {} \;`
+	CF=`/usr/bin/find -type f -printf '%f\n'`
 	if [ "$CF" != "" ]; then
 		for DOMAIN in $CF; do
 			if [ "$DOMAIN" != "" ]; then
