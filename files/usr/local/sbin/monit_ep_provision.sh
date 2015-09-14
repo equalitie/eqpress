@@ -10,7 +10,7 @@ processing=${prov}/processing
 processed=${prov}/processed
 
 sites=`find ${pending}/* -type d -exec basename {} \; 2> /dev/null`
-if [ ! -z "$sites" ]; then
+if [ -n "$sites" ]; then
     #
     # wait a second just in case provision process is still mid-write
     sleep 1
