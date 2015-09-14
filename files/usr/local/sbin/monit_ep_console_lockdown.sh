@@ -4,7 +4,7 @@ LOCK_EXIT=0
 LOCKS=/var/www/easypress.ca/console/lockdown/lock
 UNLOCKS=/var/www/easypress.ca/console/lockdown/unlock
 if cd $LOCKS; then
-	CF=`/usr/bin/find . -type f -exec /usr/bin/basename {} \;`
+	CF=`/usr/bin/find -type f -printf '%f\n'`
 	if [ "$CF" != "" ]; then
 		for DOMAIN in $CF; do
 			if [ "$DOMAIN" != "" ]; then
@@ -27,7 +27,7 @@ else
 fi
 
 if cd $UNLOCKS; then
-	CF=`/usr/bin/find . -type f -exec /usr/bin/basename {} \;`
+	CF=`/usr/bin/find -type f -printf '%f\n'`
 	if [ "$CF" != "" ]; then
 		for DOMAIN in $CF; do
 			if [ "$DOMAIN" != "" ]; then
