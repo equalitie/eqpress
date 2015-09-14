@@ -22,6 +22,6 @@ if [ -d $CONFS ]; then
 		exit 0
 	fi
 else
-	echo "Error: Could not change into $CONFS"
+	echo "Error: Could not change directory into $CONFS"
 	exit 1
 fi
