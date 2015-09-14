@@ -4,9 +4,9 @@ CONFS=/var/www/easypress.ca/console/perms
 if [ -d $CONFS ]; then
 	cd $CONFS
 	CF=`/usr/bin/find -type f -printf '%f\n'`
-	if [ "$CF" != "" ]; then
+	if [ -n "$CF" ]; then
 		for DOMAIN in $CF; do
-			if [ "$DOMAIN" != "" ]; then
+			if [ -n "$DOMAIN" ]; then
 				rm $DOMAIN
 				if [ -d /var/www/$DOMAIN ]; then
 					chwebown /var/www/$DOMAIN/wordpress/
