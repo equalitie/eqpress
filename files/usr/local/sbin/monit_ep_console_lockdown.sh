@@ -23,7 +23,7 @@ if cd $LOCKS; then
 		LOCK_EXIT=1
 	fi
 else
-	echo "Error: Could not change into $LOCKS"
+	echo "Error: Could not change directory into $LOCKS"
 fi
 
 if cd $UNLOCKS; then
@@ -43,7 +43,7 @@ if cd $UNLOCKS; then
 		LOCK_EXIT=1
 	fi
 else
-	echo "Error: Could not change into $UNLOCKS"
+	echo "Error: Could not change directory into $UNLOCKS"
 fi
 
 exit $LOCK_EXIT
