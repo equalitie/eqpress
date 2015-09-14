@@ -13,4 +13,4 @@ cat >> ${HTML} <<EOMM
 </pre></div></body></html>
 EOMM
 
-echo "Today's webstats" | mail -s "{{ org_name }} web stats" -a /var/tmp/webstats.html {{ org_support_email }}
+echo "Today's webstats" | mail -s "{{ org_name }} web stats" -a /var/tmp/webstats.html {{ monitoring_email }}
