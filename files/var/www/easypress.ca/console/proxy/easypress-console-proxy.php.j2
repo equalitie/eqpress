@@ -213,6 +213,7 @@ function do_stats( $domain ) {
  *
  */
 function do_stats_month( $domain ) {
+    $clean_domain = mysql_real_escape_string( $domain );
 	$last_few_days = 0;
 	$busiest_day = array( 0, 0, 0, 0, 0 );
 	$db_query = "
@@ -221,7 +222,7 @@ function do_stats_month( $domain ) {
 		IN (
 			SELECT ID
 			FROM domains
-			WHERE domain LIKE '$domain')
+			WHERE domain LIKE '$clean_domain')
 		ORDER BY date DESC";
 	$dbh = new mysqli( 'localhost', 'swp_webstats', '{{ swp_webstats_password }}', 'swp_webstats' );
 	if ( $dbh->connect_error ) {
