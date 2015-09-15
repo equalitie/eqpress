@@ -47,7 +47,7 @@ $params = array(
     'web_user'          => '{{ auto_provision_web_server_user }}',
     'web_group'         => '{{ auto_provision_web_server_group }}',
     'pwp'               => array( 'db' => '', 'sftp' => '', 'wp' => '' ),
-    'nodes'             => json_decode( '{{ auto_provision_nodes }}' )
+    'nodes'             => json_decode( '{{ auto_provision_nodes }}', true )
 ); // close $params
 
 $step = isset( $_GET['step'] ) ? (int) $_GET['step'] : 0;
