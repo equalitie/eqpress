@@ -69,8 +69,8 @@
       private: yes
 
     - name: "auto_provision_gpg_id"
-      prompt: "Email or keyID of GPG account for encrypting logs" 
-      default: "sysops@equalit.ie"
+      prompt: "keyID of GPG account for encrypting logs (lookup your keyID at https://pgp.mit.edu/)" 
+      default: "2DD3C271"
       private: no
 
     - name: "auto_provision_ansible_version"
