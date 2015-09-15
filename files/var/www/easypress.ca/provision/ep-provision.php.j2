@@ -32,7 +32,7 @@ $params = array(
     'real_last_name'    => '',
     'first_name'        => '',
     'last_name'         => '',
-    'location'          => 'us',
+    'location'          => '',
     'multisite'         => false,
     'ep_api_key'        => '',
     'db_host'           => '{{ auto_provision_db_host }}',
@@ -47,11 +47,7 @@ $params = array(
     'web_user'          => '{{ auto_provision_web_server_user }}',
     'web_group'         => '{{ auto_provision_web_server_group }}',
     'pwp'               => array( 'db' => '', 'sftp' => '', 'wp' => '' ),
-    'nodes'             => array('eqpress1' => array( 'hostname' => 'eqpress1.deflect.ca',
-                                                      'ip'       => '78.46.104.235',
-                                                    )
-                                )
-
+    'nodes'             => json_decode( '{{ auto_provision_nodes }}' )
 ); // close $params
 
 $step = isset( $_GET['step'] ) ? (int) $_GET['step'] : 0;

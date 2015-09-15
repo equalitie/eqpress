@@ -107,24 +107,6 @@ class EP_Provision_Util {
     }
 
     /**
-     * Authenticate the request
-     *
-     */
-    public function authenticate( $username, $password, $source ){
-        global $params;
-        if ( $username == 'equalitie' ) {
-            if ( hash('sha256', $password ) == 'ef4bc1f71c4eed44075d41af78a8e6df1c8fee30fd2077884b8d34063b711e44' ) {
-                $params['location'] = 'eqpress1';
-                $params['org_name'] = '{{ org_name }}';
-                $params['org_email'] = '{{ org_support_email }}';
-            } else {
-                $this->process_errors( 'Incorrect password.', true );
-            }
-        } else {
-            $this->process_errors( 'Incorrect username or password.', true );
-        }
-    }
-    /**
      * Process errors
      *
      * @param string $message is the error message to write to the log and/or screen.

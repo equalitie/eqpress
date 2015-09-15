@@ -3,6 +3,21 @@
   gather_facts: false
 
   vars_prompt:
+    - name: "auto_provision_node_location"
+      prompt: "Auto-provision node location"
+      default: "montreal"
+      private: no
+    
+    - name: "auto_provision_node_hostname"
+      prompt: "Auto-provision node hostname"
+      default: "node1.example.com"
+      private: no
+    
+    - name: "auto_provision_node_ip_address"
+      prompt: "Auto-provision node IP address"
+      default: "127.0.0.1"
+      private: no
+    
     - name: "auto_provision_db_host"
       prompt: "Auto-provision database host"
       default: "localhost"
