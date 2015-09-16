@@ -106,6 +106,10 @@
     - reload nginx
   tags: [nginx, nginx_config, nginx_ssl]
 
+- name: link easypress.ca nginx config
+  file: src=/etc/nginx/sites-available/easypress.ca dest=/etc/nginx/sites-enabled/easypress.ca state=link
+  tags: ep-console
+
 - name: copy nginx cache config only during initial install
   copy: src={{ files }}/etc/nginx/cache.conf dest=/etc/nginx owner=root group=staff mode=0664
   tags: [nginx, nginx_cache]
