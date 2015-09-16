@@ -47,7 +47,7 @@
     command: /usr/local/sbin/chwebown /var/www/{{domain}}/wordpress
 
   - name: Add SFTP user for {{domain}}
-    user: name={{sftp_user}} group=sftponly groups=www-data shell=/bin/sh home=/var/www/{{domain}} createhome=no
+    user: name={{sftp_user}} group=sftponly groups=www-data shell=/bin/false home=/var/www/{{domain}} createhome=no
   
   - name: Set SFTP user password for {{domain}}
     shell: /bin/echo {{sftp_user}}:{{sftp_pass}} | /usr/sbin/chpasswd
