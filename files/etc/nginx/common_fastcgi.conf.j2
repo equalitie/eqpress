@@ -59,8 +59,7 @@ fastcgi_param PHP_VALUE "open_basedir=$document_root:/var/tmp \n session.save_pa
 # Cacheing is enabled, so tell the client to use its local cache.
 if ($do_not_set_cache = "") {
 	add_header Cache-Control "max-age=600, must-revalidate";
-	add_header easyPress-Platform {{ easypress_server_id }};
-	add_header easyPress-Cache $upstream_cache_status;
+	add_header eQ-Cache $upstream_cache_status;
 	add_header X-Frame-Options SAMEORIGIN;
 	add_header X-XSS-Protection "1; mode=block";
 	add_header Vary "Accept-Encoding, Cookie";
@@ -71,8 +70,7 @@ if ($do_not_set_cache = "true") {
 	#add_header Cache-Control "max-age=0, no-cache, no-store, must-revalidate";
 	#add_header Expires "Wed, 11 Jan 1984 05:00:00 GMT";
 	#add_header Pragma no-cache;
-	add_header easyPress-Platform {{ easypress_server_id }};
-	add_header easyPress-Cache $upstream_cache_status;
+	add_header eQ-Cache $upstream_cache_status;
 	add_header X-Frame-Options SAMEORIGIN;
 	add_header X-XSS-Protection "1; mode=block";
 	add_header Vary "Accept-Encoding";
