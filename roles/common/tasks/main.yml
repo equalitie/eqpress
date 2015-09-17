@@ -1,24 +1,12 @@
 ---
 # common/tasks/main.yml
 
-- name: Set fact with host's manually set external IPv4 address
-  set_fact: public_ipv4_address="{{real_ipv4}}"
-  when: real_ipv4 is defined
+- name: Set fact with host's external IPv4 address
+  set_fact: public_ipv4_address="{{real_ipv4 or ansible_default_ipv4.address}}"
   tags: hostname
 
-- name: Set fact with host's automaticall detected IPv4 address
-  set_fact: public_ipv4_address="{{ansible_default_ipv4.address}}"
-  when: real_ipv4 is not defined
-  tags: hostname
-
-- name: Set fact with host's manually set external IPv6 address
-  set_fact: public_ipv6_address="{{real_ipv6}}"
-  when: real_ipv6 is defined
-  tags: hostname
-
-- name: Set fact with host's automaticall detected IPv6 address
-  set_fact: public_ipv6_address="{{ansible_default_ipv6.address}}"
-  when: real_ipv6 is not defined
+- name: Set fact with host's external IPv6 address
+  set_fact: public_ipv6_address="{{real_ipv6 or ansible_default_ipv6.address}}"
   tags: hostname
 
 # this is here at the top just in case proxies are required which are set in .bashrc
