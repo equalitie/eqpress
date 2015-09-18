@@ -31,7 +31,7 @@
   tags: [mysql, repl, myuser]
 
 - name: Create the mysqladmin user for replication monitoring on master
-  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
+  mysql_user: name={{ mysql_admin_user.username }}  host="{{item}}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
   with_items:
     - "{{ mysql_repl_slave }}"
     - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
