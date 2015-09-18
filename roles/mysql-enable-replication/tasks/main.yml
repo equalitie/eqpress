@@ -30,7 +30,7 @@
   mysql_user: name={{ mysql_repl_creds.username }}  host="{{item}}" password={{ mysql_repl_creds.password|default("password") }} priv=*.*:"REPLICATION SLAVE" state=present
   with_items:
     - "{{ mysql_repl_slave }}"
-    - "{{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}"
+    - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
   when: mysql_repl_role == 'master'
   tags: [mysql, repl, myuser]
 
@@ -38,7 +38,7 @@
   mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
   with_items:
     - "{{ mysql_repl_slave }}"
-    - "{{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}"
+    - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
   when: mysql_repl_role == 'master'
   tags: [mysql, repl, mysqladmin_user]
 
