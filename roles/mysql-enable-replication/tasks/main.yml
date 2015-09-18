@@ -27,7 +27,7 @@
   tags: mysql
 
 - name: Create the replication user on the master
-  mysql_user: name={{ mysql_repl_creds.username }}  host="{{ item }}" password={{ mysql_repl_creds.password|default("password") }} priv=*.*:"REPLICATION SLAVE" state=present
+  mysql_user: name={{ mysql_repl_creds.username }}  host="{{item}}" password={{ mysql_repl_creds.password|default("password") }} priv=*.*:"REPLICATION SLAVE" state=present
   with_items:
     - "{{ mysql_repl_slave }}"
     - "{{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}"
