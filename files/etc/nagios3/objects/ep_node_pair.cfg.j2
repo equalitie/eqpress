@@ -58,15 +58,3 @@ define service{
 
 ############## System Monitoring ##############
 
-
-############# HTTP Monitoring ##############
-
-#define service{
-#        use                             generic-service
-#        host_name                       manchester.uk
-#        service_description             http://www.in-tuition.net
-#        check_command                   check_http!-H www.in-tuition.net -s div
-#        notifications_enabled           1
-#	notification_period		workhours
-#        event_handler		        trace-to-host
-#        }
