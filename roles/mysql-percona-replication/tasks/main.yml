@@ -88,7 +88,7 @@
     - localhost
     - "{{ inventory_hostname }}"
     - "{{ mysql_repl_slave }}"
-    - "{{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}"
+    - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
     - "monitor.easypress.ca"
   when: mysql_repl_role == 'master'
   tags: [mysql, repl, mysqladmin_user]
