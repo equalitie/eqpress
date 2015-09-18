@@ -6,7 +6,7 @@
   tags: provision-testing
 
 - name: deploy main code from template
-  template: src={{ files }}{{ auto_provision_base_directory }}-testing/ep-provision.php.j2 dest={{ auto_provision_base_directory }}-testing/ep-provision.php mode=0644 owner=www-data group=www-data
+  template: src={{ files }}{{ auto_provision_base_directory }}/ep-provision.php.j2 dest={{ auto_provision_base_directory }}-testing/ep-provision.php mode=0644 owner=www-data group=www-data
 
 - name: deploy util code from template
   template: src={{ files }}{{ auto_provision_base_directory }}/includes/class-ep-provision-util.php.j2 dest={{ auto_provision_base_directory }}/includes/class-ep-provision-util.php mode=0644 owner=www-data group=www-data
