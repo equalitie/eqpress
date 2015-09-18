@@ -7,8 +7,7 @@
   tags: [mysql, repl]
 
 - name: Ensure the hostname entry for the slave is entered into hosts file
-  lineinfile: dest=/etc/hosts regexp="{{ item }}" line="{{ hostvars[item].public_ipv4_address + ' ' + item }}" state=present
-  with_items: mysql_repl_slave
+  lineinfile: dest=/etc/hosts regexp="{{ mysql_repl_slave }}" line="{{ hostvars[mysql_repl_slave].public_ipv4_address + ' ' + mysql_repl_slave }}" state=present
   when: mysql_repl_role == 'master' and mysql_repl_slave is defined
   tags: [mysql, repl]
 
