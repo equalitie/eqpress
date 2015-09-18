@@ -1,10 +1,6 @@
 ---
 # roles/mysql-enable-replication/tasks/main.yml
 
-#- name: outut stuff
-#  debug: var=ssh_known_host_results
-#  tags: [ssh_known_hosts]
-
 - name: stop the mysql server on the slave
   service: name=mysql state=stopped
   when: mysql_repl_role == 'slave'
@@ -27,23 +23,23 @@
   tags: mysql
 
 - name: Create the replication user on the master
-  mysql_user: name={{ mysql_repl_creds.username }}  host="{{ item }}" password={{ mysql_repl_creds.password|default("password") }} priv=*.*:"REPLICATION SLAVE" state=present
+  mysql_user: name={{ mysql_repl_creds.username }}  host="{{item}}" password={{ mysql_repl_creds.password|default("password") }} priv=*.*:"REPLICATION SLAVE" state=present
   with_items:
     - "{{ mysql_repl_slave }}"
-    - "{{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}"
+    - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
   when: mysql_repl_role == 'master'
   tags: [mysql, repl, myuser]
 
 - name: Create the mysqladmin user for replication monitoring on master
-  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
+  mysql_user: name={{ mysql_admin_user.username }}  host="{{item}}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
   with_items:
     - "{{ mysql_repl_slave }}"
-    - "{{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}"
+    - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
   when: mysql_repl_role == 'master'
   tags: [mysql, repl, mysqladmin_user]
 
 - name: add firewall rule to allow slave to connect to master
-  command: /sbin/iptables -I INPUT -s {{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}/32 -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT
+  command: /sbin/iptables -I INPUT -s {{ hostvars[mysql_repl_slave].public_ipv4_address }}/32 -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT
   when: mysql_repl_role == 'master'
   tags: [mysql, repl]
 

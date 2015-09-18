@@ -2,13 +2,12 @@
 # roles/ssh-config/tasks/main.yml
 
 - name: Ensure the hostname entry for master is available for the client.
-  lineinfile: dest=/etc/hosts regexp="{{ mysql_repl_master }}" line="{{ hostvars[mysql_repl_master].ansible_default_ipv4.address + ' ' + mysql_repl_master }}" state=present
+  lineinfile: dest=/etc/hosts regexp="{{ mysql_repl_master }}" line="{{ hostvars[mysql_repl_master].pulic_ipv4_address + ' ' + mysql_repl_master }}" state=present
   when: mysql_repl_role == 'slave' and mysql_repl_master is defined
   tags: [mysql, repl]
 
 - name: Ensure the hostname entry for the slave is entered into hosts file
-  lineinfile: dest=/etc/hosts regexp="{{ item }}" line="{{ hostvars[item].ansible_default_ipv4.address + ' ' + item }}" state=present
-  with_items: mysql_repl_slave
+  lineinfile: dest=/etc/hosts regexp="{{ mysql_repl_slave }}" line="{{ hostvars[mysql_repl_slave].public_ipv4_address + ' ' + mysql_repl_slave }}" state=present
   when: mysql_repl_role == 'master' and mysql_repl_slave is defined
   tags: [mysql, repl]
 
