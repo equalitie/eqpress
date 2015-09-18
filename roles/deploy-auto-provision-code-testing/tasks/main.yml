@@ -1,5 +1,5 @@
 ---
-# file: roles/provision-testing/tasks/main.yml
+# file: roles/deploy-auto-provision-code-testing/tasks/main.yml
 
 - name: deploy provision scripts
   local_action: command rsync -vrlD {{ files }}/{{ auto_provision_base_directory }}/ {{ ansible_ssh_user }}@{{ inventory_hostname }}:{{ auto_provision_base_directory }}/provision-testing
