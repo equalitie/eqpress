@@ -7,5 +7,5 @@
      - web-app
      - build-auto-provision-server
      - deploy-auto-provision-code
-     - deploy-auto-provision-testing
+     - deploy-auto-provision-code-testing
      - install-ansible
