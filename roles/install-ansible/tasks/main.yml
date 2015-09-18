@@ -1,6 +1,10 @@
 ---
 # roles/install-ansible/tasks/main.yml
 
+- name: create the /etc/ansible directory
+  file: state=directory path=/etc/ansible owner=root group=root mode=0755
+  tags: [auto-provision, ansible]
+
 - name: ensure the provision directory exists
   file: state=directory path={{ auto_provision_base_directory }} owner=www-data group=www-data mode=0775
   when: auto_provision_host is defined
