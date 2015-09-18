@@ -6,6 +6,6 @@
      - easypress-ssl
      - web-app
      - build-auto-provision-server
+     - install-ansible
      - deploy-auto-provision-code
      - deploy-auto-provision-code-testing
-     - install-ansible
