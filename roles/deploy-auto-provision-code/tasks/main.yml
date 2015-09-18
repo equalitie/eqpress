@@ -11,4 +11,4 @@
 
 - name: deploy ansible hosts file
   copy: src={{ files }}/etc/ansible/hosts dest=/etc/ansible mode=0644 owner=root group=staff
-  tags: provision-testing
+  tags: provision

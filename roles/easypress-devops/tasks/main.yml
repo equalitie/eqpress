@@ -138,12 +138,6 @@
   ignore_errors: yes
   tags: [ep-console, monit]
 
-- name: copy custom monit-10 config
-  template: src={{ files }}/etc/monit/monitrc-10.j2 dest=/etc/monit owner=root group=root mode=0600
-  notify:
-    - start monit
-  tags: [ep-console, monit, monit-config]
-
 - name: copy custom monit-60 config
   template: src={{ files }}/etc/monit/monitrc-60.j2 dest=/etc/monit owner=root group=root mode=0600
   notify:

@@ -10,5 +10,12 @@ set idfile /var/run/monit-10.id
 set mailserver localhost
 set alert {{ monitoring_email }} with mail-format { subject: monit-10 $SERVICE $EVENT }
 #
-# Add monitors requiring 10 second intervals
+# WordPress provision testing system
 #
+check program provision-testing with path /usr/local/sbin/monit_ep_provision_testing.sh
+        if status != 0 then alert
+#
+# WordPress provision system
+#
+check program provision with path /usr/local/sbin/monit_ep_provision.sh
+        if status != 0 then alert

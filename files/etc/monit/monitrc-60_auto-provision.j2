@@ -1,0 +1,28 @@
+###############################################################################
+## Global section
+###############################################################################
+set daemon 60
+set expectbuffer 20 kb
+set logfile /var/log/monit.log
+set statefile /var/run/monit-60.state
+set pidfile /var/run/monit-60.pid
+set idfile /var/run/monit-60.id
+set mailserver localhost
+set alert {{ monitoring_email }} with mail-format { subject: monit-60 $SERVICE $EVENT }
+#
+# General system monitoring config
+#
+
+#
+# monitor active connections
+check program active-connectionx with path /usr/local/sbin/monit_connections.sh
+	if status != 0 then alert
+#
+# make sure cron is running
+check process cron with pidfile /var/run/crond.pid
+            start = "/etc/init.d/cron start"
+            stop  = "/etc/init.d/cron stop"
+#
+# make sure postfix queue is not growing otherwise could be some spam getting through
+check program check-mailq with path /usr/local/sbin/monit_check_mailq.sh
+	if status != 0 then alert
