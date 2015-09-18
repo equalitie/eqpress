@@ -1,0 +1,95 @@
+---
+# roles/install-auto-provision/tasks/main.yml
+
+- name: create easypress.ca docroot
+  file: path=/var/www/easypress.ca state=directory owner=www-data group=www-data mode=0755
+  tags: provision
+
+- name: create provision directory
+  file: path=/var/www/easypress.ca/provision state=directory owner=www-data group=www-data mode=0755
+  tags: provision
+
+- name: create provision testing directory
+  file: path=/var/www/easypress.ca/provision-testing state=directory owner=www-data group=www-data mode=0755
+  tags: provision
+
+- name: copy easypress.ca nginx config
+  template: src={{ files }}/etc/nginx/sites-available/easypress.ca.j2 dest=/etc/nginx/sites-available/easypress.ca owner=root group=staff mode=0664
+  notify:
+     - reload nginx
+  tags: provision
+
+- name: link easypress.ca nginx config
+  file: src=/etc/nginx/sites-available/easypress.ca dest=/etc/nginx/sites-enabled/easypress.ca state=link
+  tags: provision
+
+- name: ensure root ownership on /var/www
+  file: path=/var/www state=directory owner=root group=root mode=0755
+  tags: provision
+
+- name: set ownership on easypress.ca docroot
+  file: path=/var/www/easypress.ca owner=www-data group=www-data state=directory recurse=yes
+  tags: provision
+
+- name: create monitor group
+  group: name=monitor state=present
+  tags: users
+
+- name: create users
+  action: user group={{ item.group }} shell=/bin/bash name={{ item.user }}
+  with_items:
+    - { user: "monitor", group: "monitor" }
+  tags: users
+
+- name: reset users home directory ownerships
+  action: file path=/home/{{ item.user }} owner={{ item.user }} group={{ item.group }} state=directory recurse=yes
+  with_items:
+    - { user: "monitor", group: "monitor" }
+  tags: users
+
+- name: remove setuid bit on sbin directory
+  command: /bin/chmod g-s /usr/local/sbin
+  tags: [sbin]
+
+- name: set permissions on sbin directory
+  command: /bin/chmod 0755 /usr/local/sbin
+  tags: [sbin]
+
+- name: copy all sbin easyPress admin scripts
+  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0755
+  with_items:
+    - check-mem.pl
+    - class-http-log-parser.php
+    - harden_ip.sh
+    - monit_check_mailq.sh
+    - monit_connections.sh
+    - monit_ep_provision.sh
+    - monit_ep_provision_testing.sh
+    - resident-ram
+    - top_ram_procs.sh
+  tags: sbin
+
+- name: copy custom monit startup script
+  copy: src={{ files }}/etc/init.d/monit dest=/etc/init.d owner=root group=root mode=0750
+  notify:
+    - restart monit
+  tags: [monit]
+
+- name: copy custom monit-10 config
+  template: src={{ files }}/etc/monit/monitrc-10_auto-provision.j2 dest=/etc/monit/monitrc-10 owner=root group=root mode=0600
+  notify:
+    - restart monit
+  tags: [monit, monit-config]
+
+- name: copy custom monit-60 config
+  template: src={{ files }}/etc/monit/monitrc-60_auto-provision.j2 dest=/etc/monit/monitrc-60 owner=root group=root mode=0600
+  notify:
+    - restart monit
+  tags: [monit, monit-config]
+
+- name: install auto-provision GPG key
+  shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ auto_provision_gpg_id }}
+  when: auto_provision_host is defined
+  ignore_errors: yes
+  tags: [auto-provision, gpg]
+

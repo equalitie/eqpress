@@ -4,6 +4,8 @@
   roles:
      - common
      - easypress-ssl
-     - easypress-devops
      - web-app
+     - build-auto-provision-server
+     - deploy-auto-provision-code
+     - deploy-auto-provision-testing
      - install-ansible
