@@ -39,7 +39,7 @@
   tags: [mysql, repl, mysqladmin_user]
 
 - name: add firewall rule to allow slave to connect to master
-  command: /sbin/iptables -I INPUT -s {{ hostvars[mysql_repl_slave].ansible_default_ipv4.address }}/32 -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT
+  command: /sbin/iptables -I INPUT -s {{ hostvars[mysql_repl_slave].public_ipv4_address }}/32 -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT
   when: mysql_repl_role == 'master'
   tags: [mysql, repl]
 
