@@ -10,5 +10,5 @@
   tags: provision-testing
 
 - name: deploy ansible hosts file
-  template: src={{ files }}/etc/ansible/hosts.js dest=/etc/ansible/hosts mode=0644 owner=root group=staff
+  template: src={{ files }}/etc/ansible/hosts.j2 dest=/etc/ansible/hosts mode=0644 owner=root group=staff
   tags: provision-testing
