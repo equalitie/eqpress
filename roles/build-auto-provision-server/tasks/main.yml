@@ -1,5 +1,5 @@
 ---
-# roles/install-auto-provision/tasks/main.yml
+# roles/build-auto-provision-server/tasks/main.yml
 
 - name: create easypress.ca docroot
   file: path=/var/www/easypress.ca state=directory owner=www-data group=www-data mode=0755

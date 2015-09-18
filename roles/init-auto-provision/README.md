@@ -35,7 +35,7 @@ Add the server acting as the auto-provision server to the ansible hosts file und
 
 ## Building the Auto-Provision Server
 
-	ansible-playbook -i hosts play-auto-provision.yml -u root -l auto-provision
+	ansible-playbook -i hosts play-auto-provision.yml -u root
 
 ## PHP Config
 Variables are set using the PHP environment via the superglobal $_SERVER. Environment variables are set in the file:

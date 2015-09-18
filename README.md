@@ -1,5 +1,9 @@
 ### Installing
-A host with a working Ansible installation is required. Clone this repo:
+A host with a working Ansible installation is required.
+
+	git clone git://github.com/ansible/ansible.git --recursive
+	
+Clone this repo:
 
 	git clone https://github.com/equalitie/eqpress.git
 
