@@ -1,8 +1,8 @@
 ---
-# file: roles/provision/tasks/main.yml
+# file: roles/deploy-auto-provision-code/tasks/main.yml
 
 - name: deploy provision scripts
-  local_action: command rsync -vrlD {{ files }}/var/www/{{ auto_provision_base_directory }}/provision/ {{ inventory_hostname }}:/var/www/{{ auto_provision_base_directory }}/provision
+  local_action: command rsync -vrlD {{ files }}/{{ auto_provision_base_directory }}/ {{ inventory_hostname }}:{{ auto_provision_base_directory }}
   tags: provision
 
 - name: deploy monit script
@@ -10,5 +10,5 @@
   tags: provision
 
 - name: deploy ansible hosts file
-  copy: src={{ files }}/etc/ansible/hosts dest=/etc/ansible mode=0644 owner=root group=staff
+  template: src={{ files }}/etc/ansible/hosts.j2 dest=/etc/ansible/hosts mode=0644 owner=root group=staff
   tags: provision

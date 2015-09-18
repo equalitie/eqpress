@@ -2,7 +2,7 @@
 # file: roles/provision-testing/tasks/main.yml
 
 - name: deploy provision scripts
-  local_action: command rsync -vrlD {{ files }}/var/www/{{ auto_provision_base_directory }}/provision/ {{ ansible_ssh_user }}@{{ inventory_hostname }}:/var/www/{{ auto_provision_base_directory }}/provision-testing
+  local_action: command rsync -vrlD {{ files }}/{{ auto_provision_base_directory }}/ {{ ansible_ssh_user }}@{{ inventory_hostname }}:{{ auto_provision_base_directory }}/provision-testing
   tags: provision-testing
 
 - name: deploy monit script
@@ -10,5 +10,5 @@
   tags: provision-testing
 
 - name: deploy ansible hosts file
-  copy: src={{ files }}/etc/ansible/hosts dest=/etc/ansible mode=0644 owner=root group=staff
+  template: src={{ files }}/etc/ansible/hosts.js dest=/etc/ansible/hosts mode=0644 owner=root group=staff
   tags: provision-testing
