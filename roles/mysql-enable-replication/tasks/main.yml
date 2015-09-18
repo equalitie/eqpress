@@ -1,10 +1,6 @@
 ---
 # roles/mysql-enable-replication/tasks/main.yml
 
-#- name: outut stuff
-#  debug: var=ssh_known_host_results
-#  tags: [ssh_known_hosts]
-
 - name: stop the mysql server on the slave
   service: name=mysql state=stopped
   when: mysql_repl_role == 'slave'
