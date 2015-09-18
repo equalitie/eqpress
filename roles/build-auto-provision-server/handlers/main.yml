@@ -1,12 +1,12 @@
 ---
 - name: restart nginx
-  service: name=nginx state=reloaded
+  service: name=nginx state=reloaded enabled=yes
 
 - name: restart php-fpm
-  service: name=php5-fpm state=restarted
+  service: name=php5-fpm state=restarted enabled=yes
 
 - name: restart monit
-  service: name=monit state=restarted
+  service: name=monit state=restarted enabled=yes
 
 - name: start monit
-  service: name=monit state=started
+  service: name=monit state=started enabled=yes

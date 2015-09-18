@@ -12,7 +12,7 @@
 
 - name: clone the ansible repository
   git: repo=git://github.com/ansible/ansible.git
-       dest={{ auto_provision_base_directory }}/ansible
+       dest={{ auto_provision_base_directory }}/../ansible
        recursive=yes
        version={{ auto_provision_ansible_version }}
        accept_hostkey=yes
