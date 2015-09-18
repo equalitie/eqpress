@@ -12,7 +12,7 @@ define host{
 							; in (or inherited by) the freebsd-server host template definition.
         host_name               {{ mysql_repl_master }}
         alias                   {{ mysql_repl_master }}
-        address                 {{ ansible_default_ipv4.address }}
+        address                 {{ hostvars[mysql_repl_master].public_ipv4_address }}
         }
 
 
@@ -22,7 +22,7 @@ define host{
 							; in (or inherited by) the freebsd-server host template definition.
         host_name               {{ mysql_repl_slave }}
         alias                   {{ mysql_repl_slave }}
-        address                 {{ ansible_default_ipv4.address }}
+        address                 {{ hostvars[mysql_repl_slave].public_ipv4_address }}
         }
 
 ###############################################################################
