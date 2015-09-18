@@ -63,8 +63,6 @@
     - harden_ip.sh
     - monit_check_mailq.sh
     - monit_connections.sh
-    - monit_ep_provision.sh
-    - monit_ep_provision_testing.sh
     - resident-ram
     - top_ram_procs.sh
   tags: sbin
