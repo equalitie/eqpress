@@ -57,12 +57,11 @@ if [ -n "$1" ]; then
 			done
 	fi
 else
-	echo "Usage: wp_update_plugin.sh all | plugin1 [plugin2 ...] [path_to_plugin]"
-	echo "Update all plugins or those provided as options to this script."
+	echo "Usage: wp_update_plugin.sh all|<plugin_name>"
+	echo "Update all plugins or the one provided as option to this script."
 	echo
 	echo "Example: wp_update_plugin.sh all - update all plugin on all sites."
-	echo "Example: wp_update_plugin.sh wp-super-cache w3-total-cache - update the listed plugins on all sites."
-	echo "Example: wp_update_plugin.sh jetpack /home/easypress/jetpack.2.9.3.zip"
+	echo "Example: wp_update_plugin.sh wp-super-cache - update this plugin on all sites."
 	echo
 fi
 exit 0
