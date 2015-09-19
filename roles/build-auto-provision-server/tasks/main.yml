@@ -3,33 +3,38 @@
 
 - name: create easypress.ca docroot
   file: path=/var/www/easypress.ca state=directory owner=www-data group=www-data mode=0755
-  tags: provision
+  tags: auto-provision
 
-- name: create provision directory
-  file: path=/var/www/easypress.ca/provision state=directory owner=www-data group=www-data mode=0755
-  tags: provision
-
-- name: create provision testing directory
-  file: path=/var/www/easypress.ca/provision-testing state=directory owner=www-data group=www-data mode=0755
-  tags: provision
+- name: create provision and provision-testing directories
+  file: path=/var/www/easypress.ca/{{ item }} state=directory owner=www-data group=www-data mode=0755
+  with_items:
+    - provision
+    - provision/pending
+    - provision/processing
+    - provision/processed
+    - provision-testing
+    - provision-testing/pending
+    - provision-testing/processing
+    - provision-testing/processed
+  tags: [auto-provision, auto-provision-directories]
 
 - name: copy easypress.ca nginx config
   template: src={{ files }}/etc/nginx/sites-available/easypress.ca.j2 dest=/etc/nginx/sites-available/easypress.ca owner=root group=staff mode=0664
   notify:
      - reload nginx
-  tags: provision
+  tags: auto-provision
 
 - name: link easypress.ca nginx config
   file: src=/etc/nginx/sites-available/easypress.ca dest=/etc/nginx/sites-enabled/easypress.ca state=link
-  tags: provision
+  tags: auto-provision
 
 - name: ensure root ownership on /var/www
   file: path=/var/www state=directory owner=root group=root mode=0755
-  tags: provision
+  tags: auto-provision
 
 - name: set ownership on easypress.ca docroot
   file: path=/var/www/easypress.ca owner=www-data group=www-data state=directory recurse=yes
-  tags: provision
+  tags: auto-provision
 
 - name: create monitor group
   group: name=monitor state=present
