@@ -30,22 +30,13 @@ class EP_Provision_Util {
         }
 
         if ( isset( $_POST['location'] ) && !empty( $_POST['location'] ) ) {
-            if ( $_POST['location'] == 'jester' ||
-                 $_POST['location'] == 'us' ||
-                 $_POST['location'] == 'equalit-test' ) {
-
                 $params['location'] = $_POST['location'];
-            }
         }
 
         if ( isset( $_POST['domain'] ) && !empty( $_POST['domain'] ) ) {
             $domain = $this->sanitize_domain( $_POST['domain'] );
             if ( $this->is_valid_domain( $domain ) ) {
-                if ( $params['location'] == 'uk' ) {
-                    $params['domain_cname'] = '.wp.pendeopress.com';
-                }
                 $params['domain'] = $domain;
-                $params['domain_cname'] = $domain . $params['domain_cname'];
             } else {
                 $params['status']['errors']++;
                 $params['status']['messages'][] = 'Domain name is invalid: ' . $domain;
@@ -95,14 +86,6 @@ class EP_Provision_Util {
 
         if ( isset( $_POST['alert_email'] ) && !empty( $_POST['alert_email'] ) && $this->is_valid_email_address( $_POST['alert_email']) ) {
             $params['alert_email'] = $_POST['alert_email'];
-        }
-
-        if ( isset( $_POST['is_dev'] ) && !empty( $_POST['is_dev'] ) ) {
-            $params['is_dev'] = $_POST['is_dev'];
-        }
-
-        if ( isset( $_POST['add_cname'] ) && !empty( $_POST['add_cname'] ) ) {
-            $params['add_cname'] = $_POST['add_cname'];
         }
     }
 
@@ -393,10 +376,8 @@ class EP_Provision_Util {
 
         if ( $params['multisite'] !== false ) {
             $domain = $params['domain'];
-            $domain_cname = $params['domain_cname'];
             $multisite_config = <<<EOT
     server_name *.$domain;
-    server_name *.$domain_cname;
 
     server_name_in_redirect off;
 EOT;
@@ -422,7 +403,6 @@ EOLUA;
         $tpl = $mustache->loadTemplate('nginx-config');
         $out = $tpl->render( array(
             'domain'                    => $params['domain'],
-            'domain_cname'              => $params['domain_cname'],
             'multisite_config'          => $multisite_config,
             'multisite_subdir_config'   => $multisite_subdir_config,
             'lua_config_root'           => $lua_config_root,
@@ -443,7 +423,6 @@ EOLUA;
         $switch_to_dev = '';
         $console = '';
         $domain = $params['domain'];
-        $domain_cname = $params['domain_cname'];
         $from_email = '{{ org_support_email }} ({{ org_name }} Support)';
         $subject = "Your WordPress site for $domain is ready!";
 
@@ -480,17 +459,6 @@ EOT;
 
 EOT;
         } // end of multisite config
-
-        if ( $params['is_dev'] == 1 ) {
-            $switch_to_dev = <<<EOD
-  - name: update home DB option to be a dev site
-    command: chdir=/var/www/$domain/wordpress /usr/local/sbin/wp --allow-root option set home http://$domain_cname
-
-  - name: update siteurl DB option to be a dev site
-    command: chdir=/var/www/$domain/wordpress /usr/local/sbin/wp --allow-root option set siteurl http://$domain_cname
-
-EOD;
-        }
 
         $console = <<<EOE
   - name: Install Console as must-use plugins for $domain
@@ -544,11 +512,6 @@ EOE;
         $domain = $params['domain'];
         $welcome_email_template = 'welcome-email.txt.mustache';
 
-        // If the site is for development then send the development domain.
-        if ( $params['is_dev'] == 1 ) {
-            $domain = $params['domain_cname'];
-        }
-
         // Get the IP address of the server.
         $server_ip = $params['nodes'][$params['location']]['ip'];
 
@@ -562,7 +525,6 @@ EOE;
             'wp_admin'      => $params['first_name'],
             'db_name'       => $params['db_name'],
             'db_user'       => $params['db_user'],
-            'sftp_server'   => $params['domain_cname'],
             'sftp_user'     => $params['db_user'],
             'pwp_wp'        => $params['pwp']['wp'],
             'pwp_db'        => $params['pwp']['db'],
