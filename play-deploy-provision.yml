@@ -2,4 +2,4 @@
 - hosts: auto-provision
   gather_facts: false
   roles:
-     - auto-provision
+     - deploy-auto-provision-code
