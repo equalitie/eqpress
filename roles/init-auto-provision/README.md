@@ -35,7 +35,7 @@ Add the server acting as the auto-provision server to the ansible hosts file und
 
 ## Building the Auto-Provision Server
 
-	ansible-playbook -i hosts play-auto-provision.yml -u root
+	ansible-playbook -i hosts play-build-auto-provision-server.yml -u root
 
 ## PHP Config
 Variables are set using the PHP environment via the superglobal $_SERVER. Environment variables are set in the file:
@@ -50,13 +50,13 @@ A specific nginx configuration is required to use the auto-provision backend.
 ## Testing Auto-Provision Code Updates
 Run the following command to deploy changes to the auto-provision code to the testing environment:
 
-	ansible-playbook -i hosts play-deploy-provision-testing.yml -u root -v
+	ansible-playbook -i hosts play-deploy-aut-provision-code-testing.yml -u root -v
 
 
 ## Deploy Auto-Provision Code Updates to Production
 Run the following command to deploy changes to the auto-provision code to production:
 
-	ansible-playbook -i hosts play-deploy-provision.yml -u root -v
+	ansible-playbook -i hosts play-deploy-auto-provision-code.yml -u root -v
 
 
 
