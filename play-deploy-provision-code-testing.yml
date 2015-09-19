@@ -1,5 +1,5 @@
 ---
-- hosts: provision
+- hosts: auto-provision
   gather_facts: false
   roles:
      - deploy-auto-provision-code-testing
