@@ -1,9 +1,29 @@
 ---
 # roles/install-ansible/tasks/main.yml
 
+- name: Update the apt-get cache
+  apt: update_cache=yes
+
+- name: install required python packages
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - python-httplib2
+    - python-jinja2
+    - python-yaml
+    - python-six
+  tags: [auto-provision, ansible]
+
 - name: create the /etc/ansible directory
   file: state=directory path=/etc/ansible owner=root group=root mode=0755
   tags: [auto-provision, ansible]
+
+- name: create the ansible log file
+  shell: touch /var/log/ansible.log && chmod 0640 /var/log/ansible.log && chown root:root /var/log/ansible.log
+  tags: [auto-provision, install-ansible]
+
+- name: copy the ansible config file
+  template: src={{ files }}/etc/ansible/ansible.cfg.j2 dest=/etc/ansible/ansible.cfg owner=root group=root mode=0640
+  tags: [auto-provision, install-ansible]
 
 - name: ensure the provision directory exists
   file: state=directory path={{ auto_provision_base_directory }} owner=www-data group=www-data mode=0775
@@ -18,4 +38,3 @@
        accept_hostkey=yes
   when: auto_provision_host is defined
   tags: [auto-provision, install-ansible]
-
