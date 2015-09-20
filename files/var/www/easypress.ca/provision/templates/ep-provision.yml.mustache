@@ -10,13 +10,13 @@
     file: path=/var/www/{{domain}} state=directory mode=0755
 
   - name: Ensure directory containing WordPress archive exists for {{domain}}
-    file: path=/home/easypress state=directory mode=0755
+    file: path=/home/wordpress state=directory mode=0755
 
   - name: Ensure WordPress archive exists and it's the latest version for {{domain}}
-    copy: src=/home/easypress/latest.tar.gz dest=/home/easypress/latest.tar.gz
+    copy: src=/home/wordpress/latest.tar.gz dest=/home/wordpress/latest.tar.gz
 
   - name: Extract WordPress archive for {{domain}}
-    command: chdir=/var/www/{{domain}} /bin/tar xfz /home/easypress/latest.tar.gz creates=/var/www/{{domain}}/wordpress
+    command: chdir=/var/www/{{domain}} /bin/tar xfz /home/wordpress/latest.tar.gz creates=/var/www/{{domain}}/wordpress
 
   - name: Create the .sessions directory for {{domain}}
     file: path=/var/www/{{domain}}/wordpress/.sessions state=directory mode=0755

@@ -37,13 +37,17 @@
   tags: auto-provision
 
 - name: create monitor group
-  group: name=monitor state=present
+  group: name={{ item }} state=present
+  with_items:
+    - monitor
+    - wordpress
   tags: users
 
 - name: create users
   action: user group={{ item.group }} shell=/bin/bash name={{ item.user }}
   with_items:
     - { user: "monitor", group: "monitor" }
+    - { user: "wordpress", group: "wordpress" }
   tags: users
 
 - name: reset users home directory ownerships
