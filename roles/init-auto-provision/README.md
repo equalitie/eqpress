@@ -2,7 +2,18 @@
 
 ## Initialzing the Auto-Provision Sever
 
+Edit the ansible hosts file and make sure there's a group named "auto-provision"
+
+	# vi hosts
+	
+	[local]
+	localhost
+	
+	[auto-provision]
+	provision.equalit.ie
+
 Run the following playbooks
+
 
 	ansible-playbook -i hosts play-init-env.yml -v
 	ansible-playbook -i hosts play-init-auto-provision.yml -v

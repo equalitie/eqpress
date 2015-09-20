@@ -3,6 +3,7 @@
   gather_facts: true
   roles:
      - common
+     - ssh-config
      - easypress-ssl
      - web-app
      - build-auto-provision-server
