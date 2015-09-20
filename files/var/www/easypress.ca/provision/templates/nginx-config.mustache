@@ -2,7 +2,6 @@ server {
     listen 80;
     server_name {{domain}};
     server_name www.{{domain}};
-    server_name {{domain_cname}};
 {{multisite_config}}
     root /var/www/{{domain}}/wordpress;
     access_log /var/log/nginx/{{domain}}.access.log;
@@ -42,7 +41,6 @@ server {
     listen 443 spdy;
     server_name {{domain}};
     server_name www.{{domain}};
-    server_name {{domain_cname}};
 {{multisite_config}}
     root /var/www/{{domain}}/wordpress;
     access_log /var/log/nginx/{{domain}}.access.log;
