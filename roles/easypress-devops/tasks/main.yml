@@ -81,7 +81,7 @@
     - monit_ep_console_perms.sh
     - monit_php-fpm_procs.sh
     - monitor_nginx.pl
-    - prtran.pl
+#    - prtran.pl
     - resident-ram
     - top_ram_procs.sh
     - wp
@@ -89,7 +89,7 @@
     - wpcli_wordfence_no_scan.php
     - wp_check_plugins.php
     - wp_db_backup.sh
-    - wp_update.sh
+#    - wp_update.sh
     - wp_update_plugins.sh
   tags: ep-sbin
 
@@ -107,7 +107,7 @@
 - name: copy webstat script templates
   action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
   with_items:
-    - ep_api_webstats.php
+#    - ep_api_webstats.php
     - webstats.php
     - webstats_totals.php
   when: mysql_webstats is defined
