@@ -1,0 +1,6 @@
+---
+
+# if using DNS for host
+{% if use_host_lookup == "y" %}
+public_ipv4_address: "{{ dns_ip_ap.stdout }}"
+{%endif %}
