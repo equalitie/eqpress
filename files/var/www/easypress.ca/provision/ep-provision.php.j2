@@ -18,13 +18,11 @@ $view = new EP_Provision_View;
 $params = array(
     'status'            => array( 'errors' => 0, 'messages' => array() ),
     'request_id'        => $util->random( 8 ),
-    'auth_token'        => '',
     'bcc_email'         => '{{ org_support_email }}',
     'alert_email'       => '{{ org_support_email }}',
     'org_name'          => '{{ org_name }}',
     'org_email'         => '{{ org_support_email }}',
     'org_twitter'       => '{{ org_twitter }}',
-    'easydns_user'      => '',
     'domain'            => '',
     'email'             => '',
     'real_first_name'   => '',
@@ -65,7 +63,7 @@ switch($step) {
         define( 'EP_PEND_DIR', EP_PROV_DIR . 'pending/' );
 
         // Log the incoming request.
-        file_put_contents( EP_PROV_DIR . 'ep-provision.log',
+        file_put_contents( EP_PROV_DIR . '{{ auto_provision_log_file }}',
             "\n" . date( DATE_RFC850 ) .
             ' (request ' . $params['request_id'] . ' received): ' .
             serialize( $_POST ) . "\n", FILE_APPEND | LOCK_EX );
@@ -108,7 +106,8 @@ switch($step) {
         echo json_encode( $params['status'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 
         // Log the results of processing the request
-        file_put_contents( EP_PROV_DIR . 'ep-provision.log',
+        $util->sanitize_params();
+        file_put_contents( EP_PROV_DIR . '{{ auto_provision_log_file }}',
             "\n" . date( DATE_RFC850 ) .
             ' (request ' . $params['request_id'] . ' processed): ' .
             serialize( $params ) . "\n", FILE_APPEND | LOCK_EX );
