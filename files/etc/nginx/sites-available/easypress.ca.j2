@@ -9,7 +9,7 @@ server {
                 stub_status on;
                 access_log off;
                 allow 127.0.0.1;
-                allow {{ ansible_default_ipv4.address }};
+                allow {{ public_ipv4_address }};
                 deny all;
         }
 
