@@ -1,8 +1,16 @@
 ### Installing
-A host with a working Ansible installation is required.
+A host with a working Ansible installation is required. Read this:
+
+	http://docs.ansible.com/ansible/intro_installation.html
+
+Minimally you will need to clone the Ansible repository
 
 	git clone git://github.com/ansible/ansible.git --recursive
 	
+You will probably need to install some python package too. On debian this will take care of that step
+
+	
+
 Clone this repo:
 
 	git clone https://github.com/equalitie/eqpress.git
