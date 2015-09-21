@@ -93,6 +93,11 @@
       default: "America/Montreal"
       private: no
 
+    - name: "use_host_lookup"
+      prompt: "Use DNS lookup for host IP assignment (y/n)"
+      default: "y"
+      private: no
+
   roles:
      - init-env
      - gen-root-cert

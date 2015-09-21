@@ -1,6 +1,16 @@
 ---
 # roles/initialize/tasks/main.yml
 
+- name: Use DNS for host external IPv4 address master
+  local_action: command /usr/bin/dig +noall +short {{ master_hostname }}
+  when: use_host_lookup == "y"
+  register: dns_ip_master
+
+- name: Use DNS for host external IPv4 address slave 
+  local_action: command /usr/bin/dig +noall +short {{ slave_hostname }}
+  when: use_host_lookup == "y"
+  register: dns_ip_slave
+
 - name: Create the group_vars file.
   local_action: template src=group.yml.j2 dest=group_vars/{{ ansible_group_name }}.yml
 

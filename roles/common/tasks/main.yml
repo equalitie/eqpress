@@ -21,7 +21,7 @@
   tags: hostname
 
 - name: Add the host entry to /etc/hosts
-  lineinfile: dest=/etc/hosts line="{{ ansible_default_ipv4.address }}  {{ inventory_hostname }}" state=present
+  lineinfile: dest=/etc/hosts line="{{ public_ipv4_address }}  {{ inventory_hostname }}" state=present
   tags: hostname
 
 - name: Set the hostname
