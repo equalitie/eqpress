@@ -2,7 +2,7 @@
 # roles/easypress-ssl/tasks/main.yml
 
 - name: touch the serial file
-  local_action: shell echo 01 > {{ ssl_dir }}/serial.txt
+  local_action: shell [ -f {{ ssl_dir }}/serial.txt ] && touch {{ ssl_dir }}/serial.txt || echo 01 > {{ ssl_dir }}/serial.txt
   run_once: true
   tags: ssl
 
