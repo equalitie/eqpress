@@ -95,7 +95,7 @@
 
     - name: "use_host_lookup"
       prompt: "Use DNS lookup for host IP assignment (y/n)"
-      default: "y"
+      default: "n"
       private: no
 
   roles:
