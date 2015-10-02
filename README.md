@@ -67,6 +67,7 @@ Mandrill and Sendgrid are email delivery services offering free accounts for mod
 * **Monitoring email address** - Where all alerts are sent to.
 * **Timezone**
 * **Use DNS lookup for host IP assignment** - y or n
+
 "y" if you want to use dns lookup for IP and "n" to use ansible gathered facts for IP 
 
 #### Server Configuration Initialization
