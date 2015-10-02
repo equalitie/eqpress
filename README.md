@@ -66,7 +66,8 @@ Mandrill and Sendgrid are email delivery services offering free accounts for mod
 * **Default email service**
 * **Monitoring email address** - Where all alerts are sent to.
 * **Timezone**
-* **Use DNS lookup for host IP assignment** - y or n "y" if you want to use dns lookup to find IP an "n" to use ansible gathered facts 
+* **Use DNS lookup for host IP assignment** - y or n
+"y" if you want to use dns lookup for IP and "n" to use ansible gathered facts for IP 
 
 #### Server Configuration Initialization
 To build a redundant pair of servers there are some ansible variables that need to be set for the playbooks to work. Run the initialization playbook to create the group and host variables:
