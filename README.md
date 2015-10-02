@@ -25,7 +25,7 @@ Initializing the ansible environment is required before any other playbooks can 
 Example inventory
 	
 	[local]
-	localhost
+	localhost ansible_connection=local
 
 	[production]
 	eqwp1.equalit.ie
@@ -66,6 +66,7 @@ Mandrill and Sendgrid are email delivery services offering free accounts for mod
 * **Default email service**
 * **Monitoring email address** - Where all alerts are sent to.
 * **Timezone**
+* **Use DNS lookup for host IP assignment** - y or n "y" if you want to use dns lookup to find IP an "n" to use ansible gathered facts 
 
 #### Server Configuration Initialization
 To build a redundant pair of servers there are some ansible variables that need to be set for the playbooks to work. Run the initialization playbook to create the group and host variables:
@@ -103,6 +104,10 @@ The following settings must be specified:
 * The debian packages python and python-simplejson must be installed for ansible to work.
 
 Play to run
+
+	ansible-playbook -i hosts play-fullstack.yml -u root -l eqwp
+
+When the servers are ready for production then it's time to deploy the cron jobs
 
 	ansible-playbook -i hosts play-go-live.yml -u root -l eqwp
 

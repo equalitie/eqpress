@@ -1,6 +1,12 @@
 ---
 # roles/initialize/tasks/main.yml
 
+- name: install local dig 
+  action: apt pkg={{ item }} state=installed
+  with_items:
+    - dnsutils 
+  when: use_host_lookup == "y" 
+
 - name: Use DNS for host external IPv4 address master
   local_action: command /usr/bin/dig +noall +short {{ master_hostname }}
   when: use_host_lookup == "y"
