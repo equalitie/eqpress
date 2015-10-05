@@ -71,6 +71,9 @@ switch($step) {
         // Validate and sanitize the request
         $util->validate_post_parameters();
 
+        // Authenticate the request
+        $util->authenticate( $_POST['username'], $_POST['password'], $_POST['api_key'] );
+
         // More constants for paths
         if (!empty($_SERVER['TMP'])) {
             define( 'EP_TMP_DIR', $_SERVER['TMP'] . '/' . $params['request_id'] . '/' . $params['domain'] );
