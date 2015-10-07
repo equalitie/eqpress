@@ -12,11 +12,12 @@ class EP_Provision_View {
  	*/
 	public function display_header() {
 		header( 'Content-Type: text/html; charset=utf-8' );	?>
-		<html>
+		<!DOCTYPE html>
+		<html lang="en">
 		<head>
-			<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-			<link rel='stylesheet' id='install-css'  href='install.css' type='text/css' media='all' />
+			<meta charset="utf-8" />
 			<title>WordPress Provisioning</title>
+			<link rel='stylesheet' id='install-css'  href='install.css' type='text/css' media='all' />
 		</head>
 		<body>
 			<h1 id="logo"><img alt="WordPress" src="https://s.w.org/about/images/logos/wordpress-logo-hoz-rgb.png" /></h1>

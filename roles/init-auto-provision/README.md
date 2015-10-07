@@ -7,15 +7,19 @@ Edit the ansible hosts file and make sure there's a group named "auto-provision"
 	# vi hosts
 	
 	[local]
-	localhost
+	localhost ansible_connection=local
 	
 	[auto-provision]
 	provision.equalit.ie
 
 Run the following playbooks
 
+run these first 2 if you have not already ran for the eqpress installs
 
 	ansible-playbook -i hosts play-init-env.yml -v
+	ansible-playbook -i hosts play-init-servers.yml -v
+
+
 	ansible-playbook -i hosts play-init-auto-provision.yml -v
 
 The following settings can be specified:

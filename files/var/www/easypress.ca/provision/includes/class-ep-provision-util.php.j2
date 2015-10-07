@@ -90,6 +90,19 @@ class EP_Provision_Util {
     }
 
     /**
+     * Authenticate the request
+     *
+     */
+    public function authenticate( $username, $password, $source ) {
+        global $params;
+	/*
+         * Insert authentication code here
+         * Use this for the case auth fails:
+	 * $this->process_errors( 'Incorrect username or password.', true );
+	 */
+    }
+
+    /**
      * Process errors
      *
      * @param string $message is the error message to write to the log and/or screen.
