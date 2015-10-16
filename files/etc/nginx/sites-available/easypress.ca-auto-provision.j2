@@ -1,0 +1,101 @@
+server {
+	listen 80;
+	server_name {{ inventory_hostname }};
+	root /var/www/easypress.ca;
+	access_log /var/log/nginx/{{ inventory_hostname }}.access.log;
+	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
+
+        location /nginx_status {
+                stub_status on;
+                access_log off;
+                allow 127.0.0.1;
+                allow {{ public_ipv4_address }};
+                deny all;
+        }
+
+        location ~ ^/(phpfpmstatus|phpfpmping)$ {
+                include fastcgi_params;
+                fastcgi_pass php5-fpm-unix-sock;
+                fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
+                allow 127.0.0.1;
+                deny all;
+        }
+
+	location ~* /webstats/.* {
+		deny all;
+	}
+
+	location ~* /provision/.* {
+		deny all;
+	}
+
+	location ~* /console/.* {
+		deny all;
+	}
+
+	location ~* /perf/.* {
+		deny all;
+	}
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+        location ~ \.php$ {
+		include /etc/nginx/common_fastcgi.conf;
+	}
+
+}
+
+server {
+	listen 443;
+	server_name {{ inventory_hostname }};
+	access_log /var/log/nginx/{{ inventory_hostname }}.access.log;
+	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
+	root /var/www/easypress.ca;
+
+	include /etc/nginx/common_easypress_ssl.conf;
+	include /etc/nginx/common_location_ep.conf;
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	location ~ \.php$ {
+		expires 600;
+		add_header X-Frame-Options SAMEORIGIN;
+		include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_index index.php;
+		fastcgi_pass php5-fpm-auto-provision-sock;
+	}
+ 
+	include /etc/nginx/common_adminer.conf;
+	include /etc/nginx/common_phpmyadmin.conf;
+
+}
+
+##
+# easyPress customer console
+##
+server {
+	listen 127.0.0.1:80;
+	server_name console.localdomain;
+	access_log /var/log/nginx/console.localdomain.access.log;
+	error_log /var/log/nginx/console.localdomain.ca.error.log;
+	root /var/www/easypress.ca/console;
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	location ~ \.php$ {
+		include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_index index.php;
+		fastcgi_pass php5-fpm-admin-sock;
+	}
+}
+

@@ -24,7 +24,7 @@
       private: no
     
     - name: "console_secret_key"
-      prompt: "Console must use plugin secret key"
+      prompt: "The Console plugin's secret key"
       default: "Something long and random like 6kwiyk768g7gy2PVhhzFEUu"
       private: no
 

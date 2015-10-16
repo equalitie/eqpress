@@ -68,11 +68,6 @@
       default: "/dev/urandom"
       private: no
 
-    - name: "auto_provision_console_api_key_secret"
-      prompt: "Auto-provision Console API secret key"
-      default: "default"
-      private: yes
-
     - name: "auto_provision_gpg_id"
       prompt: "keyID of GPG account for encrypting logs (lookup your keyID at https://pgp.mit.edu/)" 
       default: "2DD3C271"

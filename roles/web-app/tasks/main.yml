@@ -134,6 +134,13 @@
     - reload nginx
   tags: [nginx, nginx_config, nginx_config_easypress]
 
+- name: copy nginx easypress.ca config template for auto-provision host
+  template: src={{ files }}/etc/nginx/sites-available/easypress.ca-auto-provision.j2 dest=/etc/nginx/sites-available/easypress.ca owner=root group=staff mode=0664
+  notify:
+    - reload nginx
+  when: auto_provision_host is defined
+  tags: [nginx, nginx_config, nginx_config_easypress]
+
 - name: link easypress.ca nginx config
   file: src=/etc/nginx/sites-available/easypress.ca dest=/etc/nginx/sites-enabled/easypress.ca state=link
   tags: ep-console
