@@ -86,13 +86,13 @@
   template: src={{ files }}/etc/monit/monitrc-10_auto-provision.j2 dest=/etc/monit/monitrc-10 owner=root group=root mode=0600
   notify:
     - restart monit
-  tags: [monit, monit-config]
+  tags: [monit, monit-config, monitoring-email]
 
 - name: copy custom monit-60 config
   template: src={{ files }}/etc/monit/monitrc-60_auto-provision.j2 dest=/etc/monit/monitrc-60 owner=root group=root mode=0600
   notify:
     - restart monit
-  tags: [monit, monit-config]
+  tags: [monit, monit-config, monitoring-email]
 
 - name: install auto-provision GPG key
   shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ auto_provision_gpg_id }}
