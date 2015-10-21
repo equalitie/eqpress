@@ -54,7 +54,7 @@ fastcgi_cache_valid any 1m;
 fastcgi_cache_min_uses 1;
 
 # set which directories can be accessed and which PHP functions are prohibited
-fastcgi_param PHP_VALUE "open_basedir=$document_root:/var/tmp \n session.save_path=$document_root/.sessions \n disable_functions='curl_multi_exec,dl,exec,passthru,pfsockopen,popen,posix_kill,posix_mkfifo,posix_setuid,posix_uname,proc_close,proc_open,proc_terminate,shell_exec,system,ftp_exec,leak,posix_setpgid,posix_setsid,proc_get_status,proc_nice,show_source,escapeshellcmd,apc_clear_cache,ssh2_connect,phpinfo,pcntl_alarm,pcntl_fork,pcntl_waitpid,pcntl_wait,pcntl_wifexited,pcntl_wifstopped,pcntl_wifsignaled,pcntl_wexitstatus,pcntl_wtermsig,pcntl_wstopsig,pcntl_signal,pcntl_signal_dispatch,pcntl_get_last_error,pcntl_strerror,pcntl_sigprocmask,pcntl_sigwaitinfo,pcntl_sigtimedwait,pcntl_exec,pcntl_getpriority,pcntl_setpriority'";
+fastcgi_param PHP_VALUE "open_basedir=$document_root:/var/tmp \n session.save_path=$document_root/.sessions \n disable_functions='curl_multi_exec,dl,exec,passthru,pfsockopen,popen,posix_kill,posix_mkfifo,posix_setuid,posix_uname,proc_close,proc_open,proc_terminate,shell_exec,system,ftp_exec,leak,posix_setpgid,posix_setsid,proc_get_status,proc_nice,show_source,escapeshellcmd,apc_clear_cache,ssh2_connect,phpinfo,pcntl_alarm,pcntl_fork,pcntl_waitpid,pcntl_wait,pcntl_wifexited,pcntl_wifstopped,pcntl_wifsignaled,pcntl_wexitstatus,pcntl_wtermsig,pcntl_wstopsig,pcntl_signal,pcntl_signal_dispatch,pcntl_get_last_error,pcntl_strerror,pcntl_sigprocmask,pcntl_sigwaitinfo,pcntl_sigtimedwait,pcntl_exec,pcntl_getpriority,pcntl_setpriority,xmlrpc_decode,xmlrpc_entity_decode'";
 
 # Cacheing is enabled, so tell the client to use its local cache.
 if ($do_not_set_cache = "") {
