@@ -39,6 +39,7 @@
     - php5-mysqlnd
     - php5-redis
     - php5-ssh2
+    - php5-ldap
   tags: [nginx, php]
 
 - name: ensure nginx will start at boot
