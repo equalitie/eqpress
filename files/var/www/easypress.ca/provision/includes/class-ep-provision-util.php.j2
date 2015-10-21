@@ -95,12 +95,18 @@ class EP_Provision_Util {
      */
     public function authenticate( $username, $password, $source ) {
         global $params;
-        $isauth = $this->ldap_auth ($username,
-	                            $password,
-				    $params['ldap_auth_attrib'],
-				    $params['ldap_auth_basedn'],
-				    $params['ldap_auth_server'],
-				    $params['ldap_auth_port']);
+
+        $isauth = false;
+
+	if (preg_match ('/^[A-Za-z0-9_\.\-]+$/', $username)) {
+            $isauth = $this->ldap_auth ($username,
+    	                                $password,
+	  	    	  	        $params['ldap_auth_attrib'],
+				        $params['ldap_auth_basedn'],
+				        $params['ldap_auth_server'],
+				        $params['ldap_auth_port']);
+	}
+
 	if (!$isauth) {
        	    $this->process_errors( 'Incorrect username or password.', true );
 	}
