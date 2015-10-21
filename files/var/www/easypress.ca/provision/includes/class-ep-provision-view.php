@@ -43,14 +43,14 @@ class EP_Provision_View {
 			</tr>
 			<tr>
 				<th align="right" scope="row"><label>Node</label></th>
-				<td><select name="location">
+				<td><select name="location" id="location">
 				<?php
 				if (isset($params['nodes'])) {
 					foreach($params['nodes'] as $key => $value) {
 						print "<option value=\"".$key."\">".$key."</option>";
 					}
 				}
-				?></td>
+				?></select></td>
 			<tr>
 				<th align="right" scope="row"><label>Domain Name</label></th>
 				<td><input name="domain" type="text" id="domain" size="64"></td>
@@ -75,12 +75,6 @@ class EP_Provision_View {
 				Subdirectory<input name="multisite" type="radio" id="multisite" value="subdirectory">
 				</td>
 			</tr>
-            <?php /*
-			<tr>
-				<th align="right" scope="row"><label>Location</label></th>
-				<td><input name="location" type="text" id="location" size="64"></td>
-			</tr>
-            */ ?>
 			<tr>
 				<td align="center" colspan="2">
 				<input name="api_key" type="hidden" value="web_form">
