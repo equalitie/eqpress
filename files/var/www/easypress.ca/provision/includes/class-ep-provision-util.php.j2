@@ -95,12 +95,15 @@ class EP_Provision_Util {
      */
     public function authenticate( $username, $password, $source ) {
         global $params;
-        
-	/*
-         * Insert authentication code here
-         * Use this for the case auth fails:
-	 * $this->process_errors( 'Incorrect username or password.', true );
-	 */
+        $isauth = $this->ldap_auth ($username,
+	                            $password,
+				    $params['ldap_auth_attrib'],
+				    $params['ldap_auth_basedn'],
+				    $params['ldap_auth_server'],
+				    $params['ldap_auth_port']);
+	if (!$isauth) {
+       	    $this->process_errors( 'Incorrect username or password.', true );
+	}
     }
 
     /**
