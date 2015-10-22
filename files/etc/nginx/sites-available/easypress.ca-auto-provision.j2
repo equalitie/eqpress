@@ -62,13 +62,7 @@ server {
 	}
 
 	location ~ \.php$ {
-		expires 600;
-		add_header X-Frame-Options SAMEORIGIN;
-		include fastcgi_params;
-		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-		fastcgi_split_path_info ^(.+\.php)(/.+)$;
-		fastcgi_index index.php;
-		fastcgi_pass php5-fpm-auto-provision-sock;
+		include /etc/nginx/common_fastcgi.conf;
 	}
  
 	include /etc/nginx/common_adminer.conf;
