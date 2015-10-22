@@ -91,7 +91,6 @@
     - common_location_ep.conf
     - common_login_limiter.conf
     - common_multisite_3.5.conf
-    - common_phpmyadmin.conf
     - common_w3tc.conf
     - lua_block_post_noreferrer.lua
     - lua_block_post_noreferrer_on.lua
