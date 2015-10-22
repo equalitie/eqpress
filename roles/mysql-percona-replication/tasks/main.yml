@@ -96,7 +96,7 @@
 - name: copy replication check script
   template: src={{ files }}/usr/local/sbin/check_mysql_replication_status.sh.j2 dest=/usr/local/sbin/check_mysql_replication_status.sh owner=root group=staff mode=0750
   when: mysql_repl_role == 'slave'
-  tags: [mysql, repl, mysqladmin_user, repl_check_replication]
+  tags: [mysql, repl, mysqladmin_user, repl_check_replication, monitoring-email]
 
 #- name: reset permissions on SSL key
 #  file: path=/etc/ssl/easypress/{{ inventory_hostname}}.key owner=root group=mysql mode=0640

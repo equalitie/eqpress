@@ -15,5 +15,5 @@
 - name: Create the main variables file.
   local_action: template src=auto-provision.yml.j2 dest={{ playbook_dir }}/group_vars/auto-provision.yml
 
-- name: Create host varialbe file for auto-provision server
+- name: Create host variable file for auto-provision server
   local_action: template src=auto-provision-host.yml.j2 dest={{ playbook_dir }}/host_vars/{{ auto_provision_server }}.yml

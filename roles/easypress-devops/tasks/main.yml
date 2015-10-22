@@ -100,7 +100,7 @@
     - check_for_large_http_log_files.sh
     - webstats_totals_wrapper.sh
     - ep_gen_api_key.php
-  tags: [ep-sbin, ep-sbin-templates]
+  tags: [ep-sbin, ep-sbin-templates, monitoring-email]
 
 - name: copy webstat script templates
   action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
@@ -139,7 +139,7 @@
   template: src={{ files }}/etc/monit/monitrc-60.j2 dest=/etc/monit owner=root group=root mode=0600
   notify:
     - start monit
-  tags: [ep-console, monit, monit-config]
+  tags: [ep-console, monit, monit-config, monitoring-email]
 
 - name: copy custom monit startup script
   copy: src={{ files }}/etc/init.d/monit dest=/etc/init.d owner=root group=root mode=0750
