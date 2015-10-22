@@ -5,9 +5,9 @@
  *
  * Use transients to store web stats for 15 min
  *
- */	
+ */
 
- 
+
 if ( !isset( $_POST['do'] ) )
 	process_errors( "easypress-console-proxy accessed with no do POST argument\n", true );
 if ( !isset( $_POST['domain'] ) )
@@ -105,7 +105,7 @@ function do_logs( $domain ) {
 	$php_log = '/var/www/' . $domain . '/wordpress/php-errors.log';
 	$web_alog = '/var/log/nginx/' . $domain . '.access.log';
 	$web_elog = '/var/log/nginx/' . $domain . '.error.log';
-	
+
 	if ( isset($_POST['log']) && $_POST['log'] == 'pe' ) {
 		echo '<pre class="super-big">PHP Error Log</pre>';
 		$shellout = exec( '/usr/bin/tail -50 ' . $php_log . ' 2>&1', $out, $status );
@@ -117,7 +117,7 @@ function do_logs( $domain ) {
 			foreach ( $out as $line )
 				echo '<pre>' . htmlentities( $line, ENT_COMPAT, 'UTF-8' )  . '</pre>';
 		}
-	}	
+	}
 	if ( isset($_POST['log']) && $_POST['log'] == 'wa' ) {
 		echo '<pre class="super-big">Web Access Log</pre>';
 		$shellout = exec( '/usr/bin/tail -50 ' . $web_alog . ' 2>&1', $out, $status );
@@ -224,7 +224,7 @@ function do_stats_month( $domain ) {
 			FROM domains
 			WHERE domain LIKE '$clean_domain')
 		ORDER BY date DESC";
-	$dbh = new mysqli( 'localhost', 'swp_webstats', '{{ swp_webstats_password }}', 'swp_webstats' );
+	$dbh = new mysqli( 'localhost', 'swp_webstats', '{{ mysql_webstats.password }}', 'swp_webstats' );
 	if ( $dbh->connect_error ) {
 		process_errors( "Connect failed to swp_webstats for domain $domain: " . $dbh->connect_errno . ' : ' . $dbh->connect_error, true );
 	}
@@ -288,7 +288,7 @@ function do_stats_month( $domain ) {
 	}
 	$dbh->close();
 }
-	
+
 /**
  * Lockdown the document root using stricter permissions and ownerships.
  * Using monit because root access required.
@@ -352,12 +352,12 @@ function do_password_reset( $domain ) {
 
 /**
  * Administration over SSL
- * 
+ *
  * Choose between SSL for logins only, SSL for all wp-admin screens including
  * login or no SSL.
  *
  * @param string $domain is the customer's domain name.
- * 
+ *
  */
 function do_wpadmin_ssl( $domain, $ssl_state ) {
 	$wp_dir = "/var/www/" . $domain . "/wordpress";
@@ -368,7 +368,7 @@ function do_wpadmin_ssl( $domain, $ssl_state ) {
 		$wp_config_file = $wp_dir . '../wp-config.php';
 	else
 		process_errors( "easypress-console-proxy: wpadmin_ssl error. " .  $wp_dir . "/wp-config.php not found. Domain is $domain.", true );
-	
+
 	if ( 'off' == $ssl_state ) {
 		$new_state_admin = "'FORCE_SSL_ADMIN', false";
 		$new_state_login = "'FORCE_SSL_LOGIN', false";
@@ -380,7 +380,7 @@ function do_wpadmin_ssl( $domain, $ssl_state ) {
 		$new_state_login = "'FORCE_SSL_LOGIN', true";
 	} else
 		process_errors( "easypress-console-proxy: wpadmin_ssl error. Unexpeced ssl_state argument: $ssl_state. Domain is $domain.", true );
-	
+
 	$old_wp_config = file_get_contents( $wp_config_file );
 	file_put_contents( $backup_wp_config, $old_wp_config );
 	$new_wp_config = preg_replace( '/\'FORCE_SSL_ADMIN\', *(true|false)/', $new_state_admin, $old_wp_config );
@@ -392,11 +392,11 @@ function do_wpadmin_ssl( $domain, $ssl_state ) {
 
 /**
  * Plugin and Theme Editor
- * 
+ *
  * Enable or diable the editor.
  *
  * @param string $domain is the customer's domain name.
- * 
+ *
  */
 function do_editor( $domain, $edits ) {
 	$wp_dir = "/var/www/" . $domain . "/wordpress";
@@ -407,14 +407,14 @@ function do_editor( $domain, $edits ) {
 		$wp_config_file = $wp_dir . '../wp-config.php';
 	else
 		process_errors( "easypress-console-proxy: admin-editor error. " .  $wp_dir . "/wp-config.php not found. Domain is $domain.", true );
-	
+
 	if ( 'off' == $edits ) {
 		$new_state = "'DISALLOW_FILE_EDIT', true";
 	} else if ( 'on' == $edits ) {
 		$new_state = "'DISALLOW_FILE_EDIT', false";
 	} else
 		process_errors( "easypress-console-proxy: admin-editor error. Unexpected edits argument: $edits. Domain is $domain.", true );
-	
+
 	$old_wp_config = file_get_contents( $wp_config_file );
 	file_put_contents( $backup_wp_config, $old_wp_config );
 	$new_wp_config = preg_replace( '/\'DISALLOW_FILE_EDIT\', *(true|false)/', $new_state, $old_wp_config );
@@ -465,7 +465,7 @@ function valid_domain($domain) {
  *
  * @param string $message is the error message to write to the log and/or screen.
  * @param boolean $exit_now will determine whether or not to terminate the process.
- * 
+ *
  */
 function process_errors( $message, $exit_now = false ) {
 	global $all_errors;
