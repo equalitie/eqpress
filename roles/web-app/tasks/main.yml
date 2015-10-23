@@ -107,7 +107,7 @@
   tags: [nginx, nginx_config, nginx_ssl]
 
 - name: copy nginx cache config only during initial install
-  copy: src={{ files }}/etc/nginx/cache.conf dest=/etc/nginx owner=root group=staff mode=0664
+  copy: src={{ files }}/etc/nginx/cache.conf dest=/etc/nginx owner=root group=staff mode=0664 force=no
   tags: [nginx, nginx_cache]
 
 - name: copy nginx blacklist
