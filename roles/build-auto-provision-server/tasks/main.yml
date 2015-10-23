@@ -18,16 +18,6 @@
     - provision-testing/processed
   tags: [auto-provision, auto-provision-directories]
 
-- name: copy easypress.ca nginx config
-  template: src={{ files }}/etc/nginx/sites-available/easypress.ca.j2 dest=/etc/nginx/sites-available/easypress.ca owner=root group=staff mode=0664
-  notify:
-     - reload nginx
-  tags: auto-provision
-
-- name: link easypress.ca nginx config
-  file: src=/etc/nginx/sites-available/easypress.ca dest=/etc/nginx/sites-enabled/easypress.ca state=link
-  tags: auto-provision
-
 - name: ensure root ownership on /var/www
   file: path=/var/www state=directory owner=root group=root mode=0755
   tags: auto-provision
