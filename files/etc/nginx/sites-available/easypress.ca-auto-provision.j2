@@ -40,11 +40,6 @@ server {
 	location / {
 		try_files $uri $uri/ /index.php?$args;
 	}
-
-        location ~ \.php$ {
-		include /etc/nginx/common_fastcgi.conf;
-	}
-
 }
 
 server {
@@ -62,32 +57,13 @@ server {
 	}
 
 	location ~ \.php$ {
-		include /etc/nginx/common_fastcgi.conf;
-	}
- 
-	include /etc/nginx/common_adminer.conf;
-}
-
-##
-# easyPress customer console
-##
-server {
-	listen 127.0.0.1:80;
-	server_name console.localdomain;
-	access_log /var/log/nginx/console.localdomain.access.log;
-	error_log /var/log/nginx/console.localdomain.ca.error.log;
-	root /var/www/easypress.ca/console;
-
-	location / {
-		try_files $uri $uri/ /index.php?$args;
-	}
-
-	location ~ \.php$ {
-		include fastcgi_params;
-		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-		fastcgi_split_path_info ^(.+\.php)(/.+)$;
-		fastcgi_index index.php;
-		fastcgi_pass php5-fpm-admin-sock;
+                expires 600;
+                add_header X-Frame-Options SAMEORIGIN;
+                include fastcgi_params;
+                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_split_path_info ^(.+\.php)(/.+)$;
+                fastcgi_index index.php;
+                fastcgi_pass php5-fpm-auto-provision-sock;
 	}
 }
 
