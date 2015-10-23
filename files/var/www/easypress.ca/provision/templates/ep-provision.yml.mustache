@@ -37,7 +37,7 @@
 {{console}}
 
   - name: Install WordPress using WP-CLI # must be after console so WP doesn't send its email
-    command: chdir=/var/www/{{domain}}/wordpress /usr/local/sbin/wp --allow-root core install --url=http://{{domain}}/ --admin_user={{wpadmin_user}} --admin_password={{wpadmin_pass}} --admin_email={{wpadmin_email}} --title="Just another easyPress site"
+    command: chdir=/var/www/{{domain}}/wordpress /usr/local/sbin/wp --allow-root core install --url=http://{{domain}}/ --admin_user={{wpadmin_user}} --admin_password={{wpadmin_pass}} --admin_email={{wpadmin_email}} --title="Just another eqPress site"
 
 {{switch_to_dev}}
 
