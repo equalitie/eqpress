@@ -136,7 +136,7 @@
   tags: [ep-console, monit]
 
 - name: copy custom monit-60 config
-  template: src={{ files }}/etc/monit/monitrc-60.j2 dest=/etc/monit owner=root group=root mode=0600
+  template: src={{ files }}/etc/monit/monitrc-60.j2 dest=/etc/monit/monitrc-60 owner=root group=root mode=0600
   notify:
     - start monit
   tags: [ep-console, monit, monit-config, monitoring-email]
