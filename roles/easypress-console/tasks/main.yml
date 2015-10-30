@@ -13,17 +13,18 @@
     - monit_connections.sh
   tags: [ep-console, console_monit_scripts, monit]
 
-- name: copy console monit templates
+- name: copy console-related templates
   action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
   with_items:
     - monit_ep_console_reset_password.sh
-  tags: [ep-sbin, ep-sbin-templates]
+    - nagios_check_mysql.php
+  tags: [ep-sbin, ep-sbin-templates, monitoring]
 
 #- name: rsync easypress.ca docroot containing the easyPress Console
 #  synchronize: src={{ files }}/var/www/easypress.ca dest=/var/www
 #  tags: ep-console
 
-- name: create easypress.ca docroot
+- name: create easypress.ca docroot (/var/www/easypress.ca)
   file: path=/var/www/easypress.ca state=directory owner=www-data group=www-data mode=0755
   tags: ep-console
 
@@ -31,46 +32,29 @@
   file: path=/var/www/easypress.ca/.sessions state=directory owner=www-data group=www-data mode=0775
   tags: ep-console
 
-#- name: rsync easyPress Console files
-#  #synchronize: src={{ files }}/var/www/easypress.ca/console dest=/var/www/easypress.ca
-#  local_action: command rsync -a {{ files }}/var/www/easypress.ca/console root@{{inventory_hostname}}:/var/www/easypress.ca
-#  notify:
-#     - reset permissions
-#  tags: [ep-console, console]
+- name: rsync easyPress Console files
+  local_action: command rsync -a --exclude=*.j2 {{ files }}/var/www/easypress.ca/console root@{{inventory_hostname}}:/var/www/easypress.ca/
+  tags: [ep-console, console]
 
-#- name: rsync adminer files
-#  #synchronize: src={{ files }}/var/www/easypress.ca/adminer dest=/var/www/easypress.ca
-#  local_action: command rsync -a {{ files }}/var/www/easypress.ca/adminer root@{{inventory_hostname}}/var/www/easypress.ca
-#  tags: [ep-console, adminer]
-#
-#- name: rsync bruteprotect files
-  #synchronize: src={{ files }}/var/www/easypress.ca/bruteprotect dest=/var/www/easypress.ca
-#  local_action: command rsync -a {{ files }}/var/www/easypress.ca/bruteprotect root@{{inventory_hostname}}/var/www/easypress.ca
-#  tags: [ep-console, bruteprotect]
-#
-#- name: rsync nginx-helper (cache purge) files
-#  synchronize: src={{ files }}/var/www/easypress.ca/cache-purge dest==/var/www/easypress.ca
-#  tags: [ep-console, cache-purge]
-#
-#- name: rsync catchall files
-#  synchronize: src={{ files }}/var/www/easypress.ca/catchall dest=/var/www/easypress.ca
-#  tags: [ep-console, catchall]
-#
-#- name: rsync cdn files
-#  synchronize: src={{ files }}/var/www/easypress.ca/cdn dest=/var/www/easypress.ca
-#  tags: [ep-console, cdn]
-#
-#- name: rsync performance monitoring files
-#  synchronize: src={{ files }}/var/www/easypress.ca/perf dest=/var/www/easypress.ca
-#  tags: [ep-console, perf]
+- name: rsync adminer files
+  local_action: command rsync -a {{ files }}/var/www/easypress.ca/adminer root@{{inventory_hostname}}:/var/www/easypress.ca/
+  tags: [ep-console, adminer]
+
+- name: rsync bruteprotect files
+  local_action: command rsync -a {{ files }}/var/www/easypress.ca/bruteprotect root@{{inventory_hostname}}:/var/www/easypress.ca/
+  tags: [ep-console, bruteprotect]
+
+- name: rsync nginx-helper (cache purge) files
+  local_action: command rsync -a {{ files }}/var/www/easypress.ca/cache-purge root@{{inventory_hostname}}:/var/www/easypress.ca/
+  tags: [ep-console, cache-purge]
+
+- name: rsync performance monitoring files
+  local_action: command rsync -a {{ files }}/var/www/easypress.ca/perf root@{{inventory_hostname}}:/var/www/easypress.ca/
+  tags: [ep-console, perf]
 
 ##- name: rsync webstats files
 #  synchronize: src={{ files }}/var/www/easypress.ca/webstats dest=/var/www/easypress.ca
 #  tags: [ep-console, webstats]
-
-- name: rsync all of /var/www/easypress.ca
-  local_action: command rsync -a {{ files }}/var/www/easypress.ca root@{{inventory_hostname}}:/var/www
-  tags: [ep-console]
 
 - name: create the console directories
   file: path=/var/www/easypress.ca/console/{{ item }} state=directory owner=www-data group=www-data mode=0775
@@ -88,9 +72,13 @@
   template: src={{ files }}/var/www/easypress.ca/console/proxy/easypress-console-proxy.php.j2 dest=/var/www/easypress.ca/console/proxy/easypress-console-proxy.php owner=root group=www-data mode=0644
   tags: [ep-console, ep-console-proxy-code]
 
+- name: create catchall directory
+  file: path=/var/www/easypress.ca/catchall state=directory owner=www-data group=www-data mode=0755
+  tags: [ep-console, catchall]
+
 - name: copy catchall index
   template: src={{ files }}/var/www/easypress.ca/catchall/index.html.j2 dest=/var/www/easypress.ca/catchall/index.html owner=www-data group=www-data mode=0664
-  tags: ep-console
+  tags: [ep-console, catchall]
 
 - name: create mrtg directory
   file: path=/var/www/easypress.ca/mrtg state=directory owner=www-data group=www-data mode=0775
@@ -113,7 +101,3 @@
 - name: ensure root ownership on /var/www
   file: path=/var/www state=directory owner=root group=root mode=0755
   tags: [ep-console, var-www-root]
-
-- name: copy MySQL nagios check script
-  template: src={{ files }}/var/www/easypress.ca/q8z94biV2aEUQg6Zrc7yBCp.php.j2 dest=/var/www/easypress.ca/q8z94biV2aEUQg6Zrc7yBCp.php owner=www-data group=www-data mode=0644
-  tags: [monitoring]
