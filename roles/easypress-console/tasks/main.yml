@@ -33,7 +33,7 @@
   tags: ep-console
 
 - name: rsync easyPress Console files
-  local_action: command rsync -a {{ files }}/var/www/easypress.ca/console root@{{inventory_hostname}}:/var/www/easypress.ca
+  local_action: command rsync -a {{ files }}/var/www/easypress.ca/console root@{{inventory_hostname}}:/var/www/easypress.ca/
   tags: [ep-console, console]
 
 #- name: rsync adminer files
