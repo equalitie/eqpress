@@ -81,7 +81,7 @@
 
 - name: copy catchall index
   template: src={{ files }}/var/www/easypress.ca/catchall/index.html.j2 dest=/var/www/easypress.ca/catchall/index.html owner=www-data group=www-data mode=0664
-  tags: ep-console
+  tags: [ep-console, catchall]
 
 - name: create mrtg directory
   file: path=/var/www/easypress.ca/mrtg state=directory owner=www-data group=www-data mode=0775
