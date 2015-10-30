@@ -79,6 +79,10 @@
   template: src={{ files }}/var/www/easypress.ca/console/proxy/easypress-console-proxy.php.j2 dest=/var/www/easypress.ca/console/proxy/easypress-console-proxy.php owner=root group=www-data mode=0644
   tags: [ep-console, ep-console-proxy-code]
 
+- name: create catchall directory
+  file: path=/var/www/easypress.ca/catchall state=directory owner=www-data group=www-data mode=0755
+  tags: [ep-console, catchall]
+
 - name: copy catchall index
   template: src={{ files }}/var/www/easypress.ca/catchall/index.html.j2 dest=/var/www/easypress.ca/catchall/index.html owner=www-data group=www-data mode=0664
   tags: [ep-console, catchall]
