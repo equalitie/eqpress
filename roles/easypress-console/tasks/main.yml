@@ -36,11 +36,10 @@
   local_action: command rsync -a {{ files }}/var/www/easypress.ca/console root@{{inventory_hostname}}:/var/www/easypress.ca/
   tags: [ep-console, console]
 
-#- name: rsync adminer files
-#  #synchronize: src={{ files }}/var/www/easypress.ca/adminer dest=/var/www/easypress.ca
-#  local_action: command rsync -a {{ files }}/var/www/easypress.ca/adminer root@{{inventory_hostname}}/var/www/easypress.ca
-#  tags: [ep-console, adminer]
-#
+- name: rsync adminer files
+  local_action: command rsync -a {{ files }}/var/www/easypress.ca/adminer root@{{inventory_hostname}}/var/www/easypress.ca/
+  tags: [ep-console, adminer]
+
 #- name: rsync bruteprotect files
   #synchronize: src={{ files }}/var/www/easypress.ca/bruteprotect dest=/var/www/easypress.ca
 #  local_action: command rsync -a {{ files }}/var/www/easypress.ca/bruteprotect root@{{inventory_hostname}}/var/www/easypress.ca
