@@ -69,10 +69,6 @@
 #  synchronize: src={{ files }}/var/www/easypress.ca/webstats dest=/var/www/easypress.ca
 #  tags: [ep-console, webstats]
 
-- name: rsync all of /var/www/easypress.ca
-  local_action: command rsync -a {{ files }}/var/www/easypress.ca root@{{inventory_hostname}}:/var/www
-  tags: [ep-console]
-
 - name: create the console directories
   file: path=/var/www/easypress.ca/console/{{ item }} state=directory owner=www-data group=www-data mode=0775
   with_items:
