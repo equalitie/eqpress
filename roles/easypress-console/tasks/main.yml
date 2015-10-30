@@ -47,10 +47,10 @@
 - name: rsync nginx-helper (cache purge) files
   local_action: command rsync -a {{ files }}/var/www/easypress.ca/cache-purge root@{{inventory_hostname}}:/var/www/easypress.ca/
   tags: [ep-console, cache-purge]
-#
-#- name: rsync performance monitoring files
-#  synchronize: src={{ files }}/var/www/easypress.ca/perf dest=/var/www/easypress.ca
-#  tags: [ep-console, perf]
+
+- name: rsync performance monitoring files
+  local_action: command rsync -a {{ files }}/var/www/easypress.ca/perf root@{{inventory_hostname}}:/var/www/easypress.ca/
+  tags: [ep-console, perf]
 
 ##- name: rsync webstats files
 #  synchronize: src={{ files }}/var/www/easypress.ca/webstats dest=/var/www/easypress.ca
