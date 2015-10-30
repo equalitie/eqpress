@@ -50,9 +50,6 @@
 #  synchronize: src={{ files }}/var/www/easypress.ca/cache-purge dest==/var/www/easypress.ca
 #  tags: [ep-console, cache-purge]
 #
-- name: rsync catchall files
-  local_action: command rsync -a {{ files }}/var/www/easypress.ca/catchall root@{{inventory_hostname}}:/var/www/easypress.ca/
-  tags: [ep-console, catchall]
 #
 #- name: rsync cdn files
 #  synchronize: src={{ files }}/var/www/easypress.ca/cdn dest=/var/www/easypress.ca
