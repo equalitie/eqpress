@@ -64,7 +64,6 @@
     - ep_get_sftp_user.sh
     - ep_install_console.sh
     - ep_install_cache_purge.sh
-    - ep_install_mu_plugins.sh
     - ep_plugin_blacklist.php
     - ep_purge_site.sh
     - ep_purge_cache.sh
