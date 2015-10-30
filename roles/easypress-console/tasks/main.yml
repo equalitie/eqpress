@@ -24,7 +24,7 @@
 #  synchronize: src={{ files }}/var/www/easypress.ca dest=/var/www
 #  tags: ep-console
 
-- name: create easypress.ca docroot
+- name: create easypress.ca docroot (/var/www/easypress.ca)
   file: path=/var/www/easypress.ca state=directory owner=www-data group=www-data mode=0755
   tags: ep-console
 
