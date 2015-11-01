@@ -143,7 +143,7 @@
   tags: [nginx, nginx_config, nginx_config_easypress]
 
 - name: install nginx htpasswd file for restricted pages
-  copy: dest=/etc/nginx/restricted_pages.htpasswd owner=www-data group=www-data mode=0440 content="{{nginx_restricted_pages_login}}:{SSHA}{{nginx_restricted_pages_password|password_hash('sha1')}}"
+  template: src={{ files }}/etc/nginx/restricted_pages.htpasswd.j2 dest=/etc/nginx/restricted_pages.htpasswd owner=www-data group=www-data mode=0440
   notify:
     - reload nginx
   tags: [nginx, nginx_config, nginx_htpasswd]
