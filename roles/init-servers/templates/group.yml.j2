@@ -3,6 +3,9 @@
 # nginx
 easypress_server_id: "{{ org_name }}"
 nginx_worker_processes: "{{ nginx_worker_processes }}"
+nginx_restricted_pages_credentials:
+  username: "{{ nginx_restricted_pages_login }}"
+  password: "{{ nginx_restricted_pages_password }}"
 
 # php-fpm
 phpfpm_max_children: "{{ phpfpm_max_children }}"

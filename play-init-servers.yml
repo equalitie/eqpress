@@ -9,6 +9,15 @@
       default: "2"
       private: no
 
+    - name: "nginx_restricted_pages_login"
+      prompt: "Nginx login for restricted pages access"
+      default: "equalitie"
+      private: yes
+
+    - name: "nginx_restricted_pages_password"
+      prompt: "Nginx password for restricted pages access"
+      private: yes
+
     - name: "phpfpm_max_children"
       prompt: "PHP-FPM max children"
       default: "48"
