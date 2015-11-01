@@ -142,6 +142,12 @@
   when: auto_provision_host is defined
   tags: [nginx, nginx_config, nginx_config_easypress]
 
+- name: install nginx htpasswd file for restricted pages
+  copy: dest=/etc/nginx/restricted_pages.htpasswd owner=www-data group=www-data mode=0440 content="{{nginx_restricted_pages_login}}:{SSHA}{{nginx_restricted_pages_password|password_hash('sha1')}}"
+  notify:
+    - reload nginx
+  tags: [nginx, nginx_config, nginx_htpasswd]
+
 - name: link easypress.ca nginx config
   file: src=/etc/nginx/sites-available/easypress.ca dest=/etc/nginx/sites-enabled/easypress.ca state=link
   tags: ep-console
