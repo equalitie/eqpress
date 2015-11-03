@@ -14,7 +14,7 @@ alias nsn='netstat -an|egrep ":80|:443"|grep tcp|grep ESTAB'
 alias nst='netstat -tan|awk "{print $6}"|sort|uniq -c'
 alias lnt='ls -lrtch /var/log/nginx/|tail -30'
 alias lns='ls -lrSh /var/log/nginx/|tail -30'
-alias wp='wp --allow-root'
+alias wp='sudo -u www-data wp'
 
 export HISTIGNORE="&:ls:[bf]g:exit:shutdown:reboot:sshd stop:rm:rm -rf:halt"
 
