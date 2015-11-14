@@ -3,11 +3,18 @@
 function tail_logs() {
 	tail -f /var/log/nginx/$1
 }
+
+function tail_more_logs() {
+	tail -f /var/log/{syslog,*.log,*/*.log}
+}
+
+eval "`dircolors`"
+
 alias um='u && top_ram_procs.sh && resident-ram'
 alias gh='wp option get home'
 alias sr='wp search-replace'
 alias tl='tail_logs'
-alias ls='ls -AF'
+alias ls='ls $LS_OPTIONS -AF'
 alias u='uptime'
 alias ns='netstat -an|egrep ":80|:443"|grep tcp|grep ESTAB|wc -l'
 alias nsn='netstat -an|egrep ":80|:443"|grep tcp|grep ESTAB'
@@ -17,9 +24,13 @@ alias lns='ls -lrSh /var/log/nginx/|tail -30'
 alias wp='sudo -u www-data wp'
 
 export HISTIGNORE="&:ls:[bf]g:exit:shutdown:reboot:sshd stop:rm:rm -rf:halt"
+export LS_OPTIONS='--color=auto -h'
 
 #alias rsync='ionice -c 3 rsync --rsync-path="ionice -c3 rsync"'
-TITLEBAR='\[\033]0; \u@\h: \w \007\]'
-export PS1="${TITLEBAR}\n\t \d\n[\u@\h \W]# "
+#TITLEBAR='\[\033]0; \u@\h: \w \007\]'
+TITLEBAR='\[\033[01;31m\]\u\[\033[01;33m\]@\[\033[01;36m\]\h \[\033[01;33m\]\w \[\033[01;35m\]\$ \[\033[00m\]'
+PROMPT='\[\033[01;31m\]\u\[\033[01;33m\]@\[\033[01;36m\]\h \[\033[01;33m\]\w \[\033[01;35m\]\$ \[\033[00m\]'
+#export PS1="${TITLEBAR}\n\t \d\n[\u@\h \W]# "
+export PS1="${TITLEBAR}\n\t \d\n${PROMPT}"
 {{ bashrc_proxy_http }}
 {{ bashrc_proxy_ftp }}
