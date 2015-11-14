@@ -27,10 +27,9 @@ export HISTIGNORE="&:ls:[bf]g:exit:shutdown:reboot:sshd stop:rm:rm -rf:halt"
 export LS_OPTIONS='--color=auto -h'
 
 #alias rsync='ionice -c 3 rsync --rsync-path="ionice -c3 rsync"'
-#TITLEBAR='\[\033]0; \u@\h: \w \007\]'
-TITLEBAR='\[\033[01;31m\]\u\[\033[01;33m\]@\[\033[01;36m\]\h \[\033[01;33m\]\w \[\033[01;35m\]\$ \[\033[00m\]'
-PROMPT='\[\033[01;31m\]\u\[\033[01;33m\]@\[\033[01;36m\]\h \[\033[01;33m\]\w \[\033[01;35m\]\$ \[\033[00m\]'
 #export PS1="${TITLEBAR}\n\t \d\n[\u@\h \W]# "
+TITLEBAR='\[\033]0; \u@\h: \w \007\]'
+PROMPT='\[\033[01;31m\]\u\[\033[01;33m\]@\[\033[01;36m\]\h \[\033[01;33m\]\w \[\033[01;35m\]\$ \[\033[00m\]'
 export PS1="${TITLEBAR}\n\t \d\n${PROMPT}"
 {{ bashrc_proxy_http }}
 {{ bashrc_proxy_ftp }}
