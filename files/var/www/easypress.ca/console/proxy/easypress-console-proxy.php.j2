@@ -227,7 +227,7 @@ function do_stats_month( $domain ) {
 	if ( $dbh->connect_error ) {
 		process_errors( "Connect failed to swp_webstats for domain $domain: " . $dbh->connect_errno . ' : ' . $dbh->connect_error, true );
 	}
-	if ( $db_results = $dbh->query( $dbquery ) ) {
+	if ( $db_results = $dbh->query( $db_query ) ) {
 		$all_stats = $db_results->fetch_all();
 		if ( !empty( $all_stats ) ) {
 			echo "<h3>Monthly Stats</h3>";
