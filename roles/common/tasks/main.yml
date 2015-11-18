@@ -119,7 +119,7 @@
   tags: [configuration,timezone]
 
 - name: Copy custom fail2ban jail.conf
-  copy: src={{ files }}/etc/fail2ban/jail.conf dest=/etc/fail2ban owner=root group=root mode=0644
+  template: src={{ files }}/etc/fail2ban/jail.conf.j2 dest=/etc/fail2ban/jail.conf owner=root group=root mode=0644
   notify:
     - restart fail2ban
   tags: [security, fail2ban]
