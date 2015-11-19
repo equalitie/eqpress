@@ -66,8 +66,11 @@ innodb_file_per_table          = 1
 innodb_log_file_size           = {{ mysql_innodb_log_file_size }} 
 innodb_buffer_pool_size        = {{ mysql_innodb_buffer_pool_size }} 
 innodb_stats_on_metadata       = 0
-innodb_read_io_threads         = 16
-innodb_write_io_threads        = 16
+innodb_read_io_threads         = 64 
+innodb_write_io_threads        = 64 
+innodb_io_capacity             = 2000
+# Set innodb_thread_concurrency to 0 to autodetect
+innodb_thread_concurrency      = 0
 
 # LOGGING #
 log_queries_not_using_indexes  = 1
