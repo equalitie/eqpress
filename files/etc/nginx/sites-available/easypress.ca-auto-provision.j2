@@ -1,7 +1,7 @@
 server {
 	listen 443;
 	server_name {{ inventory_hostname }};
-	access_log /var/log/nginx/{{ inventory_hostname }}.access.log;
+	access_log /var/log/nginx/{{ inventory_hostname }}.access.log eq_default;
 	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
 	root /var/www/easypress.ca;
 
