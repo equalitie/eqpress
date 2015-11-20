@@ -128,6 +128,12 @@
     - reload nginx
   tags: [nginx, nginx_config, nginx_dot_conf]
 
+- name: copy common_log_formats.conf.j2 as template
+  template: src={{ files }}/etc/nginx/common_log_formats.conf.j2 dest=/etc/nginx/common_log_formats.conf owner=root group=staff mode=0664
+  notify:
+    - reload nginx
+  tags: [nginx, nginx_config]
+
 - name: copy nginx easypress.ca config template
   template: src={{ files }}/etc/nginx/sites-available/easypress.ca.j2 dest=/etc/nginx/sites-available/easypress.ca owner=root group=staff mode=0664
   notify:

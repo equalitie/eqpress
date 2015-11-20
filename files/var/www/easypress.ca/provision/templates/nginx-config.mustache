@@ -4,7 +4,7 @@ server {
     server_name www.{{domain}};
 {{multisite_config}}
     root /var/www/{{domain}}/wordpress;
-    access_log /var/log/nginx/{{domain}}.access.log;
+    access_log /var/log/nginx/{{domain}}.access.log eq_default;
     error_log /var/log/nginx/{{domain}}.error.log;
 
     include /etc/nginx/common_location.conf;
@@ -43,7 +43,7 @@ server {
     server_name www.{{domain}};
 {{multisite_config}}
     root /var/www/{{domain}}/wordpress;
-    access_log /var/log/nginx/{{domain}}.access.log;
+    access_log /var/log/nginx/{{domain}}.access.log eq_default;
     error_log /var/log/nginx/{{domain}}.error.log;
 
     include /etc/nginx/common_easypress_ssl.conf;
