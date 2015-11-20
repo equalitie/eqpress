@@ -70,7 +70,7 @@
   tags: mysql
 
 - name: Create the mysqladmin user mysql server monitoring on slave
-  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
+  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv='*.*:SUPER,PROCESS' state=present
   # comment out line above and uncomment line below to change the mysqladmin user password
   #mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password }}
   with_items:
@@ -133,7 +133,7 @@
   tags: [webstats-db, mysql]
 
 - name: Create webstats user
-  mysql_user: name={{ mysql_webstats.username }} host="localhost" password={{ mysql_webstats.password }} priv=*.*:"ALL" state=present
+  mysql_user: name={{ mysql_webstats.username }} host="localhost" password={{ mysql_webstats.password }} priv='*.*:ALL' state=present
   when: mysql_repl_role == 'master'
   tags: [webstats-db, mysql]
 
