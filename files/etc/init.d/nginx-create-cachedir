@@ -6,14 +6,16 @@
 # Required-Stop:     $local_fs
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: creates the nginx web server cache directory on tmpfs
-# Description:       creates the nginx web server cache directory on tmpfs
+# Short-Description: creates the nginx web server cache directory on tmpfs and on-disk
+# Description:       creates the nginx web server cache directory on tmpfs and on-disk
 ### END INIT INFO
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 NAME=nginx-create-cachedir
-DESC="Create the nginx web server cache directory on tmpfs"
+DESC="Create the nginx web server cache directory on tmpfs and on-disk"
 CACHE=/run/cache/nginx
+ONDISK=/var/cache/nginx-ondisk
+OWNER=www-data
 
 set -e
 
@@ -22,11 +24,20 @@ set -e
 
 start() {
 	if [ -d $CACHE ]; then
-        	echo "nginx cache already exits"
-        	/bin/chown -R www-data $CACHE
+        	echo "nginx tmpfs cache already exits"
+        	/bin/chown -R $OWNER $CACHE
+
 	else
         	/bin/mkdir -p $CACHE
-        	/bin/chown -R www-data $CACHE
+        	/bin/chown -R $OWNER $CACHE
+	fi
+
+	if [ -d $ONDISK ]; then
+		echo "nginx on-disk cache already exits"
+		/bin/chown -R $OWNER $ONDISK
+	else
+		/bin/mkdir -p $ONDISK
+		/bin/chown -R $OWNER $ONDISK
 	fi
 }
 
