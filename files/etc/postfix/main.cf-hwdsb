@@ -1,5 +1,5 @@
-myhostname = hwdsb1.easypress.ca
-mydomain = easypress.ca
+myhostname = hostname.example.com
+mydomain = example.com
 myorigin = $mydomain
 inet_interfaces = loopback-only
 local_transport = error:local delivery is disabled
