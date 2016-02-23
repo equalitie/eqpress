@@ -1,5 +1,5 @@
-myhostname = hostname.example.com
-mydomain = example.com
+myhostname = {{ inventory_hostname }}
+mydomain = {{ email_domain }}
 myorigin = $mydomain
 inet_interfaces = loopback-only
 local_transport = error:local delivery is disabled
