@@ -1,7 +1,6 @@
 #!/bin/sh
 #
 # Reports Swap IO to mrtg
-# mf@in-tuition.net
 VMSTAT="/usr/bin/vmstat"
 
 SI=`$VMSTAT 1 2| gawk '{print $7}'`
