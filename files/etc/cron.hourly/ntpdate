@@ -1,2 +1,2 @@
 #!/bin/sh
-/usr/sbin/ntpdate -u -b -s 132.246.168.148 142.3.100.15 132.246.168.164
+/usr/sbin/ntpdate -u -b -s 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org

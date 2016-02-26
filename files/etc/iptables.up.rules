@@ -8,7 +8,7 @@
 -A OUTPUT -o lo -j ACCEPT
 
 # block the baddies
--I INPUT -s 109.68.38.22 -j DROP
+# -I INPUT -s xxx.xxx.xxx.xxx -j DROP
 
 # Accepts all established inbound connections
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -28,26 +28,7 @@
 -A INPUT -p udp --dport 60000:60020 -j ACCEPT
 
 # Allows MySQL
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 104.131.95.171 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 104.237.149.190 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 108.61.209.101 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 173.255.225.182 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 178.79.144.208 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 192.81.208.6 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 194.1.166.186 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 194.1.164.240 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 194.1.164.240 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 194.1.166.186 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 198.211.100.146 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 198.211.115.196 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 198.74.61.42 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 199.27.180.193 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 199.27.180.229 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 199.27.180.228 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 45.56.108.152 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 45.56.111.125 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 45.56.111.24 -j ACCEPT
--A INPUT -p tcp -m state --state NEW --dport 3306 -s 45.56.118.161 -j ACCEPT
+#-A INPUT -p tcp -m state --state NEW --dport 3306 -s xxx.xxx.xxx.xxx -j ACCEPT
 
 # Allow ping
 -A OUTPUT -p icmp --icmp-type 0 -j ACCEPT
@@ -82,8 +63,7 @@
 -A FORWARD -p icmp --icmp-type 12 -j ACCEPT
 
 # allow SNMP from specific hosts
--I INPUT -p udp --dport 161 -s 217.154.106.153 -j ACCEPT
--I INPUT -p udp --dport 161 -s 217.154.106.134 -j ACCEPT
+#-I INPUT -p udp --dport 161 -s xxx.xxx.xxx.xxx -j ACCEPT
 
 # log iptables denied calls (access via 'dmesg' command)
 #-A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables denied: " --log-level 7

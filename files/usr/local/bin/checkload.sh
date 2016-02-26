@@ -1,7 +1,6 @@
 #!/bin/sh
 #
 # Checks load and turns off SA if too high
-# mf@in-tuition.net
 
 LOAD=`cat /proc/loadavg | gawk '{print $3}'`
 
@@ -11,7 +10,7 @@ LOAD2=`echo $LOAD | gawk -F . '{print $1}'`
 
 if [ $LOAD2 -gt 2 ]; then
 	echo "Load is greater than 2!"
-	echo "Load on sa1 is above 2, shutting down SA" | mail -s "SA1 Load Alert" noc@in-tuition.net
+	echo "Load on sa1 is above 2, shutting down SA" | mail -s "SA1 Load Alert" your-noc@example.com
 	#/usr/local/bin/svc -d /service/spamd
 	/sbin/shutdown -r now
 fi

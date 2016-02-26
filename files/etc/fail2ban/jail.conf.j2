@@ -17,8 +17,11 @@
 
 [DEFAULT]
 
-# "ignoreip" can be an IP address, a CIDR mask or a DNS host
-ignoreip = 127.0.0.1 199.27.180.128/25
+# The "ignoreip" parameter can be an IP address, a CIDR mask or a DNS host and accept multiple values like in the
+# following example:
+#       ignoreip = 127.0.0.1 xxx.xxx.xxx.xxx/xx
+#
+ignoreip = 127.0.0.1
 bantime  = 6400000
 findtime = 300
 maxretry = 8

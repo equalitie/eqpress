@@ -1,7 +1,6 @@
 #!/bin/sh
 #
 # Reports Disk IO to mrtg
-# mf@in-tuition.net
 VMSTAT="/usr/bin/vmstat"
 
 BI=`$VMSTAT 1 2| gawk '{print $9}'`

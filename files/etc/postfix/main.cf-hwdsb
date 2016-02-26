@@ -1,5 +1,5 @@
-myhostname = hwdsb1.easypress.ca
-mydomain = easypress.ca
+myhostname = {{ inventory_hostname }}
+mydomain = {{ email_domain }}
 myorigin = $mydomain
 inet_interfaces = loopback-only
 local_transport = error:local delivery is disabled
