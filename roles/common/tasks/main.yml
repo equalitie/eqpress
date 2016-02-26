@@ -47,7 +47,7 @@
     - fail2ban
     - gawk
     - git
-    - heirloom-mailx
+    - mailutils 
     - iotop
     - less
     - libncurses5-dev
