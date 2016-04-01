@@ -78,9 +78,24 @@
       default: ""
       private: yes
 
+    - name: "email_user_local"
+      prompt: "Local Email User"
+      default: "eqpress"
+      private: no
+
+    - name: "email_passwd_local"
+      prompt: "Local Email Passwd"
+      default: "enter_passwd"
+      private: yes
+
     - name: "email_service"
       prompt: "Default email service"
       default: "mandrill"
+      private: no
+
+    - name: "email_domain"
+      prompt: "Main Email Domain"
+      default: "example.co"
       private: no
 
     - name: "monitoring_email"

@@ -138,6 +138,13 @@
   when: sendgrid_username is defined
   tags: [email, main.cf, sendgrid]
 
+- name: Copy Local postfix main.cf
+  template: src={{ files }}/etc/postfix/main.cf-local.j2 dest=/etc/postfix/main.cf-local owner=root group=root mode=0644
+  notify:
+    - restart postfix
+  when: sendgrid_username is defined
+  tags: [email, main.cf, local-email]
+
 - name: Backup default mail.cf
   #shell: mv /etc/postfix/main.cf /etc/postfix/main.cf.{{ ansible_date_time.iso8601 }}
   shell: mv /etc/postfix/main.cf /etc/postfix/main.cf.`date "+%Y%m%d%H%M%S"`

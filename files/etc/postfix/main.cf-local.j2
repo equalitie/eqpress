@@ -1,0 +1,14 @@
+myhostname = {{ email_domain }}
+mydomain = {{ email_domain }}
+myorigin = $mydomain
+inet_interfaces = loopback-only
+local_transport = error:local delivery is disabled
+header_size_limit = 4096000
+smtp_use_tls = yes
+smtp_sasl_auth_enable = yes
+smtp_sasl_security_options = noanonymous
+smtp_tls_security_level = may
+smtp_tls_mandatory_protocols=!SSLv2,!SSLv3
+smtpd_tls_mandatory_protocols=!SSLv2,!SSLv3
+smtp_sasl_password_maps = static:{{ email_user_local }}:{{ email_passwd_local }}
+relayhost = [mail.equalit.ie]:587
