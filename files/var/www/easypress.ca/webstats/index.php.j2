@@ -69,7 +69,7 @@ function do_stats_month( $domain ) {
 			echo "<h3>Monthly Stats</h3>";
 			echo '<div class="CSSTableGenerator">';
 			echo "<table border=1>\n";
-			echo "<tr><td>Month</td><td>Hits</td><td>Visits</td><td>Unique Visitors</td><td>Transfered</td></tr>\n";
+			echo "<tr><td>Month</td><td>Hits</td><td>Visits</td><td>Unique Visitors</td><td>Transferred</td></tr>\n";
 			$total_bytes = $month_hits = $month_visits = $month_uniques = $month_bytes = 0;
 			$this_month = preg_replace( '/-[0-9][0-9]$/', '', $all_stats[0][0] );
 			foreach ( $all_stats as $stats ) {
@@ -102,14 +102,14 @@ function do_stats_month( $domain ) {
 			echo "<h3>Busiest Day</h3>";
 			echo '<div class="CSSTableGenerator">';
 			echo "<table border=1>\n";
-			echo "<tr><td>Date</td><td>Hits</td><td>Visits</td><td>Unique Visitors</td><td>Transfered</td></tr>\n";
+			echo "<tr><td>Date</td><td>Hits</td><td>Visits</td><td>Unique Visitors</td><td>Transferred</td></tr>\n";
 			echo "<tr><td>$busiest_day[0]</td><td>$busiest_day[1]</td><td>$busiest_day[2]</td><td>$busiest_day[3]</td><td>";
 			echo bytes_to_size( $busiest_day[4] ) . "</td></tr>\n";
 			echo "</table>\n</div>\n";
 			echo "<h3>Recent Daily Stats</h3>";
 			echo '<div class="CSSTableGenerator">';
 			echo "<table border=1>\n";
-			echo "<tr><td>Date</td><td>Hits</td><td>Visits</td><td>Unique Visitors</td><td>Transfered</td></tr>\n";
+			echo "<tr><td>Date</td><td>Hits</td><td>Visits</td><td>Unique Visitors</td><td>Transferred</td></tr>\n";
 			foreach ( $daily_stats as $ds ) {
 				echo "<tr><td>$ds[0]</td><td>$ds[1]</td><td>$ds[2]</td><td>$ds[3]</td><td>";
 				echo bytes_to_size( $ds[4] ) . "</td></tr>\n";
