@@ -46,7 +46,7 @@ function ep_console_docs_manage_cache() {
 					<div class="postbox">
 						<h3><span>Manage Cache</span></h3>
 						<div class="inside">
-							<p>Manage Cache provides a way to delete the server cache. If you are making changes to your content and you need to see the changes immediately, you can use this feature to purge the web server's cache. It might take up to a minute for the cache to be removed depending on the its size.</p>
+							<p>Manage Cache provides a way to delete the server cache. If you are making changes to your content and you need to see the changes immediately, you can use this feature to purge the web server's cache. It might take up to a minute for the cache to be removed depending on its size.</p>
 						</div> <!-- .inside -->
 					</div> <!-- .postbox -->
 				</div> <!-- .meta-box-sortables .ui-sortable -->
