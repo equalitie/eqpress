@@ -150,6 +150,7 @@
 
 - name: install nginx htpasswd file for restricted pages
   template: src={{ files }}/etc/nginx/restricted_pages.htpasswd.j2 dest=/etc/nginx/restricted_pages.htpasswd owner=www-data group=www-data mode=0440
+  when: auto_provision_host is not defined
   notify:
     - reload nginx
   tags: [nginx, nginx_config, nginx_htpasswd]
