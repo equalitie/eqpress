@@ -573,20 +573,22 @@ EOE;
         // Create the email from the template
         $tpl = $mustache->loadTemplate( $welcome_email_template );
         $out = $tpl->render( array(
-            'domain'        => $domain,
-            'email'         => $params['email'],
-            'first_name'    => $params['real_first_name'],
-            'last_name'     => $params['real_last_name'],
-            'wp_admin'      => $params['first_name'],
-            'db_name'       => $params['db_name'],
-            'db_user'       => $params['db_user'],
-            'sftp_user'     => $params['db_user'],
-            'pwp_wp'        => $params['pwp']['wp'],
-            'pwp_db'        => $params['pwp']['db'],
-            'pwp_sftp'      => $params['pwp']['sftp'],
-            'server_ip'     => $server_ip,
-            'org_name'      => $params['org_name'],
-            'org_email'     => $params['org_email'],
+            'domain'          => $domain,
+            'email'           => $params['email'],
+            'first_name'      => $params['real_first_name'],
+            'last_name'       => $params['real_last_name'],
+            'wp_admin'        => $params['first_name'],
+            'db_name'         => $params['db_name'],
+            'db_user'         => $params['db_user'],
+            'sftp_user'       => $params['db_user'],
+            'org_tos_link'    => $params['org_tos_link'],
+            'org_support_url' => $params['org_support_url'],
+            'pwp_wp'          => $params['pwp']['wp'],
+            'pwp_db'          => $params['pwp']['db'],
+            'pwp_sftp'        => $params['pwp']['sftp'],
+            'server_ip'       => $server_ip,
+            'org_name'        => $params['org_name'],
+            'org_email'       => $params['org_email'],
         ) );
 
         // Save the parsed template to a file to be read by ansible process.

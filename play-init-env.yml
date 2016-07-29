@@ -15,7 +15,12 @@
     
     - name: "org_support_url"
       prompt: "Enter organization support website address"
-      default: "eqpress.equalit.ie"
+      default: "equalit.ie"
+      private: no
+
+    - name: "org_tos_link"
+      prompt: "Enter full link to Terms Of Service"
+      default: "https://wiki.deflect.ca/wiki/ToS"
       private: no
     
     - name: "pwpush_url"
