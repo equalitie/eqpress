@@ -3,6 +3,7 @@ worker_processes {{ nginx_worker_processes }};
 worker_priority -5;
 worker_rlimit_nofile 32768;
 pid /var/run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
 error_log /var/log/nginx/nginx-error.log info;
 
 events {

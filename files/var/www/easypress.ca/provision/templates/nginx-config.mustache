@@ -38,7 +38,7 @@ server {
 # SSL server
 #
 server {
-    listen 443 spdy;
+    listen 443 http2;
     server_name {{domain}};
     server_name www.{{domain}};
 {{multisite_config}}

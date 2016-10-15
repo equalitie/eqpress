@@ -84,6 +84,27 @@
   file: src=/run/cache/nginx dest=/var/cache/nginx owner=root group=root state=link
   tags: nginx
 
+- name: create modules- directories
+  file: path=/etc/nginx/{{ item }} state=directory mode=0755
+  with_items:
+    - modules-enabled
+    - modules-available
+  tags: [nginx, nginx_config]
+
+- name: link modules
+  file: src=/usr/share/nginx/modules-available/{{ item }} dest=/etc/nginx/modules-enabled/{{ item }} state=link
+  with_items:
+    - 10-mod-http-ndk.conf
+    - 50-mod-http-auth-pam.conf
+    - 50-mod-http-geoip.conf
+    - 50-mod-http-image-filter.conf
+    - 50-mod-http-lua.conf
+    - 50-mod-http-perl.conf
+    - 50-mod-http-xslt-filter.conf
+    - 50-mod-mail.conf
+    - 50-mod-stream.conf
+  tags: [nginx, nginx_config]
+
 - name: copy nginx config files
   action: copy src={{ files }}/etc/nginx/{{ item }} dest=/etc/nginx owner=root group=staff mode=0664
   with_items:
