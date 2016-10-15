@@ -43,6 +43,9 @@ log_slave_updates              = 1
 relay_log                      = /var/lib/mysql/relay_bin
 slave_net_timeout              = 60
 
+replicate-ignore-db            = information_schema
+replicate-ignore-db            = performance_schema
+
 # CACHES AND LIMITS #
 tmp_table_size                 = 32M
 max_heap_table_size            = 32M
