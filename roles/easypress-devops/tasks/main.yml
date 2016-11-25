@@ -89,6 +89,12 @@
     - wp_update_plugins.sh
   tags: ep-sbin
 
+- name: copy /usr/local/bin scripts used for system administration
+  action: copy src={{ files }}/usr/local/bin/{{ item }} dest=/usr/local/bin owner=root group=staff mode=0755
+  with_items:
+    - check_big_files.sh
+  tags: ep-sbin
+
 - name: copy sbin script templates
   action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
   with_items:
