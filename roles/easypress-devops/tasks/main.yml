@@ -94,7 +94,6 @@
   with_items:
     - ep_chpass.sh
     - monit_ep_console_reset_password.sh
-    - check_for_disk_usage.sh
     - check_for_large_files.sh
     - check_for_large_http_log_files.sh
     - webstats_totals_wrapper.sh
