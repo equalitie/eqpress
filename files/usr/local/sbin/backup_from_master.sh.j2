@@ -4,10 +4,13 @@
 #
 #
 
+LOGFILE=/var/log/backup_from_master.log
+
 master={{ mysql_repl_master }}
 
 export PATH=/bin:/usr/bin
 if ping -c 1 ${master} > /dev/null 2>&1; then
+    RSYNCSTART=$(date +%s%3N)
     rsync -av --delete \
 	    --exclude '*.zip' \
 	    --exclude '*.tar.gz' \
@@ -20,6 +23,10 @@ if ping -c 1 ${master} > /dev/null 2>&1; then
 	    ${master}:/var/www /var
     rsync -av --delete --exclude 'easypress.ca' ${master}:/etc/nginx /etc
     rsync -av ${master}:/etc/ssl /etc
+    RSYNCEND=$(date +%s%3N)
+    DURATION_MS=$(($RSYNCEND - $RSYNCSTART))
+    echo $(date +%s) backup OK ${DURATION_MS}ms >>${LOGFILE}
 else
     echo "${0}: error, cant reach ${master}."
+    echo $(date +%s) backup FAIL Cannot reach $master >>${LOGFILE}
 fi
