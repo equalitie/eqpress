@@ -25,8 +25,8 @@ if ping -c 1 ${master} > /dev/null 2>&1; then
     rsync -av ${master}:/etc/ssl /etc
     RSYNCEND=$(date +%s%3N)
     DURATION_MS=$(($RSYNCEND - $RSYNCSTART))
-    echo $(date +%s) backup OK ${DURATION_MS}ms >>${LOGFILE}
+    echo $(date +%s) backup-end OK ${DURATION_MS}ms >>${LOGFILE}
 else
     echo "${0}: error, cant reach ${master}."
-    echo $(date +%s) backup FAIL Cannot reach $master >>${LOGFILE}
+    echo $(date +%s) backup-end FAIL Cannot reach $master >>${LOGFILE}
 fi
