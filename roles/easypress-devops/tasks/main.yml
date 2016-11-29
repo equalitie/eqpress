@@ -130,6 +130,11 @@
   when: mysql_repl_role == 'slave' and mysql_repl_master is defined
   tags: [ep-sbin, backup-scripts]
 
+- name: copy backup checking nagios script to slave
+  copy: src={{ files }}/usr/local/bin/check_backup_from_master.sh dest=/usr/local/bin/check_backup_from_master.sh owner=root group=staff mode=0750
+  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  tags: [ep-sbin, backup-scripts]
+
 - name: copy tarsnap config file
   template: src={{ files }}/usr/local/etc/tarsnap.conf.j2 dest=/usr/local/etc/tarsnap.conf owner=root group=staff mode=0640
   tags: [tarsnap]
