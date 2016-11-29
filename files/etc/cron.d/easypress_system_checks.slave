@@ -1,3 +1,2 @@
-1 */6 * * *  root /usr/local/sbin/check_for_large_files.sh
 */5 * * * *  root /usr/local/sbin/check_mysql_replication_status.sh
 3 */4 * * *  root /usr/sbin/nginx -s reload

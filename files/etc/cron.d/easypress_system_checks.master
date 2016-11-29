@@ -1,2 +1,1 @@
-10 * * * *  root /usr/local/sbin/check_for_large_http_log_files.sh
 10 */4 * * *  root /usr/local/sbin/check_size_of_php_error_logs.sh

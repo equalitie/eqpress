@@ -100,8 +100,6 @@
   with_items:
     - ep_chpass.sh
     - monit_ep_console_reset_password.sh
-    - check_for_large_files.sh
-    - check_for_large_http_log_files.sh
     - webstats_totals_wrapper.sh
     - ep_gen_api_key.php
   tags: [ep-sbin, ep-sbin-templates, monitoring-email]
