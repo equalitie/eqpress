@@ -20,6 +20,10 @@
     - nagios_check_mysql.php
   tags: [ep-sbin, ep-sbin-templates, monitoring]
 
+- name: ensure /var/www exists and is owned by root
+  file: path=/var/www state=directory owner=root group=root mode=0755
+  tags: [var-www-root]
+
 #- name: rsync easypress.ca docroot containing the easyPress Console
 #  synchronize: src={{ files }}/var/www/easypress.ca dest=/var/www
 #  tags: ep-console
@@ -51,6 +55,15 @@
 - name: rsync performance monitoring files
   local_action: command rsync -a {{ files }}/var/www/easypress.ca/perf root@{{inventory_hostname}}:/var/www/easypress.ca/
   tags: [ep-console, perf]
+
+- name: make webstats directory
+  file:
+    path: /var/www/easypress.ca/webstats
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+  tags: [ep-console, webstats]
 
 ##- name: rsync webstats files
 #  synchronize: src={{ files }}/var/www/easypress.ca/webstats dest=/var/www/easypress.ca
