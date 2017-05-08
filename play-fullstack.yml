@@ -5,11 +5,11 @@
      - common
      - ssh-config
      - easypress-ssl
+     - web-app
+     - easypress-console
      - easypress-devops
      - mysql-percona-replication
      - mysql-enable-replication
-     - web-app
-     - easypress-console
 
 #  tasks:
 #    - name: reboot
