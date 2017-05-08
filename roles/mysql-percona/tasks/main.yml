@@ -1,8 +1,16 @@
 ---
 # roles/mysql-percona/tasks/main.yml
 
+- name: remove old apt keys required for Percona
+  apt_key:
+    url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x1C4CBDCDCD2EFD2A'
+    state: absent
+  ignore_errors: true
+
 - name: Add apt keys required for Percona
-  apt_key: url='http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x1C4CBDCDCD2EFD2A'
+  apt_key:
+    url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9334A25F8507EFA5'
+    state: present
 
 - name: Add repos for Percona
   apt_repository: repo='deb http://repo.percona.com/apt wheezy main'
