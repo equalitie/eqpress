@@ -11,6 +11,12 @@
   register: the_date_time
   tags: mysql
 
+- name: Sleep awhile and then run a killall -9 on mysqld in case stuck
+  shell: sleep 10 && killall -TERM mysqld ; sleep 5 ; killall -9 mysqld ; sleep 5
+  when: mysql_repl_role == 'slave'
+  ignore_errors: yes
+  tags: mysql
+
 - name: rename the mysql directory
   shell: mv /var/lib/mysql /var/lib/mysql.{{ the_date_time.stdout }}
   when: mysql_repl_role == 'slave'
@@ -113,13 +119,22 @@
   when: mysql_repl_role == 'slave'
   tags: [mysql, repl, slaveon]
 
+- name: create /var/lib/mysql/mysql_error.log because we can't start without it
+  file:
+    path: /var/lib/mysql/mysql_error.log
+    state: touch
+    owner: mysql
+    group: mysql
+    mode: 0660
+  tags: [mysql, relp, slaveon]
+
 - name: start mysql on the replica
   service: name=mysql state=started
   when: mysql_repl_role == 'slave'
   ignore_errors: yes
   tags: [mysql, repl, slaveon]
 
-- name: Change the master in slave to start the replication
+- name: Change the master in slave to start the replication, this seems to always fail but it really does not
   mysql_replication: mode=changemaster master_host={{ mysql_repl_master }} master_log_file={{ mysql_binlog_file.stdout }} master_log_pos={{ mysql_binlog_position.stdout }} master_user={{ mysql_repl_creds.username }} master_password={{ mysql_repl_creds.password }} master_ssl=1 master_ssl_ca=/etc/ssl/easypress/root_CA.pem master_ssl_cert=/etc/ssl/easypress/{{ inventory_hostname }}.pem master_ssl_key=/etc/ssl/easypress/{{ inventory_hostname }}.key
   when: mysql_repl_role == 'slave' and mysql_repl_master is defined
   ignore_errors: yes
