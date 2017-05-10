@@ -1,8 +1,16 @@
 ---
 
 auto_provision_host: true
+# Note you can edit auto_provision_nodes and add multiple nodes
+# ie;
+# auto_provision_nodes: '{"mynode1":{"hostname":"example1.node.co","ip":"192.168.2.1"},"mynode2":{"hostname":"example3.node.co","ip":"192.168.6.2"}}'
 auto_provision_nodes: '{"{{ auto_provision_node_location }}":{"hostname":"{{ auto_provision_node_hostname }}","ip":"{{ auto_provision_node_ip_address }}"}}'
+# auto_provision_node_hostname created by init is a single string. If you have multiple nodes defined above
+# you will need to change this to a list
+# ie;
+# auto_provision_node_hostname: [ "example1.node.co", "example3.node.co" ]
 auto_provision_node_hostname: "{{ auto_provision_node_hostname }}"
+# auto_provision_node_ip_address: only gets used in the init process. No need to update.
 auto_provision_node_ip_address: "{{ auto_provision_node_ip_address }}"
 auto_provision_db_host: "{{ auto_provision_db_host }}"
 auto_provision_base_directory: "{{ auto_provision_base_directory }}"

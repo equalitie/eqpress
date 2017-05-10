@@ -1,2 +1,8 @@
 [nodes]
+{% if auto_provision_node_hostname is defined and auto_provision_node_hostname is not string %}
+{% for h in auto_provision_node_hostname %}
+{{ h }}
+{% endfor %}
+{% else %}
 {{ auto_provision_node_hostname }}
+{% endif %}
