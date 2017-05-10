@@ -70,6 +70,8 @@ Mandrill and Sendgrid are email delivery services offering free accounts for mod
 
 "y" if you want to use dns lookup for IP and "n" to use ansible gathered facts for IP 
 
+Note: If your VM or server has a private interal IP address and a network server supplies your public IP address (floating IP), choose "y" or your IP addresses will be the private addresses and in most cases will not work.
+
 #### Server Configuration Initialization
 To build a redundant pair of servers there are some ansible variables that need to be set for the playbooks to work. Run the initialization playbook to create the group and host variables:
 
@@ -77,7 +79,8 @@ To build a redundant pair of servers there are some ansible variables that need 
 
 The following settings must be specified:
 
-* **Nginx worker processes** - Should equal c - 2 where c is number of CPU cores. If c is < 4 then worker procs should equal 2.
+* **Nginx worker processes** - Should equal c - 2 where c is number of CPU cores. If c is < 4 then worker procs should equal 2
+.
 * **PHP-FPM max children** - default is typically fine
 * **PHP-FPM start servers** - default is typically fine
 * **PHP-FPM min spare** - default is typically fine
