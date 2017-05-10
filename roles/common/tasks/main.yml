@@ -21,7 +21,10 @@
   tags: hostname
 
 - name: Add the host entry to /etc/hosts
-  lineinfile: dest=/etc/hosts line="{{ public_ipv4_address }}  {{ inventory_hostname }}" state=present
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{ public_ipv4_address }}  {{ inventory_hostname }}"
+    state: present
   tags: hostname
 
 - name: Set the hostname
@@ -95,7 +98,6 @@
         group=root
         mode=0644
         backup=yes
-  #when: ansible_os_family == "Debian"
   tags: [configuration,timezone]
 
 # tasks file for locale
@@ -160,15 +162,30 @@
   tags: [email, main.cf]
 
 - name: Copy iptables startup script
-  copy: src={{ files }}/etc/network/if-pre-up.d/iptables dest=/etc/network/if-pre-up.d owner=root group=root mode=0750
+  copy:
+    src: "{{ files }}/etc/network/if-pre-up.d/iptables"
+    dest: /etc/network/if-pre-up.d
+    owner: root
+    group: root
+    mode: 0750
   tags: [security, firewall]
 
 - name: Copy iptables shutdown script
-  copy: src={{ files }}/etc/network/if-down.d/iptables_save dest=/etc/network/if-down.d owner=root group=root mode=0750
+  copy:
+    src: "{{ files }}/etc/network/if-down.d/iptables_save"
+    dest: /etc/network/if-down.d
+    owner: root
+    group: root
+    mode: 0750
   tags: [security, firewall]
 
 - name: Copy iptables config
-  copy: src={{ files }}/etc/iptables.up.rules dest=/etc owner=root group=root mode=0640
+  copy:
+    src: "{{ files }}/etc/iptables.up.rules"
+    dest: /etc/iptables.up.rules
+    owner: root
+    group: root
+    mode: 0640
   notify:
     - start firewall
   tags: [security, firewall]
