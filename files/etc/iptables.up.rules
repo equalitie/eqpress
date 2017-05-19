@@ -30,6 +30,9 @@
 # Allows MySQL
 #-A INPUT -p tcp -m state --state NEW --dport 3306 -s xxx.xxx.xxx.xxx -j ACCEPT
 
+# Allow nagios
+#-A INPUT -p tcp -m state --state NEW --dport 5666 -s xxx.xxx.xxx.xxx -j ACCEPT
+
 # Allow ping
 -A OUTPUT -p icmp --icmp-type 0 -j ACCEPT
 -A INPUT -p icmp --icmp-type 0 -j ACCEPT
