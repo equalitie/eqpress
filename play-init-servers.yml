@@ -103,5 +103,10 @@
       default: "equalitie-montreal"
       private: no
 
+    - name: "failban_ignore"
+      prompt: "fail2ban ignore IPs list. Space separated"
+      default: "192.168.2.1/24 192.168.3.1"
+      private: no
+
   roles:
      - init-servers

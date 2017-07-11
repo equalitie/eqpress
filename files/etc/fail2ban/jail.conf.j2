@@ -21,7 +21,10 @@
 # following example:
 #       ignoreip = 127.0.0.1 xxx.xxx.xxx.xxx/xx
 #
-ignoreip = 127.0.0.1
+ignoreip = 127.0.0.1{% if failban_ignore is defined and failban_ignore|length > 6 %} {{ failban_ignore }}
+{% else %}
+
+{% endif %}
 bantime  = 6400000
 findtime = 300
 maxretry = 8
