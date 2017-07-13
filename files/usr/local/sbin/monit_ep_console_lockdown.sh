@@ -15,8 +15,8 @@ if cd $LOCKS; then
 					chwebown /var/www/$DOMAIN/wordpress/.sessions # make PHP sessions dir writable by web server user
 					chwebown /var/www/$DOMAIN/wordpress/php-errors.log
 
-					if [ -d /var/www/${DOMAIN}/wp-content/blogs.dir ]; then
-						chwebown /var/www/${DOMAIN}/wp-content/blogs.dir # make multisite upload dir writable by web server user
+					if [ -d /var/www/${DOMAIN}/wordpress/wp-content/blogs.dir ]; then
+						chwebown /var/www/${DOMAIN}/wordpress/wp-content/blogs.dir # make multisite upload dir writable by web server user
 					fi
 					echo "$DOMAIN has been locked down"
 				else
