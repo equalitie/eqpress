@@ -13,6 +13,7 @@ if cd $LOCKS; then
 					chcustown ${DOMAIN}	# change ownership to customer's username	
 					chwebown /var/www/$DOMAIN/wordpress/wp-content/uploads # make uploads writable by web server user
 					chwebown /var/www/$DOMAIN/wordpress/.sessions # make PHP sessions dir writable by web server user
+					touch /var/www/$DOMAIN/wordpress/php-errors.log
 					chwebown /var/www/$DOMAIN/wordpress/php-errors.log
 
 					if [ -d /var/www/${DOMAIN}/wordpress/wp-content/blogs.dir ]; then
