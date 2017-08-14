@@ -99,3 +99,12 @@ function ep_remove_pingbacks( $methods ) {
     unset( $methods['pingback.extensions.getPingbacks'] );
     return $methods;
 }
+
+/**
+ * Make sure we have a decent password
+ *
+ */
+add_action( 'admin_enqueue_scripts', 'pass_strength' );
+function pass_strength() {
+	wp_add_inline_style( 'admin-menu', '.pw-weak {display: none !important;}' );
+}
