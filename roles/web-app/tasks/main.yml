@@ -162,7 +162,7 @@
   when: auto_provision_host is not defined
   tags: [nginx, nginx_config, nginx_config_easypress]
 
-- name: copy nginx easypress.ca config template for auto-provision host *will not overwrite*
+- name: nginx 'easypress.ca' config template for auto-provision host. ** will not overwrite **
   template:
     src: "{{ files }}/etc/nginx/sites-available/easypress.ca-auto-provision.j2"
     dest: "/etc/nginx/sites-available/easypress.ca"
@@ -173,8 +173,11 @@
     backup: yes
   notify:
     - reload nginx
-  when: auto_provision_host is defined
-  tags: [nginx, nginx_config, nginx_config_easypress]
+  when: auto_provision_host is defined and auto_provision_host
+  tags:
+    - nginx
+    - nginx_config
+    - nginx_config_easypress
 
 - name: install nginx htpasswd file for restricted pages
   template: src={{ files }}/etc/nginx/restricted_pages.htpasswd.j2 dest=/etc/nginx/restricted_pages.htpasswd owner=www-data group=www-data mode=0440
