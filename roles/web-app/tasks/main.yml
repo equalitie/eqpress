@@ -162,8 +162,15 @@
   when: auto_provision_host is not defined
   tags: [nginx, nginx_config, nginx_config_easypress]
 
-- name: copy nginx easypress.ca config template for auto-provision host
-  template: src={{ files }}/etc/nginx/sites-available/easypress.ca-auto-provision.j2 dest=/etc/nginx/sites-available/easypress.ca owner=root group=staff mode=0664
+- name: copy nginx easypress.ca config template for auto-provision host *will not overwrite*
+  template:
+    src: "{{ files }}/etc/nginx/sites-available/easypress.ca-auto-provision.j2"
+    dest: "/etc/nginx/sites-available/easypress.ca"
+    owner: root
+    group: staff
+    mode: '0664'
+    force: no
+    backup: yes
   notify:
     - reload nginx
   when: auto_provision_host is defined
