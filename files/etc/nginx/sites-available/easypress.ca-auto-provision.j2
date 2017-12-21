@@ -1,4 +1,22 @@
 server {
+	listen 80;
+	server_name {{ inventory_hostname }};
+	access_log /var/log/nginx/{{ inventory_hostname }}.access.log eq_default;
+	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
+	root /var/www/easypress.ca;
+
+	# Only allow this uri for LetsEncrypt certonly webroot
+	location ~ /.well-known/acme-challenge {
+		try_files $uri =404;
+		break;
+	}
+
+	location / {
+		return 301 https://$host$request_uri;
+	}
+}
+
+server {
 	listen 443;
 	server_name {{ inventory_hostname }};
 	access_log /var/log/nginx/{{ inventory_hostname }}.access.log eq_default;
