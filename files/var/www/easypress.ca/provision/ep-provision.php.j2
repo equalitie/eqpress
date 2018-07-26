@@ -69,10 +69,12 @@ switch($step) {
         define( 'EP_PEND_DIR', EP_PROV_DIR . 'pending/' );
 
         // Log the incoming request.
-        file_put_contents( EP_PROV_DIR . '{{ auto_provision_log_file }}',
+// FIXME: We need to format this log. Do not want to log passwords
+/****        file_put_contents( EP_PROV_DIR . '{{ auto_provision_log_file }}',
             "\n" . date( DATE_RFC850 ) .
             ' (request ' . $params['request_id'] . ' received): ' .
             serialize( $_POST ) . "\n", FILE_APPEND | LOCK_EX );
+******/
 
         // Validate and sanitize the request
         $util->validate_post_parameters();
