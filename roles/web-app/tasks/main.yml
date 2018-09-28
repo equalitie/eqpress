@@ -31,7 +31,6 @@
     - php5-dev
     - php5-fpm
     - php5-gd
-    - php5-http
     - php5-imagick
     - php5-json
     - php5-mcrypt
@@ -41,6 +40,7 @@
     - php5-ssh2
     - php5-ldap
     - php5-intl
+#    - php5-http
   tags: [nginx, php]
 
 - name: ensure nginx will start at boot
