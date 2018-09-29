@@ -19,11 +19,11 @@
 
 - name: restart firewall
   command: /etc/network/if-down.d/iptables_save && /etc/network/if-pre-up.d/iptables
-  ignore_errors: yes
+  #ignore_errors: yes
 
 - name: start firewall
   command: /etc/network/if-pre-up.d/iptables
-  ignore_errors: yes
+  #ignore_errors: yes
 
 - name: harden IP stack
   command: /usr/local/sbin/harden_ip.sh
