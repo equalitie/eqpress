@@ -1,6 +1,9 @@
 #
 # iptables firewall
 #
+* Initial flush all
+-F
+
 *filter
 
 # loopback is free
