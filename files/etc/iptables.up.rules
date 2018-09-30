@@ -1,7 +1,7 @@
 #
 # iptables firewall
 #
-* Initial flush all
+# Initial flush all
 -F
 
 *filter
