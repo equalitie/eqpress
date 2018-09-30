@@ -20,8 +20,6 @@
 -A INPUT -p tcp --dport 80 -j ACCEPT
 -A INPUT -p tcp --dport 443 -j ACCEPT
 
-# block old servers
--A INPUT -s 64.68.201.0/24 -j DROP
 
 # Allows SSH and mosh connections
 -A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
