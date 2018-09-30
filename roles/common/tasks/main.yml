@@ -222,6 +222,10 @@
   copy: src={{ files }}/etc/security/limits.conf dest=/etc/security owner=root group=root mode=0644
   tags: [limits]
 
+- name: force all notified handlers to run at this point, not waiting for normal sync points
+  meta: flush_handlers
+  tags: [firewall, security]
+
 #- name: copy mrtg monitoring scripts
 #  action: copy src={{ files }}/usr/local/bin/{{ item }} dest=/usr/local/bin owner=root group=staff mode=0770
 #  with_items:
