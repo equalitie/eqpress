@@ -1,6 +1,5 @@
 ---
 # roles/mysql-percona-replication/tasks/main.yml
-
 - name: remove old apt keys required for Percona
   apt_key:
     url: "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x1C4CBDCDCD2EFD2A"
@@ -13,20 +12,35 @@
     state: present
 
 - name: Add repos for Percona
-  apt_repository: repo='deb http://repo.percona.com/apt wheezy main'
-  tags: mysql
+  apt_repository:
+    repo: 'deb http://repo.percona.com/apt wheezy main'
+  tags:
+    - mysql
 
 - name: Update the apt-get cache
-  apt: update_cache=yes
-  tags: mysql
+  apt:
+    update_cache: yes
+  tags:
+    - mysql
 
 - name: create mysql config directory
-  file: path=/etc/mysql owner=root group=root mode=0755 state=directory
-  tags: [mysql, mysql_config]
+  file:
+    path: /etc/mysql
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+  tags:
+    - mysql
+    - mysql_config
 
 - name: Copy main database configuation file my.cnf
-  template: src={{ files }}/etc/mysql/my.cnf.j2 dest=/etc/mysql/my.cnf
-  tags: [mysql, mysql_config]
+  template:
+    src: "{{ files }}/etc/mysql/my.cnf.j2"
+    dest: /etc/mysql/my.cnf
+  tags:
+    - mysql
+    - mysql_config
 
 - name: Install packages
   action: apt pkg={{ item }} state=installed
@@ -35,12 +49,10 @@
     - percona-server-client-5.6
     - percona-toolkit
     - percona-xtrabackup
-  tags: [mysql, apt-mysql]
+  tags:
+   - mysql
+   - apt-mysql
   register: pkg_install
-
-#- name: outut stuff
-#  debug: var=pkg_install
-#  tags: [mysql, apt-mysql]
 
 #- name: remove existing .my.cnf files for initial install
 #  file: path=/root/.my.cnf state=absent
@@ -48,62 +60,120 @@
 #  tags: [mysql, apt-mysql]
 
 - name: Update mysql root password for all root accounts.
-  mysql_user: name=root host={{ item }} password={{ mysql_root_db_pass }}
+  mysql_user:
+    name: root
+    login_host: localhost
+    host: "{{ item }}"
+    password: "{{ mysql_root_db_pass }}"
+    state: present
   with_items:
-    - "{{ ansible_hostname }}"
-    - "{{ inventory_hostname }}"
+    - localhost
     - 127.0.0.1
     - ::1
-    - localhost
-  tags: mysql
+    - "{{ ansible_hostname }}"
+    - "{{ inventory_hostname }}"
+  #when: mysql_repl_role == 'master'
+  tags:
+    - mysql
+    - mysql_resync
 
 - name: Copy .my.cnf file to /root/
-  template: src={{ files }}/root/.my.cnf.j2 dest=/root/.my.cnf mode=0600
-  tags: [mysql, mysql_config]
+  template:
+    src: "{{ files }}/root/.my.cnf.j2"
+    dest: /root/.my.cnf
+    mode: '0600'
+  tags:
+    - mysql
+    - mysql_config
+    - mysql_resync
 
 - name: Copy .my.cnf-mysqladmin file to /root/
-  template: src={{ files }}/root/.my.cnf-mysqladmin.j2 dest=/root/.my.cnf-mysqladmin mode=0600
-  tags: [mysql, mysql_config, mysqladmin_user]
+  template:
+    src: "{{ files }}/root/.my.cnf-mysqladmin.j2"
+    dest: /root/.my.cnf-mysqladmin
+    mode: '0600'
+  tags:
+    - mysql
+    - mysql_config
+    - mysqladmin_user
+    - mysql_resync
 
 - name: ensure anonymous users are not in the database
-  mysql_user: name='' host={{ item }} state=absent
+  mysql_user:
+    name: ''
+    host: "{{ item }}"
+    state: absent
   with_items:
     - localhost
     - "{{ inventory_hostname }}"
-  tags: mysql
+  #when: mysql_repl_role == 'master'
+  tags:
+    - mysql
+    - mysql_resync
 
 - name: remove the test database
-  mysql_db: name=test state=absent
-  tags: mysql
+  mysql_db:
+    name: test
+    state: absent
+  when: mysql_repl_role == 'master'
+  tags:
+    - mysql
+    - mysql_resync
 
 - name: Create the mysqladmin user mysql server monitoring on slave
-  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv='*.*:SUPER,PROCESS' state=present
+  mysql_user:
+    name: "{{ mysql_admin_user.username }}"
+    host: "{{ item }}"
+    password: "{{ mysql_admin_user.password|default('password') }}"
+    priv: '*.*:SUPER,PROCESS'
+    state: present
   # comment out line above and uncomment line below to change the mysqladmin user password
   #mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password }}
   with_items:
     - localhost
     - "{{ inventory_hostname }}"
-    - "monitor.easypress.ca"
   when: mysql_repl_role == 'slave'
-  tags: [mysql, repl, mysqladmin_user]
+  tags:
+    - mysql
+    - repl
+    - mysqladmin_user
 
 - name: Create the mysqladmin user for replication monitoring on master
-  mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password|default("password") }} priv=*.*:"SUPER,PROCESS" state=present
-  # comment out line above and uncomment line below to change the mysqladmin user password
+  mysql_user:
+    name: "{{ mysql_admin_user.username }}"
+    host: "{{ item }}"
+    password: "{{ mysql_admin_user.password|default('password') }}"
+    priv: '*.*:SUPER,PROCESS'
+    state: present
+  # comment out lines above and uncomment line below to change the mysqladmin user password
   #mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password }}
   with_items:
     - localhost
     - "{{ inventory_hostname }}"
     - "{{ mysql_repl_slave }}"
     - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
-    - "monitor.easypress.ca"
   when: mysql_repl_role == 'master'
-  tags: [mysql, repl, mysqladmin_user]
+  tags:
+    - mysql
+    - repl
+    - mysqladmin_user
+    - mysql_resync
 
 - name: copy replication check script
-  template: src={{ files }}/usr/local/sbin/check_mysql_replication_status.sh.j2 dest=/usr/local/sbin/check_mysql_replication_status.sh owner=root group=staff mode=0750
+  template:
+    src: "{{ files }}/usr/local/sbin/check_mysql_replication_status.sh.j2"
+    dest: /usr/local/sbin/check_mysql_replication_status.sh
+    owner: root
+    group: staff
+    mode: '0750'
   when: mysql_repl_role == 'slave'
-  tags: [mysql, repl, mysqladmin_user, repl_check_replication, monitoring-email]
+  tags:
+    - mysql
+    - repl
+    - mysqladmin_user
+    - repl_check_replication
+    - monitoring-email
+    - mysql_resync
 
 #- name: reset permissions on SSL key
 #  file: path=/etc/ssl/easypress/{{ inventory_hostname}}.key owner=root group=mysql mode=0640
@@ -135,22 +205,43 @@
 #  tags: [mysql, repl]
 
 - name: Copy webstats DB table structure to server
-  copy: src={{ files }}/etc/mysql/webstats.sql dest=/tmp
+  copy:
+    src: "{{ files }}/etc/mysql/webstats.sql"
+    dest: /tmp
   when: mysql_repl_role == 'master'
-  tags: [webstats-db, mysql]
+  tags:
+    - webstats-db
+    - mysql
 
 - name: Create webstats user
-  mysql_user: name={{ mysql_webstats.username }} host="localhost" password={{ mysql_webstats.password }} priv='*.*:ALL' state=present
+  mysql_user:
+    name: "{{ mysql_webstats.username }}"
+    host: "localhost"
+    password: "{{ mysql_webstats.password }}"
+    priv: '*.*:ALL'
+    state: present
   when: mysql_repl_role == 'master'
-  tags: [webstats-db, mysql]
+  tags:
+    - mysql
+    - webstats-db
+    - mysql_resync
 
 - name: Create webstats DB
-  mysql_db: name={{ mysql_webstats.db }} state=present
+  mysql_db:
+    name: "{{ mysql_webstats.db }}"
+    state: present
   when: mysql_repl_role == 'master'
-  tags: [webstats-db, mysql]
+  tags:
+    - webstats-db
+    - mysql
 
 - name: Create webstats tables
-  mysql_db: name={{ mysql_webstats.db }} state=import target=/tmp/webstats.sql
+  mysql_db:
+    name: "{{ mysql_webstats.db }}"
+    state: import
+    target: /tmp/webstats.sql
   when: mysql_repl_role == 'master'
-  tags: [webstats-db, mysql]
+  tags:
+    - webstats-db
+    - mysql
 
