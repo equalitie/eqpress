@@ -66,8 +66,6 @@
     - monit
     - mosh
     - mtr-tiny
-    - nagios-plugins-basic
-    - nagios-plugins-common
     - ntpdate
     - openssl
     - perl

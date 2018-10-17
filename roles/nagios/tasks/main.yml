@@ -1,0 +1,19 @@
+---
+- name: Install nagios packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nagios-plugins-basic
+    - nagios-plugins-common
+
+- name: Install scripts
+  template:
+    src: "{{item}}.j2"
+    dest: "/usr/local/bin/{{item}}"
+    owner: root
+    group: staff 
+    mode: '0755'
+  with_items:
+    - runargs.sh
+    - check_big_files.sh

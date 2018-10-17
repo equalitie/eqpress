@@ -1,0 +1,11 @@
+#!/bin/sh
+
+export A=`echo $1 | sed 's#.*/##g'`
+export C=/etc/nagios/args/$A.args
+
+if [ -f $C ] ; then
+	$1 `cat $C`
+else
+	$1
+fi
+
