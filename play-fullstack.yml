@@ -10,6 +10,7 @@
      - easypress-devops
      - mysql-percona-replication
      - mysql-enable-replication
+     - nagios
 
 #  tasks:
 #    - name: reboot
