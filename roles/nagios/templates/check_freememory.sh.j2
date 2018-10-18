@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# check freememory - replaces the perl script that does same
+
+unset ERROR WARN CRIT HELP TOTAL FREE MESSAGE EXIT MODE MYSTERY RELATIVE
+
+while getopts "ac:w:hp" options ; do
+case $options in                 
+  a )
+    MODE=A    
+  ;;
+  c )
+    [ -n $OPTARG ] && CRIT=$OPTARG
+  ;;
+  p )
+    RELATIVE=ON
+  ;;
+  w )
+    [ -n $OPTARG ] && WARN=$OPTARG
+  ;;
+  h )
+    HELP=ME
+  ;;
+esac
+done
+
+[ "$CRIT" -gt 0 ] 2>/dev/null || ERROR="$ERROR crit value looks wrong;"
+[ "$WARN" -gt 0 ] 2>/dev/null || ERROR="$ERROR warn value looks wrong;"
+[ "$WARN" -lt "$CRIT" ] 2>/dev/null && ERROR="$ERROR <crit> must be less than <warn>;"
+if [ "$RELATIVE" == ON ] ; then
+	[ "$WARN" -lt 100 ] 2>/dev/null || ERROR="$ERROR thresholds should be less than 100 in percentage mode;"
+fi
+
+if [ "$HELP" = "ME" ] || [ -n "$ERROR" ] ; then
+    echo -e "Usage:\n    `basename $0` -w <warn> -c <crit> [ -a ] [ -p ] [ -h ]\n'-a' checks against \"available\" instead of \"free\" memory\n'-p' checks against percentage levels instead of absolute levels"
+    [ -n "$ERROR" ] && echo "Errors:$ERROR"
+    exit 2
+fi
+
+[ "$MODE" != "A" ] && MODE=F
+
+TOTALkb=$(grep ^MemTotal /proc/meminfo | awk '{print $2}')
+AVAILABLEkb=$(grep ^MemAvailable /proc/meminfo | awk '{print $2}')
+FREEkb=$(grep ^MemFree /proc/meminfo | awk '{print $2}')
+TOTAL=$(($TOTALkb / 1024))
+AVAILABLE=$(expr $AVAILABLEkb / 1024)
+FREE=$(($FREEkb / 1024))
+MYSTERY=$(($AVAILABLE - $FREE))
+PERCENTAGE_FREE=$(mawk "BEGIN{printf \"%.0f\n\",$FREEkb / $TOTALkb * 100}")
+PERCENTAGE_AVAILABLE=$(mawk "BEGIN{printf \"%.0f\n\",$AVAILABLEkb / $TOTALkb * 100}")
+
+PERFDATA="free=${FREE};; available=${AVAILABLE};; total=${TOTAL};; mystery=${MYSTERY};;"
+
+if [ "$MODE" == A ] ; then
+        MESSAGE="${AVAILABLE}M / ${PERCENTAGE_AVAILABLE}% available"
+    if [ "$RELATIVE" == ON ] ; then
+        VALUE=$PERCENTAGE_AVAILABLE
+      else
+        VALUE=$AVAILABLE
+    fi
+  elif [ "$MODE" == F ] ; then
+    MESSAGE="${FREE}M / ${PERCENTAGE_FREE}% free"
+    if [ "$RELATIVE" == ON ] ; then
+        VALUE=$PERCENTAGE_FREE
+      else
+        VALUE=$FREE
+    fi
+fi
+
+if [ "$VALUE" -lt "$CRIT" ] ; then
+        echo "MEMORY CRITICAL $MESSAGE | $PERFDATA"
+	EXIT=2
+    elif [ "$VALUE" -lt "$WARN" ] ; then
+        echo "MEMORY WARNING $MESSAGE | $PERFDATA"
+	EXIT=1
+    else
+        echo "MEMORY OK $MESSAGE | $PERFDATA"
+	EXIT=0
+fi
+
+exit $EXIT

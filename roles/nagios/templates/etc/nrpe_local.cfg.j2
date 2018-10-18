@@ -1,0 +1,15 @@
+allowed_hosts=127.0.0.1
+
+command[check_swap]=/usr/local/bin/runargs.sh /usr/lib/nagios/plugins/check_swap
+command[check_users]=/usr/local/bin/runargs.sh /usr/lib/nagios/plugins/check_users
+command[check_load]=/usr/local/bin/runargs.sh /usr/lib/nagios/plugins/check_load
+command[check_all_disks]=/usr/local/bin/runargs.sh /usr/lib/nagios/plugins/check_disk
+command[check_procs]=/usr/local/bin/runargs.sh /usr/lib/nagios/plugins/check_procs
+command[check_zombie_procs]=/usr/local/bin/runargs.sh /usr/lib/nagios/plugins/check_procs
+command[check_big_files]=/usr/local/bin/runargs.sh /usr/local/bin/check_big_files.sh
+command[check_freememory]=/usr/local/bin/runargs.sh /usr/local/bin/check_freememory.sh
+command[check_connections]=/usr/local/bin/runargs.sh /usr/local/bin/check_connections.sh
+command[check_tcptraffic]=/usr/local/bin/runargs.sh /usr/local/bin/check_ifutil.pl
+{% if mysql_repl_role is defined and mysql_repl_role == 'slave' and mysql_repl_master is defined %}
+command[check_backup_from_master]=/usr/local/bin/runargs.sh /usr/local/bin/check_backup_from_master.sh
+{% endif %}

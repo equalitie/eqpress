@@ -14,7 +14,7 @@ find_files_bigger_than() {
 unset ERROR WARN CRIT HELP
 
 while getopts "c:w:h" options ; do
-case $options in                 
+case $options in
   c )
    [ -n $OPTARG ] && CRIT=$OPTARG
   ;;
@@ -32,7 +32,9 @@ shift $((OPTIND-1))
 [ "$CRIT" -gt 0 ] 2>/dev/null && [ "$CRIT" -lt 9999999 ] || ERROR="$ERROR crit value looks wrong;"
 [ "$WARN" -gt 0 ] 2>/dev/null && [ "$WARN" -lt 9999999 ] || ERROR="$ERROR warn value looks wrong;"
 [ "$WARN" -gt "$CRIT" ] 2>/dev/null && ERROR="$ERROR <crit> must be greater than <warn>;"
+{% raw %}
 [ ${#@} = 0 ] 2>/dev/null && ERROR="$ERROR you must specify at least one path to look in"
+{% endraw %}
 
 if [ "$HELP" = "ME" ] || [ -n "$ERROR" ] ; then
     echo -e "\nUsage:\n\n`basename $0` -w <warn> -c <crit> <path> [<path> ...]\n"

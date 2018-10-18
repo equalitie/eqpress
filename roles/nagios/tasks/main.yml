@@ -4,16 +4,101 @@
     name: "{{ item }}"
     state: present
   with_items:
-    - nagios-plugins-basic
+    - nagios-nrpe-server
     - nagios-plugins-common
+    - nagios-plugins-basic
+  tags:
+    - nagios
 
-- name: Install scripts
+- name: Install scripts to all
   template:
     src: "{{item}}.j2"
     dest: "/usr/local/bin/{{item}}"
     owner: root
-    group: staff 
+    group: staff
     mode: '0755'
   with_items:
     - runargs.sh
     - check_big_files.sh
+    - check_connections.sh
+    - check_freememory.sh
+    - check_ifutil.pl
+    - check_tcptraffic
+  tags:
+    - nagios
+
+- name: Install scripts to slave
+  template:
+    src: "{{item}}.j2"
+    dest: "/usr/local/bin/{{item}}"
+    owner: root
+    group: staff
+    mode: '0755'
+  when: mysql_repl_role is defined and mysql_repl_role == 'slave' and mysql_repl_master is defined
+  with_items:
+    - check_backup_from_master.sh
+  tags:
+    - nagios
+
+- name: create args directory for nagios nrpe args files
+  file:
+    path: /etc/nagios/args
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+  tags:
+    - nagios
+
+- name: Install args files
+  template:
+    src: "etc/args/{{item}}.j2"
+    dest: "/etc/nagios/args/{{item}}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - check_big_files.sh.args
+    - check_connections.sh.args
+    - check_disk.args
+    - check_freememory.sh.args
+    - check_ifutil.pl.args
+    - check_load.args
+    - check_procs.args
+    - check_swap.args
+    - check_users.args
+    - check_zombies.args
+  tags:
+    - nagios
+
+- name: Install args slave only
+  template:
+    src: "etc/args/{{item}}.j2"
+    dest: "/etc/nagios/args/{{item}}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: mysql_repl_role is defined and mysql_repl_role == 'slave' and mysql_repl_master is defined
+  with_items:
+    - check_backup_from_master.sh.args
+  tags:
+    - nagios
+
+- name: Install nrpe config files
+  template:
+    src: "etc/{{item}}.j2"
+    dest: "/etc/nagios/{{item}}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - nrpe.cfg
+    - nrpe_local.cfg
+  tags:
+    - nagios
+
+# Still needed
+# Firewall
+# defaults for args templates
+# add to init allowed_hosts for montoring to group_vars/group.yml file
+# restart handlers
