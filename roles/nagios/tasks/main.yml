@@ -94,11 +94,28 @@
   with_items:
     - nrpe.cfg
     - nrpe_local.cfg
+  notify:
+    - 'restart nrpe'
   tags:
     - nagios
 
+# TODO: Need to make this smarter and only run if needed so it does not
+# insert duplicate rules
+- name: add firewall rule to allow nagios server to connect
+  command: /sbin/iptables -I INPUT -s {{item}} -p tcp -m state --state NEW --dport 5666 -j ACCEPT
+  with_items:
+    - "{{ nagios_server_ips.split(',') }}"
+  tags:
+    - nagios
+    - security
+    - firewall
+
+- name: save new firewall rule
+  shell: /sbin/iptables-save > /etc/iptables.up.rules
+  tags:
+    - nagios
+    - security
+    - firewall
+
 # Still needed
-# Firewall
 # defaults for args templates
-# add to init allowed_hosts for montoring to group_vars/group.yml file
-# restart handlers
