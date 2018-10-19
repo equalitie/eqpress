@@ -1,1 +1,47 @@
 ---
+check_swap:
+  warn: 20
+  crit: 10
+  add: ''
+check_users:
+  warn: 5
+  crit: 10
+  add: ''
+check_load:
+  warn: '15,10,5'
+  crit: '30,25,20'
+  add: ''
+# This is in args check_disk
+check_all_disks:
+  warn: 100000
+  crit: 50000
+  add: '-p /'
+check_procs:
+  warn: 200
+  crit: 300
+  add: ''
+check_zombie_procs:
+  warn: 5
+  crit: 10
+  add: '-s Z'
+check_big_files:
+  warn: 50
+  crit: 200
+  add: '/var/www /var/log/nginx'
+check_freememory:
+  warn: 50
+  crit: 45
+  add: '-p -a'
+check_connections:
+  warn: 1000
+  crit: 1800
+  add: ''
+# check_ifutil
+check_tcptraffic:
+  warn: '2M'
+  crit: '6M'
+  add: '-i eth0'
+check_backup_from_master:
+  warn: 1800
+  crit: 3600
+  add: '-m 15000'

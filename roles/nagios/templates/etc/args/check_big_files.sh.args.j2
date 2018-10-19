@@ -1,1 +1,1 @@
--w 50 -c 200 /var/www /var/log/nginx
+-w {{ check_big_files.warn }} -c {{ check_big_files.crit }} {{ check_big_files.add }}

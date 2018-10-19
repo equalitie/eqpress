@@ -1,1 +1,1 @@
--w 1800 -c 3600 -m 15000
+-w {{ check_backup_from_master.warn }} -c {{ check_backup_from_master.crit }} {{ check_backup_from_master.add }}

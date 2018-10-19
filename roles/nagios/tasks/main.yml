@@ -70,6 +70,7 @@
     - check_zombies.args
   tags:
     - nagios
+    - nagios_args
 
 - name: Install args slave only
   template:
@@ -116,6 +117,3 @@
     - nagios
     - security
     - firewall
-
-# Still needed
-# defaults for args templates
