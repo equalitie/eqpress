@@ -110,7 +110,7 @@
 
     - name: "timezone"
       prompt: "Timezone"
-      default: "America/Montreal"
+      default: "Etc/UTC"
       private: no
 
     - name: "use_host_lookup"
