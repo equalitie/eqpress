@@ -4,10 +4,10 @@
   roles:
      - common
      - ssh-config
-     - easypress-ssl
+     - eqpress-ssl
      - web-app
-     - easypress-console
-     - easypress-devops
+     - eqpress-console
+     - eqpress-devops
      - mysql-percona-replication
      - mysql-enable-replication
      - nagios
