@@ -1,12 +1,34 @@
 ---
 # roles/build-auto-provision-server/tasks/main.yml
 
-- name: create easypress.ca docroot
-  file: path=/var/www/easypress.ca state=directory owner=www-data group=www-data mode=0755
-  tags: auto-provision
+- name: ensure root ownership on /var/www
+  file:
+    path: /var/www
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - auto-provision
+
+- name: create docroot {{eqpress-docroot}}
+  file:
+    path: "{{eqpress-docroot}}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+    recursive: yes
+  tags:
+    - auto-provision
 
 - name: create provision and provision-testing directories
-  file: path=/var/www/easypress.ca/{{ item }} state=directory owner=www-data group=www-data mode=0755
+  file:
+    path: "{{eqpress-docroot}}/{{ item }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
   with_items:
     - provision
     - provision/pending
@@ -16,46 +38,60 @@
     - provision-testing/pending
     - provision-testing/processing
     - provision-testing/processed
-  tags: [auto-provision, auto-provision-directories]
-
-- name: ensure root ownership on /var/www
-  file: path=/var/www state=directory owner=root group=root mode=0755
-  tags: auto-provision
-
-- name: set ownership on easypress.ca docroot
-  file: path=/var/www/easypress.ca owner=www-data group=www-data state=directory recurse=yes
-  tags: auto-provision
+  tags:
+    - auto-provision
+    - auto-provision-directories
 
 - name: create monitor group
-  group: name={{ item }} state=present
+  group:
+    name: "{{ item }}"
+    state: present
   with_items:
     - monitor
     - wordpress
-  tags: users
+  tags:
+    - users
 
 - name: create users
-  action: user group={{ item.group }} shell=/bin/bash name={{ item.user }}
+  user:
+    name: "{{ item.user }}"
+    group: "{{ item.group }}"
+    shell: /bin/bash
   with_items:
     - { user: "monitor", group: "monitor" }
     - { user: "wordpress", group: "wordpress" }
-  tags: users
+  tags:
+    - users
 
 - name: reset users home directory ownerships
-  action: file path=/home/{{ item.user }} owner={{ item.user }} group={{ item.group }} state=directory recurse=yes
+  file:
+    path: "/home/{{ item.user }}"
+    owner: "{{ item.user }}"
+    group: "{{ item.group }}"
+    state: directory
+    recurse: yes
   with_items:
     - { user: "monitor", group: "monitor" }
-  tags: users
+  tags:
+    - users
 
 - name: remove setuid bit on sbin directory
   command: /bin/chmod g-s /usr/local/sbin
-  tags: [sbin]
+  tags:
+    - sbin
 
 - name: set permissions on sbin directory
   command: /bin/chmod 0755 /usr/local/sbin
-  tags: [sbin]
+  tags:
+    - sbin
 
 - name: copy all sbin easyPress admin scripts
-  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0755
+  copy:
+    src: "{{ files }}/usr/local/sbin/{{ item }}"
+    dest: /usr/local/sbin
+    owner: root
+    group: staff
+    mode: '0755'
   with_items:
     - check-mem.pl
     - class-http-log-parser.php
@@ -64,29 +100,53 @@
     - monit_connections.sh
     - resident-ram
     - top_ram_procs.sh
-  tags: sbin
+  tags:
+    - sbin
 
 - name: copy custom monit startup script
-  copy: src={{ files }}/etc/init.d/monit dest=/etc/init.d owner=root group=root mode=0750
+  copy:
+    src: "{{ files }}/etc/init.d/monit"
+    dest: /etc/init.d
+    owner: root
+    group: root
+    mode: '0750'
   notify:
     - restart monit
-  tags: [monit]
+  tags:
+    - monit
 
 - name: copy custom monit-10 config
-  template: src={{ files }}/etc/monit/monitrc-10_auto-provision.j2 dest=/etc/monit/monitrc-10 owner=root group=root mode=0600
+  template:
+    src: "{{ files }}/etc/monit/monitrc-10_auto-provision.j2"
+    dest: /etc/monit/monitrc-10
+    owner: root
+    group: root
+    mode: '0600'
   notify:
     - restart monit
-  tags: [monit, monit-config, monitoring-email]
+  tags:
+    - monit
+    - monit-config
+    - monitoring-email
 
 - name: copy custom monit-60 config
-  template: src={{ files }}/etc/monit/monitrc-60_auto-provision.j2 dest=/etc/monit/monitrc-60 owner=root group=root mode=0600
+  template:
+    src: "{{ files }}/etc/monit/monitrc-60_auto-provision.j2"
+    dest: /etc/monit/monitrc-60
+    owner: root
+    group: root
+    mode: '0600'
   notify:
     - restart monit
-  tags: [monit, monit-config, monitoring-email]
+  tags:
+    - monit
+    - monit-config
+    - monitoring-email
 
 - name: install auto-provision GPG key
   shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ auto_provision_gpg_id }}
   when: auto_provision_host is defined
   ignore_errors: yes
-  tags: [auto-provision, gpg]
-
+  tags:
+    - auto-provision
+    - gpg
