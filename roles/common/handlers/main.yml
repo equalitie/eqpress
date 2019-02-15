@@ -6,39 +6,55 @@
   ignore_errors: yes
 
 - name: restart rsyslog
-  service: name=rsyslog state=restarted enabled=yes
+  systemd:
+    name: rsyslog
+    state: restarted
+    enabled: yes
   ignore_errors: yes
 
 - name: restart ssh
-  service: name=ssh state=restarted enabled=yes
+  systemd:
+    name: ssh
+    state: restarted
+    enabled: yes
   ignore_errors: yes
 
 - name: restart fail2ban
-  service: name=fail2ban state=restarted enabled=yes
+  systemd:
+    name: fail2an
+    state: restarted
+    enabled: ye
   ignore_errors: yes
 
 - name: restart firewall
   command: /etc/network/if-down.d/iptables_save && /etc/network/if-pre-up.d/iptables
-  #ignore_errors: yes
 
 - name: start firewall
   command: /etc/network/if-pre-up.d/iptables
-  #ignore_errors: yes
 
 - name: harden IP stack
   command: /usr/local/sbin/harden_ip.sh
   ignore_errors: yes
 
 - name: restart postfix
-  service: name=postfix state=restarted enabled=yes
+  systemd:
+    name: postfix
+    state: restarted
+    enabled: yes
   ignore_errors: yes
 
 - name: restart nginx
-  service: name=nginx state=restarted enabled=yes
+  systemd:
+    name: nginx
+    state: restarted
+    enabled: yes
   ignore_errors: yes
 
 - name: restart mysql
-  service: name=mysql state=restarted enabled=yes
+  systemd:
+    name: mysql
+    state: restarted
+    eneabled: yes
   ignore_errors: yes
 
 - name: reboot the server
