@@ -2,26 +2,39 @@
 # roles/initialize/tasks/main.yml
 
 - name: install local dig 
-  action: apt pkg={{ item }} state=installed
+  apt:
+    name: "{{ item }}"
+    state: present
   with_items:
     - dnsutils 
   when: use_host_lookup == "y" 
 
 - name: Use DNS for host external IPv4 address master
-  local_action: command /usr/bin/dig +noall +short {{ master_hostname }}
+  local_action:
+    module: command /usr/bin/dig +noall +short {{ master_hostname }}
   when: use_host_lookup == "y"
   register: dns_ip_master
 
 - name: Use DNS for host external IPv4 address slave 
-  local_action: command /usr/bin/dig +noall +short {{ slave_hostname }}
+  local_action:
+    module: command /usr/bin/dig +noall +short {{ slave_hostname }}
   when: use_host_lookup == "y"
   register: dns_ip_slave
 
 - name: Create the group_vars file.
-  local_action: template src=group.yml.j2 dest=group_vars/{{ ansible_group_name }}.yml
+  local_action:
+    module: template
+    src: group.yml.j2
+    dest: "group_vars/{{ ansible_group_name }}.yml"
 
 - name: Create the master host_vars file.
-  local_action: template src=master.yml.j2 dest=host_vars/{{ master_hostname }}.yml
+  local_action:
+    module: template
+    src: master.yml.j2
+    dest: "host_vars/{{ master_hostname }}.yml"
 
 - name: Create the slave host_vars file.
-  local_action: template src=slave.yml.j2 dest=host_vars/{{ slave_hostname }}.yml
+  local_action:
+    module: template
+    src: slave.yml.j2
+    dest: "host_vars/{{ slave_hostname }}.yml"
