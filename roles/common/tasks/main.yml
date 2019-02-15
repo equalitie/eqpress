@@ -2,162 +2,222 @@
 # common/tasks/main.yml
 
 - name: Set fact with host's external IPv4 address
-  set_fact: public_ipv4_address={{ansible_default_ipv4.address}}
+  set_fact:
+    public_ipv4_address: "{{ansible_default_ipv4.address}}"
   when: public_ipv4_address is not defined
-  tags: hostname
+  tags:
+    - hostname
 
 - name: Set fact with host's external IPv6 address
-  set_fact: public_ipv6_address={{ansible_default_ipv6.address}}
+  set_fact:
+    public_ipv6_address: "{{ansible_default_ipv6.address}}"
   when: public_ipv6_address is not defined
-  tags: hostname
+  tags:
+    - hostname
 
 # this is here at the top just in case proxies are required which are set in .bashrc
 - name: Copy .bashrc
-  template: src={{ files }}/root/.bashrc.j2 dest=/root/.bashrc owner=root group=root mode=0600
-  tags: env
+  template:
+    src: "{{ files }}/root/.bashrc.j2"
+    dest: /root/.bashrc
+    owner: root
+    group: root
+    mode: '0600'
+  tags:
+    - env
 
-- name: Copy the hostname file
-  template: src={{ files }}/etc/hostname dest=/etc owner=root group=root mode=0644
-  tags: hostname
+- name: set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+  tags:
+    - hostname
 
 - name: Add the host entry to /etc/hosts
   lineinfile:
     dest: /etc/hosts
     line: "{{ public_ipv4_address }}  {{ inventory_hostname }}"
     state: present
-  tags: hostname
-
-- name: Set the hostname
-  command: /etc/init.d/hostname.sh start
-  tags: hostname
+  tags:
+    - hostname
 
 - name: Update the apt-get cache
-  apt: update_cache=yes
+  apt:
+    update_cache: yes
 
 - name: Update all packages to the latest version
-  apt: upgrade=dist
+  apt:
+    upgrade: dist
 
 - name: Install common packages
-  apt: pkg={{ item }} state=installed
-  with_items:
-    - bc
-    - buthead
-    - clamav
-    - cron
-    - curl
-    - dnsutils
-    - e2fslibs-dev
-    - fail2ban
-    - gawk
-    - git
-    - mailutils 
-    - iotop
-    - less
-    - libncurses5-dev
-    - libpcre3-dev
-    - libreadline-dev
-    - libsasl2-dev
-    - libsasl2-modules
-    - libssl-dev
-    - locales
-    - logrotate
-    - lsof
-    - make
-    - monit
-    - mosh
-    - mtr-tiny
-    - ntpdate
-    - openssl
-    - perl
-    - postfix
-    - python-dev
-    - python-pip
-    - python-apt
-    - python-mysqldb
-    - python-keyczar
-    - python-software-properties
-    - rcconf
-    - rng-tools
-    - rsync
-    - screen
-    - strace
-    - sudo
-    - tzdata
-    - unzip
-    - vim
-    - zip
-    - zlib1g-dev
+  apt:
+    name:
+      - bc
+      - buthead
+      - clamav
+      - cron
+      - curl
+      - dnsutils
+      - e2fslibs-dev
+      - fail2ban
+      - gawk
+      - git
+      - mailutils
+      - iotop
+      - less
+      - libncurses5-dev
+      - libpcre3-dev
+      - libreadline-dev
+      - libsasl2-dev
+      - libsasl2-modules
+      - libssl-dev
+      - locales
+      - logrotate
+      - lsof
+      - make
+      - monit
+      - mosh
+      - mtr-tiny
+      - ntpdate
+      - openssl
+      - perl
+      - postfix
+      - python-dev
+      - python-pip
+      - python-apt
+      - python-mysqldb
+      - python-keyczar
+      - python-software-properties
+      - rcconf
+      - rng-tools
+      - rsync
+      - screen
+      - strace
+      - sudo
+      - tzdata
+      - unzip
+      - vim
+      - zip
+      - zlib1g-dev
+    state: present
 
-# zoneinfo exists on OS X in the same location as Debian. Neat.
-- name: Set /etc/localtime according to configuration
-  copy: src=/usr/share/zoneinfo/{{ timezone }}
-        dest=/etc/localtime
-        owner=root
-        group=root
-        mode=0644
-        backup=yes
-  tags: [configuration,timezone]
+# NOTE: left here incase we need to add back. Should not be needed.
+#- name: Set /etc/localtime according to configuration
+#        copy: src=/usr/share/zoneinfo/{{ timezone }}
+#              dest=/etc/localtime
+#              owner=root
+#              group=root
+#              mode=0644
+#              backup=yes
+#        tags: [configuration,timezone]
 
-# tasks file for locale
-- name: set locale.gen file
-  locale_gen: name={{locale_lang}} state=present
-  when: ansible_os_family == "Debian"
-  tags: [configuration, locale]
-
-- name: Set /etc/default/locale according to our configuration
-  template: src=files/etc/default/locale.j2 dest=/etc/default/locale
-  when: ansible_os_family == "Debian"
-  tags: [configuration, locale]
-
-- name: Set /etc/timezone according to our configuration
-  template: src=files/etc/timezone.j2 dest=/etc/timezone
+- name: set timezone
+  timezone:
+    name: "{{ timezone }}"
   notify:
     - update tzdata
     - restart rsyslog
     - restart ssh
-  #when: ansible_os_family == "Debian"
-  tags: [configuration,timezone]
+  when: ansible_os_family == "Debian"
+  tags:
+    - configuration
+    - timezone
+
+- name: set locale.gen file
+  locale_gen:
+    name: "{{locale_lang}}"
+    state: present
+  when: ansible_os_family == "Debian"
+  tags:
+    - configuration
+    - locale
+
+- name: Set /etc/default/locale according to our configuration
+  template:
+    src: files/etc/default/locale.j2
+    dest: /etc/default/locale
+  when: ansible_os_family == "Debian"
+  tags:
+    - configuration
+    - locale
 
 - name: Copy custom fail2ban jail.conf
-  template: src={{ files }}/etc/fail2ban/jail.conf.j2 dest=/etc/fail2ban/jail.conf owner=root group=root mode=0644
+  template:
+    src: "{{ files }}/etc/fail2ban/jail.conf.j2"
+    dest: /etc/fail2ban/jail.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
   notify:
     - restart fail2ban
-  tags: [security, fail2ban]
+  tags:
+    - security
+    - fail2ban
 
 - name: Copy Mandrill postfix mail.cf
-  template: src={{ files }}/etc/postfix/main.cf-mandrill.j2 dest=/etc/postfix/main.cf-mandrill owner=root group=root mode=0644
+  template:
+    src: "{{ files }}/etc/postfix/main.cf-mandrill.j2"
+    dest: /etc/postfix/main.cf-mandrill
+    owner: root
+    group: root
+    mode: '0644'
   notify:
     - restart postfix
   when: mandrill_username is defined
-  tags: [email, main.cf, mandrill]
+  tags:
+    - email
+    - main.cf
+    - mandrill
 
 - name: Copy SendGrid postfix mail.cf
-  template: src={{ files }}/etc/postfix/main.cf-sendgrid.j2 dest=/etc/postfix/main.cf-sendgrid owner=root group=root mode=0644
+  template:
+    src: "{{ files }}/etc/postfix/main.cf-sendgrid.j2"
+    dest: /etc/postfix/main.cf-sendgrid
+    owner: root
+    group: root
+    mode: '0644'
   notify:
     - restart postfix
   when: sendgrid_username is defined
-  tags: [email, main.cf, sendgrid]
+  tags:
+    - email
+    - main.cf
+    - sendgrid
 
 - name: Copy Local postfix main.cf
-  template: src={{ files }}/etc/postfix/main.cf-local.j2 dest=/etc/postfix/main.cf-local owner=root group=root mode=0644
+  template:
+    src: "{{ files }}/etc/postfix/main.cf-local.j2"
+    dest: /etc/postfix/main.cf-local
+    owner: root
+    group: root
+    mode: '0644'
   notify:
     - restart postfix
-  when: sendgrid_username is defined
-  tags: [email, main.cf, local-email]
+  when: email_user_local is defined
+  tags:
+    - email
+    - main.cf
+    - local-email
 
 - name: Backup default mail.cf
-  #shell: mv /etc/postfix/main.cf /etc/postfix/main.cf.{{ ansible_date_time.iso8601 }}
-  shell: mv /etc/postfix/main.cf /etc/postfix/main.cf.`date "+%Y%m%d%H%M%S"`
+  shell: mv /etc/postfix/main.cf /etc/postfix/main.cf-orig
+  args:
+    creates: /etc/postfix/main.cf-orig
   ignore_errors: yes
   tags: [email, main.cf]
 
 - name: Symlink to postfix mail.cf
-  shell: ln -s main.cf-{{ mail_service }} main.cf
-  args:
-    chdir: /etc/postfix
+  file:
+    src: "/etc/postfix/main.cf-{{ mail_service }}"
+    path: /etc/postfix/main.cf
+    state: link
+    owner: root
+    group: root
   notify:
     - restart postfix
-  tags: [email, main.cf]
+  tags:
+    - email
+    - main.cf
 
 - name: Copy iptables startup script
   copy:
@@ -165,8 +225,10 @@
     dest: /etc/network/if-pre-up.d
     owner: root
     group: root
-    mode: 0750
-  tags: [security, firewall]
+    mode: '0750'
+  tags:
+    - security
+    - firewall
 
 - name: Copy iptables shutdown script
   copy:
@@ -174,8 +236,10 @@
     dest: /etc/network/if-down.d
     owner: root
     group: root
-    mode: 0750
-  tags: [security, firewall]
+    mode: '0750'
+  tags:
+    - security
+    - firewall
 
 - name: Copy iptables config
   copy:
@@ -183,71 +247,96 @@
     dest: /etc/iptables.up.rules
     owner: root
     group: root
-    mode: 0640
+    mode: '0640'
   notify:
     - start firewall
-  tags: [security, firewall]
+  tags:
+    - security
+    - firewall
 
 - name: Copy ntpdate cron
-  copy: src={{ files }}/etc/cron.hourly/ntpdate dest=/etc/cron.hourly owner=root group=root mode=750
-  tags: [ntpdate]
+  copy:
+    src: "{{ files }}/etc/cron.hourly/ntpdate"
+    dest: /etc/cron.hourly
+    owner: root
+    group: root
+    mode: '0750'
+  tags:
+    - ntpdate
 
 - name: Copy crontab to change default launch of daily tasks from 6am to 1am for nginx webstats
-  copy: src={{ files }}/etc/crontab dest=/etc owner=root group=root mode=0644
-  tags: [crontab]
+  copy:
+    src: "{{ files }}/etc/crontab"
+    dest: /etc
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - crontab
 
 - name: Upload and apply network hardening rules.
-  copy: src={{ files }}/usr/local/sbin/harden_ip.sh dest=/usr/local/sbin owner=root group=root mode=750
+  copy:
+    src: "{{ files }}/usr/local/sbin/harden_ip.sh"
+    dest: /usr/local/sbin
+    owner: root
+    group: root
+    mode: '0750'
   notify:
     - harden IP stack
-  tags: security
+  tags:
+    - security
 
 - name: Set permissions on .ssh directory
-  file: path=/root/.ssh state=directory owner=root group=root mode=700
-  tags: [security, ssh]
+  file:
+    path: /root/.ssh
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  tags:
+    - security
+    - ssh
 
 - name: Create sftponly group for chroot'ed logins
-  group: name=sftponly state=present
-  tags: security
+  group:
+    name: sftponly
+    state: present
+    system: yes
+  tags:
+    - security
 
 - name: copy sshd_config file containing sftponly subsystem for chroot'ed logins
-  copy: src={{ files }}/etc/ssh/sshd_config dest=/etc/ssh owner=root group=root mode=0644
+  copy:
+    src: "{{ files }}/etc/ssh/sshd_config"
+    dest: /etc/ssh
+    owner: root
+    group: root
+    mode: '0644'
   notify:
     - restart ssh
-  tags: [security, ssh, sshd_config]
+  tags:
+    - security
+    - ssh
+    - sshd_config
 
 - name: copy limits.conf to increase open file limits for nginx and mysql
-  copy: src={{ files }}/etc/security/limits.conf dest=/etc/security owner=root group=root mode=0644
-  tags: [limits]
+  copy:
+    src: "{{ files }}/etc/security/limits.conf"
+    dest: /etc/security
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - limits
 
 - name: force all notified handlers to run at this point, not waiting for normal sync points
   meta: flush_handlers
-  tags: [firewall, security]
-
-#- name: copy mrtg monitoring scripts
-#  action: copy src={{ files }}/usr/local/bin/{{ item }} dest=/usr/local/bin owner=root group=staff mode=0770
-#  with_items:
-#    - checkdisk.sh
-#    - checkload.sh
-#    - currentconnections.sh
-#    - diskio.sh
-#    - swapio.sh
-#    - uptime.pl
-#  tags: [mrtg, monitor]
-#
-#- name: copy mrtg config template
-#  template: src={{ files }}/etc/mrtg.cfg.j2 dest=/etc/mrtg.cfg owner=root group=root mode=0600
-#  tags: [mrtg, monitor]
-#
-#- name: Copy passwd shadow group files
-#  action: copy src={{ item.name }} dest=/etc/ owner=root group={{ item.group }} mode={{ item.perms }}
-#  with_items:
-#    - { name: 'passwd', perms: '0644', group: 'root' }
-#    - { name: 'shadow', perms: '0640' , group: 'shadow'}
-#    - { name: 'group', perms: '0644' , group: 'root'}
-#  tags: users
+  tags:
+    - firewall
+    - security
 
 - name: reboot after installation
-  command: /sbin/init 6
+  reboot:
   when: reboot_after_install == "yes"
-  tags: reboot
+  tags:
+    - reboot
