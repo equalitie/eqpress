@@ -1,0 +1,123 @@
+---
+- hosts: localhost
+  gather_facts: false
+
+  vars_prompt:
+    - name: "org_name"
+      prompt: "Enter organization name"
+      default: "eQualit.ie"
+      private: no
+    
+    - name: "org_support_email"
+      prompt: "Enter organization support email address"
+      default: "support@equalit.ie"
+      private: no
+    
+    - name: "org_support_url"
+      prompt: "Enter organization support website address"
+      default: "equalit.ie"
+      private: no
+
+    - name: "org_tos_link"
+      prompt: "Enter full link to Terms Of Service"
+      default: "https://wiki.deflect.ca/wiki/ToS"
+      private: no
+    
+    - name: "pwpush_url"
+      prompt: "Enter the URL for the password pusher web app"
+      default: "https://provision.deflect.ca/pwpush/pwpusher_public/pw.php"
+      private: no
+    
+    - name: "console_secret_key"
+      prompt: "The Console plugin's secret key"
+      default: "Something long and random like 6kwiyk768g7gy2PVhhzFEUu"
+      private: no
+
+    - name: "root_cert_country"
+      prompt: "Root certificate country"
+      default: "CA"
+      private: no
+
+    - name: "root_cert_state"
+      prompt: "Root certificate state/province"
+      default: "Quebec"
+      private: no
+
+    - name: "root_cert_city"
+      prompt: "Root certificate city"
+      default: "Montreal"
+      private: no
+
+    - name: "root_cert_org_unit"
+      prompt: "Root certificate orginazational unit"
+      default: "eQualit.ie Certification Services"
+      private: no
+
+    - name: "root_cert_common_name"
+      prompt: "Root certificate common name"
+      default: "eQualit.ie Root Certificate"
+      private: no
+
+    - name: "root_cert_email"
+      prompt: "Root certificate email address"
+      default: "sysops@example.com"
+      private: no
+
+    - name: "mandrill_username"
+      prompt: "Mandrill username"
+      default: ""
+      private: no
+
+    - name: "mandrill_password"
+      prompt: "Mandrill password"
+      default: ""
+      private: yes
+
+    - name: "sendgrid_username"
+      prompt: "Sendgrid username"
+      default: ""
+      private: no
+
+    - name: "sendgrid_password"
+      prompt: "Sendgrid password"
+      default: ""
+      private: yes
+
+    - name: "email_user_local"
+      prompt: "Local Email User"
+      default: "eqpress"
+      private: no
+
+    - name: "email_passwd_local"
+      prompt: "Local Email Passwd"
+      default: "enter_passwd"
+      private: yes
+
+    - name: "email_service"
+      prompt: "Default email service"
+      default: "mandrill"
+      private: no
+
+    - name: "email_domain"
+      prompt: "Main Email Domain"
+      default: "example.co"
+      private: no
+
+    - name: "monitoring_email"
+      prompt: "Monitoring email address"
+      default: "sysops@example.com"
+      private: no
+
+    - name: "timezone"
+      prompt: "Timezone"
+      default: "America/Montreal"
+      private: no
+
+    - name: "use_host_lookup"
+      prompt: "Use DNS lookup for host IP assignment (y/n)"
+      default: "n"
+      private: no
+
+  roles:
+     - init-env
+     - gen-root-cert
