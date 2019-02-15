@@ -1,4 +1,5 @@
 ---
+# {{anable_managed}}
 org_name: "{{ org_name }}"
 org_support_email: "{{ org_support_email }}"
 org_support_url: "{{ org_support_url }}"
@@ -29,8 +30,8 @@ ssh_known_hosts_file: '/root/.ssh/known_hosts'
 
 # misc
 timezone: "{{ timezone }}"
-files: "{{ playbook_dir }}/files"
-ssl_dir: "{{ playbook_dir }}/files/etc/ssl/easypress"
+files: "files"
+ssl_dir: "files/etc/ssl/eqpress"
 console_secret_key: "{{ console_secret_key }}"
 pwpush_url: "{{ pwpush_url }}"
 use_host_lookup: "{{ use_host_lookup }}"
