@@ -1,6 +1,6 @@
 ---
 # defaults file for timezone
-timezone: "America/Toronto"
+timezone: "Etc/UTC"
 reboot_after_install: "no"
 locale_lang: "en_CA.UTF-8"
 bashrc_proxy_ftp: ""
