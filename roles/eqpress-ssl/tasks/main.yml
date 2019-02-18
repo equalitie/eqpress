@@ -1,38 +1,57 @@
 ---
-# roles/easypress-ssl/tasks/main.yml
 
 - name: touch the serial file
-  local_action: shell [ -f {{ ssl_dir }}/serial.txt ] && touch {{ ssl_dir }}/serial.txt || echo 01 > {{ ssl_dir }}/serial.txt
+  local_action:
+    module: shell [ -f {{ ssl_dir }}/serial.txt ] && touch {{ ssl_dir }}/serial.txt || echo 01 > {{ ssl_dir }}/serial.txt
   run_once: true
-  tags: ssl
+  tags:
+    - ssl
 
 - name: touch the index file
-  local_action: shell touch {{ ssl_dir }}/index.txt
+  local_action:
+  module: shell touch {{ ssl_dir }}/index.txt
   run_once: true
-  tags: ssl
+  tags:
+    - ssl
 
 - name: copy certs and keys for public site and mutual auth connections
-  #synchronize: src={{ files }}/etc/ssl dest=/etc recursive=no owner=no group=no checksum=yes
-  local_action: command rsync -d {{ files }}/etc/ssl/ root@{{ inventory_hostname }}:/etc/ssl/
+  local_action:
+    module: command rsync -d {{ files }}/etc/ssl/ root@{{ inventory_hostname }}:/etc/ssl/
   tags: ssl
 
 - name: Create SSL directory.
-  file: path=/etc/ssl/easypress state=directory owner=root group=root mode=755
-  tags: ssl
+  file:
+    path: /etc/ssl/eqpress
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - ssl
 
 - name: Generate SSL CSR and key for secure replication connection.
-  local_action: command chdir={{ ssl_dir }} creates={{ inventory_hostname }}.key openssl req -new -newkey rsa:2048 -nodes -out {{ inventory_hostname }}.csr -keyout {{ inventory_hostname }}.key -subj "/C={{ root_cert_country }}/ST={{ root_cert_state }}/L={{ root_cert_city }}/O={{ org_name }}/CN={{ inventory_hostname }}"
-  tags: ssl
+  local_action:
+    module: command chdir={{ ssl_dir }} creates={{ inventory_hostname }}.key openssl req -new -newkey rsa:2048 -nodes -out {{ inventory_hostname }}.csr -keyout {{ inventory_hostname }}.key -subj "/C={{ root_cert_country }}/ST={{ root_cert_state }}/L={{ root_cert_city }}/O={{ org_name }}/CN={{ inventory_hostname }}"
+  tags:
+    - ssl
 
 - name: Sign the new CSR
-  local_action: command chdir={{ ssl_dir }} creates={{ inventory_hostname }}.pem ./sign_webserver.sh {{ inventory_hostname }}
-  tags: ssl
+  local_action:
+    module: command chdir={{ ssl_dir }} creates={{ inventory_hostname }}.pem ./sign_webserver.sh {{ inventory_hostname }}
+  tags:
+    - ssl
 
 # key file permissions will be reset to 0600 in mysql role
 - name: Copy SSL keys and certs.
-  action: copy src={{ ssl_dir }}/{{ item.name }} dest=/etc/ssl/easypress owner=root group=root mode={{ item.perms }}
-  with_items:
+  copy:
+    src: "{{ ssl_dir }}/{{ item.name }}"
+    dest: /etc/ssl/eqpress
+    owner: root
+    group: root
+    mode: {{ item.perms }}
+  loop:
     - { name: '{{ inventory_hostname }}.pem', perms: '0644' }
     - { name: '{{ inventory_hostname }}.key', perms: '0644' }
     - { name: 'root_CA.pem', perms: '0644' }
-  tags: ssl
+  tags:
+    - ssl
