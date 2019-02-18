@@ -2,76 +2,131 @@
 # roles/easypress-console/tasks/main.yml
 
 - name: copy console install script
-  copy: src={{ files }}/usr/local/sbin/ep_install_console.sh dest=/usr/local/sbin owner=root group=staff mode=0755
-  tags: [ep-console, ep_install_console.sh]
+  copy:
+    src: "{{ files }}/usr/local/sbin/ep_install_console.sh"
+    dest: /usr/local/sbin
+    owner: root
+    group: staff
+    mode: '0755'
+  tags:
+    - ep-console
+    - ep_install_console.sh
 
 - name: copy console monit scripts
-  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0755
-  with_items:
+  copy:
+    src: "{{ files }}/usr/local/sbin/{{ item }}"
+    dest: /usr/local/sbin
+    owner: root
+    group: staff
+    mode: '0755'
+  loop:
     - monit_ep_console_lockdown.sh
     - monit_ep_console_perms.sh
     - monit_connections.sh
-  tags: [ep-console, console_monit_scripts, monit]
+  tags:
+    - ep-console
+    - console_monit_scripts
+    - monit
 
 - name: copy console-related templates
-  action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
-  with_items:
+  template:
+    src: "{{ files }}/usr/local/sbin/{{ item }}.j2"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: staff
+    mode: '0755'
+  loop:
     - monit_ep_console_reset_password.sh
     - nagios_check_mysql.php
-  tags: [ep-sbin, ep-sbin-templates, monitoring]
+  tags:
+    - ep-sbin
+    - ep-sbin-templates
+    - monitoring
 
 - name: ensure /var/www exists and is owned by root
-  file: path=/var/www state=directory owner=root group=root mode=0755
-  tags: [var-www-root]
+  file:
+    path: /var/www
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - var-www-root
 
-#- name: rsync easypress.ca docroot containing the easyPress Console
-#  synchronize: src={{ files }}/var/www/easypress.ca dest=/var/www
-#  tags: ep-console
+- name: create eqpress docroot "{{ eqpress-docroot }}" 
+  file:
+    path: "{{ eqpress-docroot }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  tags:
+    - ep-console
 
-- name: create easypress.ca docroot (/var/www/easypress.ca)
-  file: path=/var/www/easypress.ca state=directory owner=www-data group=www-data mode=0755
-  tags: ep-console
-
-- name: create easypress.ca .sesssions directory for PHP sessions and adminer to work
-  file: path=/var/www/easypress.ca/.sessions state=directory owner=www-data group=www-data mode=0775
-  tags: ep-console
+- name: create eqpress .sesssions directory for PHP sessions and adminer to work
+  file:
+    path: "{{ eqpress-docroot }}/.sessions"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0775'
+  tags:
+    - ep-console
 
 - name: rsync easyPress Console files
-  local_action: command rsync -a --exclude=*.j2 {{ files }}/var/www/easypress.ca/console root@{{inventory_hostname}}:/var/www/easypress.ca/
-  tags: [ep-console, console]
+  local_action:
+    module: command rsync -a --exclude=*.j2 {{ files }}{{ eqpress-docroot }}/console root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+  tags:
+    - ep-console
+    - console
 
 - name: rsync adminer files
-  local_action: command rsync -a {{ files }}/var/www/easypress.ca/adminer root@{{inventory_hostname}}:/var/www/easypress.ca/
-  tags: [ep-console, adminer]
+  local_action:
+    module: command rsync -a {{ files }}{{ eqpress-docroot }}/adminer root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+  tags:
+    - ep-console
+    - adminer
 
 - name: rsync bruteprotect files
-  local_action: command rsync -a {{ files }}/var/www/easypress.ca/bruteprotect root@{{inventory_hostname}}:/var/www/easypress.ca/
-  tags: [ep-console, bruteprotect]
+  local_action:
+    module: command rsync -a {{ files }}{{ eqpress-docroot }}/bruteprotect root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+  tags:
+    - ep-console
+    - bruteprotect
 
 - name: rsync nginx-helper (cache purge) files
-  local_action: command rsync -a {{ files }}/var/www/easypress.ca/cache-purge root@{{inventory_hostname}}:/var/www/easypress.ca/
-  tags: [ep-console, cache-purge]
+  local_action:
+    module: command rsync -a {{ files }}{{ eqpress-docroot }}/cache-purge root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+  tags:
+    - ep-console
+    - cache-purge
 
 - name: rsync performance monitoring files
-  local_action: command rsync -a {{ files }}/var/www/easypress.ca/perf root@{{inventory_hostname}}:/var/www/easypress.ca/
-  tags: [ep-console, perf]
+  local_action:
+    module: command rsync -a {{ files }}{{ eqpress-docroot }}/perf root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+  tags:
+    - ep-console
+    - perf
 
 - name: make webstats directory
   file:
-    path: /var/www/easypress.ca/webstats
+    path: "{{ eqpress-docroot }}/webstats"
     owner: root
     group: root
-    mode: 0755
+    mode: '0755'
     state: directory
-  tags: [ep-console, webstats]
-
-##- name: rsync webstats files
-#  synchronize: src={{ files }}/var/www/easypress.ca/webstats dest=/var/www/easypress.ca
-#  tags: [ep-console, webstats]
+  tags:
+    - ep-console
+    - webstats
 
 - name: create the console directories
-  file: path=/var/www/easypress.ca/console/{{ item }} state=directory owner=www-data group=www-data mode=0775
-  with_items:
+  file:
+    path: "{{ eqpress-docroot }}/console/{{ item }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0775'
+  loop:
     - lockdown
     - lockdown/lock
     - lockdown/unlock
@@ -79,38 +134,92 @@
     - password
     - perms
     - proxy
-  tags: [ep-console]
+  tags:
+    - ep-console
 
 - name: copy easypress-console-proxy.php from template
-  template: src={{ files }}/var/www/easypress.ca/console/proxy/easypress-console-proxy.php.j2 dest=/var/www/easypress.ca/console/proxy/easypress-console-proxy.php owner=root group=www-data mode=0644
-  tags: [ep-console, ep-console-proxy-code]
+  template:
+    src: "{{ files }}{{ eqpress-docroot }}/console/proxy/easypress-console-proxy.php.j2"
+    dest: "{{ eqpress-docroot }}/console/proxy/easypress-console-proxy.php"
+    owner: root
+    group: www-data
+    mode: '0644'
+  tags:
+    - ep-console
+    - ep-console-proxy-code
 
 - name: create catchall directory
-  file: path=/var/www/easypress.ca/catchall state=directory owner=www-data group=www-data mode=0755
-  tags: [ep-console, catchall]
+  file:
+    path: "{{ eqpress-docroot }}/catchall"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  tags:
+    - ep-console
+    - catchall
 
 - name: copy catchall index
-  template: src={{ files }}/var/www/easypress.ca/catchall/index.html.j2 dest=/var/www/easypress.ca/catchall/index.html owner=www-data group=www-data mode=0664
-  tags: [ep-console, catchall]
+  template:
+    src: "{{ files }}{{ eqpress-docroot }}/catchall/index.html.j2"
+    dest: "{{ eqpress-docroot }}/catchall/index.html"
+    owner: www-data
+    group: www-data
+    mode: '0664'
+  tags:
+    - ep-console
+    - catchall
 
 - name: create mrtg directory
-  file: path=/var/www/easypress.ca/mrtg state=directory owner=www-data group=www-data mode=0775
-  tags: [ep-console, mrtg]
+  file:
+    path: "{{ eqpress-docroot }}/mrtg"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0775'
+  tags:
+    - ep-console
+    - mrtg
 
-- name: set ownership on easypress.ca docroot
-  file: path=/var/www/easypress.ca owner=www-data group=www-data state=directory recurse=yes
-  tags: ep-console
+- name: set ownership on eqpress docroot
+  file:
+    path: "{{ eqpress-docroot }}"
+    owner: www-data
+    group: www-data
+    state: directory
+    recurse: yes
+  tags:
+    - ep-console
 
-- name: copy easypress.ca nginx config
-  template: src={{ files }}/etc/nginx/sites-available/easypress.ca.j2 dest=/etc/nginx/sites-available/easypress.ca owner=root group=staff mode=0664
+
+# FIXME: change these easypress file names
+- name: copy eqpress nginx config
+  template:
+    src: "{{ files }}/etc/nginx/sites-available/easypress.j2"
+    dest: /etc/nginx/sites-available/easypress.ca
+    owner: root
+    group: staff
+    mode: '0664'
   notify:
      - reload nginx
-  tags: ep-console
+  tags:
+    - ep-console
 
 - name: link easypress.ca nginx config
-  file: src=/etc/nginx/sites-available/easypress.ca dest=/etc/nginx/sites-enabled/easypress.ca state=link
-  tags: ep-console
+  file:
+    src: /etc/nginx/sites-available/easypress.ca
+    dest: /etc/nginx/sites-enabled/easypress.ca
+    state: link
+  tags:
+    - ep-console
 
 - name: ensure root ownership on /var/www
-  file: path=/var/www state=directory owner=root group=root mode=0755
-  tags: [ep-console, var-www-root]
+  file:
+    path: /var/www
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - ep-console
+    - var-www-root
