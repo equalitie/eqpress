@@ -1,12 +1,11 @@
 ---
 - name: Install nagios packages
   apt:
-    name: "{{ item }}"
+    name:
+      - nagios-nrpe-server
+      - nagios-plugins-common
+      - nagios-plugins-basic
     state: present
-  with_items:
-    - nagios-nrpe-server
-    - nagios-plugins-common
-    - nagios-plugins-basic
   tags:
     - nagios
 
@@ -17,7 +16,7 @@
     owner: root
     group: staff
     mode: '0755'
-  with_items:
+  loop:
     - runargs.sh
     - check_big_files.sh
     - check_connections.sh
@@ -35,7 +34,7 @@
     group: staff
     mode: '0755'
   when: mysql_repl_role is defined and mysql_repl_role == 'slave' and mysql_repl_master is defined
-  with_items:
+  loop:
     - check_backup_from_master.sh
   tags:
     - nagios
@@ -57,7 +56,7 @@
     owner: root
     group: root
     mode: '0644'
-  with_items:
+  loop:
     - check_big_files.sh.args
     - check_connections.sh.args
     - check_disk.args
@@ -80,7 +79,7 @@
     group: root
     mode: '0644'
   when: mysql_repl_role is defined and mysql_repl_role == 'slave' and mysql_repl_master is defined
-  with_items:
+  loop:
     - check_backup_from_master.sh.args
   tags:
     - nagios
@@ -92,7 +91,7 @@
     owner: root
     group: root
     mode: '0644'
-  with_items:
+  loop:
     - nrpe.cfg
     - nrpe_local.cfg
   notify:
@@ -102,6 +101,7 @@
 
 # TODO: Need to make this smarter and only run if needed so it does not
 # insert duplicate rules
+# FIXME: change to loop
 - name: add firewall rule to allow nagios server to connect
   command: /sbin/iptables -I INPUT -s {{item}} -p tcp -m state --state NEW --dport 5666 -j ACCEPT
   with_items:
