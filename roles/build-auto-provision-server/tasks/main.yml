@@ -29,7 +29,7 @@
     owner: www-data
     group: www-data
     mode: '0755'
-  with_items:
+  loop:
     - provision
     - provision/pending
     - provision/processing
@@ -46,7 +46,7 @@
   group:
     name: "{{ item }}"
     state: present
-  with_items:
+  loop:
     - monitor
     - wordpress
   tags:
@@ -57,7 +57,7 @@
     name: "{{ item.user }}"
     group: "{{ item.group }}"
     shell: /bin/bash
-  with_items:
+  loop:
     - { user: "monitor", group: "monitor" }
     - { user: "wordpress", group: "wordpress" }
   tags:
@@ -70,7 +70,7 @@
     group: "{{ item.group }}"
     state: directory
     recurse: yes
-  with_items:
+  loop:
     - { user: "monitor", group: "monitor" }
   tags:
     - users
@@ -92,7 +92,7 @@
     owner: root
     group: staff
     mode: '0755'
-  with_items:
+ loop:
     - check-mem.pl
     - class-http-log-parser.php
     - harden_ip.sh
