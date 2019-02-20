@@ -1,56 +1,99 @@
 ---
-# roles/easypress-devops/tasks/main.yml
 
 - name: add .ssh dir to user skel
-  file: path=/etc/skel/.ssh owner=root group=root mode=0700 state=directory
-  tags: users
+  file:
+    path: /etc/skel/.ssh
+    owner: root
+    group: root
+    mode: '0700'
+    state: directory
+  tags:
+    - users
 
 - name: add authorized_key file to user skel
-  file: path=/etc/skel/.ssh/authorized_keys owner=root group=root mode=0644 state=touch
-  tags: users
+  file:
+    path: /etc/skel/.ssh/authorized_keys
+    owner: root
+    group: root
+    mode: '0644'
+    state: touch
+  tags:
+    - users
 
 - name: create monitor group
-  group: name=monitor state=present
-  tags: users
+  group:
+    name: monitor
+    state: present
+  tags:
+    - users
 
 # required for monit lockdown script via ep-console
 - name: create wordpress group
-  group: name=wordpress state=present
-  tags: users
+  group:
+    name: wordpress
+    state: present
+  tags:
+    - users
 
 - name: create users
-  action: user group={{ item.group }} shell=/bin/bash name={{ item.user }}
-  with_items:
+  user:
+    name: "{{ item.user }}"
+    group: "{{ item.group }}"
+    shell: /bin/bash
+  loop:
     - { user: "monitor", group: "monitor" }
     - { user: "wordpress", group: "wordpress" }
-  tags: users
+  tags:
+    - users
 
 - name: copy user specific files (authorized_keys etc) to server
-  local_action: shell rsync -a {{ files }}/home root@{{ inventory_hostname }}:/
-  tags: users
+  local_action:
+    module: shell rsync -a {{ files }}/home root@{{ inventory_hostname }}:/
+  tags:
+    - users
 
 - name: reset users home directory ownerships
-  action: file path=/home/{{ item.user }} owner={{ item.user }} group={{ item.group }} state=directory recurse=yes
-  with_items:
+  file:
+    path: "/home/{{ item.user }}"
+    owner: "{{ item.user }}"
+    group: "{{ item.group }}"
+    state: directory
+    recurse: yes
+  loop:
     - { user: "monitor", group: "monitor" }
     - { user: "wordpress", group: "wordpress" }
-  tags: users
+  tags:
+    - users
 
 - name: copy sudoers file
-  copy: src={{ files }}/etc/sudoers dest=/etc owner=root group=root mode=0440
-  tags: [users, sudo]
+  copy:
+    src: "{{ files }}/etc/sudoers"
+    dest: /etc
+    owner: root
+    group: root
+    mode: '0440'
+  tags:
+    - users
+    - sudo
 
 - name: remove setuid bit on sbin directory
   command: /bin/chmod g-s /usr/local/sbin
-  tags: [ep-sbin]
+  tags:
+    - ep-sbin
 
 - name: set permissions on sbin directory
   command: /bin/chmod 0755 /usr/local/sbin
-  tags: [ep-sbin]
+  tags:
+    - ep-sbin
 
-- name: copy all sbin easyPress admin scripts
-  action: copy src={{ files }}/usr/local/sbin/{{ item }} dest=/usr/local/sbin owner=root group=staff mode=0755
-  with_items:
+- name: copy all sbin eqpress admin scripts
+  copy:
+    src: "{{ files }}/usr/local/sbin/{{ item }}"
+    dest: /usr/local/sbin
+    owner: root
+    group: staff
+    mode: '0755'
+  loop:
     - chcustown
     - check-mem.pl
     - check_size_of_php_error_logs.sh
@@ -87,71 +130,141 @@
     - wp_check_plugins.php
     - wp_db_backup.sh
     - wp_update_plugins.sh
-  tags: ep-sbin
+  tags:
+    - ep-sbin
 
 - name: copy sbin script templates
-  action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
-  with_items:
+  template:
+    src: "{{ files }}/usr/local/sbin/{{ item }}.j2"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: staff
+    mode: '0755'
+  loop:
     - ep_chpass.sh
     - monit_ep_console_reset_password.sh
     - webstats_totals_wrapper.sh
     - ep_gen_api_key.php
-  tags: [ep-sbin, ep-sbin-templates, monitoring-email]
+  tags:
+    - ep-sbin
+    - ep-sbin-templates
+    - monitoring-email
 
 - name: copy webstat script templates
-  action: template src={{ files }}/usr/local/sbin/{{ item }}.j2 dest=/usr/local/sbin/{{ item }} owner=root group=staff mode=0755
-  with_items:
+  template:
+    src: "{{ files }}/usr/local/sbin/{{ item }}.j2"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: staff
+    mode: '0755'
+  loop:
     - webstats.php
     - webstats_totals.php
   when: mysql_webstats is defined
-  tags: [ep-sbin, webstats, webstats_scripts]
+  tags:
+    - ep-sbin
+    - webstats
+    - webstats_scripts
 
 - name: copy webstat index script template
-  action: template src={{ files }}/var/www/easypress.ca/webstats/index.php.j2 dest=/var/www/easypress.ca/webstats/index.php owner=www-data group=www-data mode=0644
-  ignore_errors: yes
+  template:
+    src: "{{ files }}{{ eqpress-docroot }}/webstats/index.php.j2"
+    dest: "{{ eqpress-docroot }}/webstats/index.php"
+    owner: www-data
+    group: www-data
+    mode: '0644'
   when: mysql_webstats is defined
-  tags: [webstats]
+  tags:
+    - webstats
 
 - name: copy failover script template to slave
-  template: src={{ files }}/usr/local/sbin/master_or_slave.sh.j2 dest=/usr/local/sbin/master_or_slave.sh owner=root group=staff mode=0750
+  template:
+    src: "{{ files }}/usr/local/sbin/master_or_slave.sh.j2"
+    dest: /usr/local/sbin/master_or_slave.sh
+    owner: root
+    group: staff
+    mode: '0750'
   when: mysql_repl_role == 'slave' and mysql_repl_master is defined
-  tags: [ep-sbin, failover]
+  tags:
+    - ep-sbin
+    - failover
 
 - name: copy backup from master script to slave
-  template: src={{ files }}/usr/local/sbin/backup_from_master.sh.j2 dest=/usr/local/sbin/backup_from_master.sh owner=root group=staff mode=0750
+  template:
+    src: "{{ files }}/usr/local/sbin/backup_from_master.sh.j2"
+    dest: /usr/local/sbin/backup_from_master.sh
+    owner: root
+    group: staff
+    mode: '0750'
   when: mysql_repl_role == 'slave' and mysql_repl_master is defined
-  tags: [ep-sbin, backup-scripts]
+  tags:
+    - ep-sbin
+    - backup-scripts
 
 - name: copy tarsnap config file
-  template: src={{ files }}/usr/local/etc/tarsnap.conf.j2 dest=/usr/local/etc/tarsnap.conf owner=root group=staff mode=0640
-  tags: [tarsnap]
+  template:
+    src: "{{ files }}/usr/local/etc/tarsnap.conf.j2"
+    dest: /usr/local/etc/tarsnap.conf
+    owner: root
+    group: staff
+    mode: '0640'
+  tags:
+    - tarsnap
 
+# FIXME: systemd or a flush
 - name: stop monit process
   service: name=monit state=stopped
   ignore_errors: yes
-  tags: [ep-console, monit]
+  tags:
+    - ep-console
+    - monit
 
 - name: copy custom monit-60 config
-  template: src={{ files }}/etc/monit/monitrc-60.j2 dest=/etc/monit/monitrc-60 owner=root group=root mode=0600
+  template:
+    src: "{{ files }}/etc/monit/monitrc-60.j2"
+    dest: /etc/monit/monitrc-60
+    owner: root
+    group: root
+    mode: '0600'
   notify:
     - start monit
-  tags: [ep-console, monit, monit-config, monitoring-email]
+  tags:
+    - ep-console
+    - monit
+    - monit-config
+    - monitoring-email
 
+# FIXME: systemd
 - name: copy custom monit startup script
-  copy: src={{ files }}/etc/init.d/monit dest=/etc/init.d owner=root group=root mode=0750
+  copy:
+    src: "{{ files }}/etc/init.d/monit"
+    dest: /etc/init.d
+    owner: root
+    group: root
+    mode: '0750'
   notify:
     - start monit
-  tags: [ep-console, monit]
+  tags:
+    - ep-console
+    - monit
 
 - name: copy compiled from source monit version
-  copy: src={{ files }}/usr/local/bin/monit dest=/usr/local/bin owner=root group=root mode=750
+  copy:
+    src: "{{ files }}/usr/local/bin/monit"
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    mode: '0750'
   notify:
     - start monit
-  tags: [ep-console, monit]
+  tags:
+    - ep-console
+    - monit
 
 - name: install auto-provision GPG key
   shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ auto_provision_gpg_id }}
   when: auto_provision_host is defined
   ignore_errors: yes
-  tags: auto-provision
+  tags:
+    - auto-provision
 
