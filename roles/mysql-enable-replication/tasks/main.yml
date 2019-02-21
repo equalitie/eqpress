@@ -1,5 +1,6 @@
 ---
 # roles/mysql-enable-replication/tasks/main.yml
+# FIXME: systemd
 - name: stop the mysql server on the slave
   service:
     name: mysql
