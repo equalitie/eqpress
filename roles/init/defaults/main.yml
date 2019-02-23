@@ -1,0 +1,6 @@
+---
+# defaults file for ansible
+ansible_deb_url_ppa: "http://ppa.launchpad.net/ansible/ansible/ubuntu"
+ansible_deb_dist_ppa: "xenial"
+ansible_deb_key_server: "keyserver.ubuntu.com"
+ansible_deb_key: "93C4A3FD7BB9C367"

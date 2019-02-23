@@ -1,0 +1,57 @@
+---
+# tasks file for ansible
+- name: install needed packages
+  local_action:
+    module: apt
+    name:
+      - dirmngr
+      - dnsutils 
+    state: present
+  become: true
+  tags:
+    - setup
+    - apt
+    - ansible_install
+
+- name: add ansible apt key
+  local_action:
+    module: apt_key
+    keyserver: "{{ansible_deb_key_server}}"
+    id: "{{ansible_deb_key}}"
+    state: present
+  become: true
+  tags:
+    - apt
+    - ansible_install
+
+- name: add ansible repo
+  local_action:
+    module: apt_repository
+    repo: "deb {{ansible_deb_url_ppa}} {{ansible_deb_dist_ppa}} main"
+    state: present
+    filename: 'ansible'
+  become: true
+  register: new_ansible 
+  tags:
+    - apt
+    - ansible_install
+
+- name: apt update cache
+  local_action:
+    module: apt
+    update_cache: true
+  become: true
+  tags:
+    - apt
+    - ansible_install
+  when: new_ansible.changed is defined and new_ansible.changed
+
+- name: install ansible
+  local_action:
+    module: apt
+    name: ansible
+    state: latest 
+  become: true
+  tags:
+    - apt
+    - ansible_install
