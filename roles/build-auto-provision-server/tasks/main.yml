@@ -11,9 +11,9 @@
   tags:
     - auto-provision
 
-- name: create docroot {{eqpress-docroot}}
+- name: create docroot {{eqpress_docroot}}
   file:
-    path: "{{eqpress-docroot}}"
+    path: "{{eqpress_docroot}}"
     state: directory
     owner: www-data
     group: www-data
@@ -24,7 +24,7 @@
 
 - name: create provision and provision-testing directories
   file:
-    path: "{{eqpress-docroot}}/{{ item }}"
+    path: "{{eqpress_docroot}}/{{ item }}"
     state: directory
     owner: www-data
     group: www-data
