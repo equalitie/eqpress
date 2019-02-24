@@ -163,7 +163,7 @@
     mode: '0644'
   notify:
     - restart postfix
-  when: mandrill_username is defined
+  when: mandrill_username is defined and mandrill_username != ""
   tags:
     - email
     - main.cf
@@ -178,7 +178,7 @@
     mode: '0644'
   notify:
     - restart postfix
-  when: sendgrid_username is defined
+  when: sendgrid_username is defined and sendgrid_username != ""
   tags:
     - email
     - main.cf
@@ -193,7 +193,7 @@
     mode: '0644'
   notify:
     - restart postfix
-  when: email_user_local is defined
+  when: email_user_local is defined and email_user_local != ""
   tags:
     - email
     - main.cf
@@ -204,7 +204,9 @@
   args:
     creates: /etc/postfix/main.cf-orig
   ignore_errors: yes
-  tags: [email, main.cf]
+  tags:
+    - email
+    - main.cf
 
 - name: Symlink to postfix mail.cf
   file:
