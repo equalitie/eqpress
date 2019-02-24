@@ -85,16 +85,16 @@
 
     - name: "email_user_local"
       prompt: "Local Email User"
-      default: "eqpress"
+      default: ""
       private: no
 
     - name: "email_passwd_local"
       prompt: "Local Email Passwd"
-      default: "enter_passwd"
+      default: ""
       private: yes
 
     - name: "email_service"
-      prompt: "Default email service"
+      prompt: "Default email service (local,sendgrid,mandrill)"
       default: "local"
       private: no
 
