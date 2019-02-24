@@ -53,9 +53,9 @@
   tags:
     - var-www-root
 
-- name: create eqpress docroot "{{ eqpress-docroot }}" 
+- name: create eqpress docroot "{{ eqpress_docroot }}"
   file:
-    path: "{{ eqpress-docroot }}"
+    path: "{{ eqpress_docroot }}"
     state: directory
     owner: www-data
     group: www-data
@@ -65,7 +65,7 @@
 
 - name: create eqpress .sesssions directory for PHP sessions and adminer to work
   file:
-    path: "{{ eqpress-docroot }}/.sessions"
+    path: "{{ eqpress_docroot }}/.sessions"
     state: directory
     owner: www-data
     group: www-data
@@ -75,42 +75,42 @@
 
 - name: rsync easyPress Console files
   local_action:
-    module: command rsync -a --exclude=*.j2 {{ files }}{{ eqpress-docroot }}/console root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+    module: command rsync -a --exclude=*.j2 {{ files }}{{ eqpress_docroot }}/console root@{{inventory_hostname}}:{{ eqpress_docroot }}/
   tags:
     - ep-console
     - console
 
 - name: rsync adminer files
   local_action:
-    module: command rsync -a {{ files }}{{ eqpress-docroot }}/adminer root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+    module: command rsync -a {{ files }}{{ eqpress_docroot }}/adminer root@{{inventory_hostname}}:{{ eqpress_docroot }}/
   tags:
     - ep-console
     - adminer
 
 - name: rsync bruteprotect files
   local_action:
-    module: command rsync -a {{ files }}{{ eqpress-docroot }}/bruteprotect root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+    module: command rsync -a {{ files }}{{ eqpress_docroot }}/bruteprotect root@{{inventory_hostname}}:{{ eqpress_docroot }}/
   tags:
     - ep-console
     - bruteprotect
 
 - name: rsync nginx-helper (cache purge) files
   local_action:
-    module: command rsync -a {{ files }}{{ eqpress-docroot }}/cache-purge root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+    module: command rsync -a {{ files }}{{ eqpress_docroot }}/cache-purge root@{{inventory_hostname}}:{{ eqpress_docroot }}/
   tags:
     - ep-console
     - cache-purge
 
 - name: rsync performance monitoring files
   local_action:
-    module: command rsync -a {{ files }}{{ eqpress-docroot }}/perf root@{{inventory_hostname}}:{{ eqpress-docroot }}/
+    module: command rsync -a {{ files }}{{ eqpress_docroot }}/perf root@{{inventory_hostname}}:{{ eqpress_docroot }}/
   tags:
     - ep-console
     - perf
 
 - name: make webstats directory
   file:
-    path: "{{ eqpress-docroot }}/webstats"
+    path: "{{ eqpress_docroot }}/webstats"
     owner: root
     group: root
     mode: '0755'
@@ -121,7 +121,7 @@
 
 - name: create the console directories
   file:
-    path: "{{ eqpress-docroot }}/console/{{ item }}"
+    path: "{{ eqpress_docroot }}/console/{{ item }}"
     state: directory
     owner: www-data
     group: www-data
@@ -139,8 +139,8 @@
 
 - name: copy easypress-console-proxy.php from template
   template:
-    src: "{{ files }}{{ eqpress-docroot }}/console/proxy/easypress-console-proxy.php.j2"
-    dest: "{{ eqpress-docroot }}/console/proxy/easypress-console-proxy.php"
+    src: "{{ files }}{{ eqpress_docroot }}/console/proxy/easypress-console-proxy.php.j2"
+    dest: "{{ eqpress_docroot }}/console/proxy/easypress-console-proxy.php"
     owner: root
     group: www-data
     mode: '0644'
@@ -150,7 +150,7 @@
 
 - name: create catchall directory
   file:
-    path: "{{ eqpress-docroot }}/catchall"
+    path: "{{ eqpress_docroot }}/catchall"
     state: directory
     owner: www-data
     group: www-data
@@ -161,8 +161,8 @@
 
 - name: copy catchall index
   template:
-    src: "{{ files }}{{ eqpress-docroot }}/catchall/index.html.j2"
-    dest: "{{ eqpress-docroot }}/catchall/index.html"
+    src: "{{ files }}{{ eqpress_docroot }}/catchall/index.html.j2"
+    dest: "{{ eqpress_docroot }}/catchall/index.html"
     owner: www-data
     group: www-data
     mode: '0664'
@@ -172,7 +172,7 @@
 
 - name: create mrtg directory
   file:
-    path: "{{ eqpress-docroot }}/mrtg"
+    path: "{{ eqpress_docroot }}/mrtg"
     state: directory
     owner: www-data
     group: www-data
@@ -183,7 +183,7 @@
 
 - name: set ownership on eqpress docroot
   file:
-    path: "{{ eqpress-docroot }}"
+    path: "{{ eqpress_docroot }}"
     owner: www-data
     group: www-data
     state: directory
