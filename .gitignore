@@ -8,9 +8,10 @@
 *.txt.attr
 *.txt.old
 *.txt.attr.old
-files/etc/ssl/easypress/index.txt
-files/etc/ssl/easypress/genRootCA.conf
-files/etc/ssl/easypress/serial.txt
+files/etc/ssl/eqpress/index.txt
+files/etc/ssl/eqpress/serial.txt
+files/etc/ssl/eqpress/genRootCA.conf
 hosts
-host_vars/
-group_vars/
+host_vars
+group_vars
+config/
