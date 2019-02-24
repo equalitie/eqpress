@@ -7,13 +7,12 @@
 
 - name: install required python packages
   apt:
-    name: "{{ item }}"
+    name:
+      - python-httplib2
+      - python-jinja2
+      - python-yaml
+      - python-six
     state: present 
-  loop:
-    - python-httplib2
-    - python-jinja2
-    - python-yaml
-    - python-six
   tags:
     - auto-provision
     - ansible
