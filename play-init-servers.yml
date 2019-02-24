@@ -6,7 +6,7 @@
 
     - name: "nginx_worker_processes"
       prompt: "Nginx worker processes"
-      default: "2"
+      default: "auto"
       private: no
 
     - name: "nginx_restricted_pages_login"
