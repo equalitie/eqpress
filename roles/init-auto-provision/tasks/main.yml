@@ -7,18 +7,8 @@
   when: use_host_lookup == "y"
   register: dns_ip_ap
 
-- name: Create group_vars directory.
-  local_action:
-    module: file path={{ playbook_dir }}/group_vars state=directory mode=0755
-
-- name: Create host_vars directory.
-  local_action:
-    module: file path={{ playbook_dir }}/host_vars state=directory mode=0755
-
 - name: Create the main variables file.
   local_action:
-    module: template src=auto-provision.yml.j2 dest={{ playbook_dir }}/group_vars/auto-provision.yml
-
-- name: Create host variable file for auto-provision server
-  local_action:
-    module: template src=auto-provision-host.yml.j2 dest={{ playbook_dir }}/host_vars/{{ auto_provision_server }}.yml
+    module: template
+    src: auto-provision.yml.j2
+    dest: "{{ playbook_dir }}/group_vars/auto-provision.yml"
