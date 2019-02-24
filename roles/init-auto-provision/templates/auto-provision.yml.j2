@@ -1,13 +1,13 @@
 ---
-
 auto_provision_host: true
 # Note you can edit auto_provision_nodes and add multiple nodes
-# ie;
+# Example
 # auto_provision_nodes: '{"mynode1":{"hostname":"example1.node.co","ip":"192.168.2.1"},"mynode2":{"hostname":"example3.node.co","ip":"192.168.6.2"}}'
 auto_provision_nodes: '{"{{ auto_provision_node_location }}":{"hostname":"{{ auto_provision_node_hostname }}","ip":"{{ auto_provision_node_ip_address }}"}}'
-# auto_provision_node_hostname created by init is a single string. If you have multiple nodes defined above
+# auto_provision_node_hostname created by init is a single string.
+# If you have multiple nodes defined above
 # you will need to change this to a list
-# ie;
+# Example
 # auto_provision_node_hostname: [ "example1.node.co", "example3.node.co" ]
 auto_provision_node_hostname: "{{ auto_provision_node_hostname }}"
 # auto_provision_node_ip_address: only gets used in the init process. No need to update.
@@ -45,4 +45,8 @@ mysql_root_db_pass: "{{ mysql_root_db_pass }}"
 mysql_innodb_buffer_pool_size: "{{ mysql_innodb_buffer_pool_size }}"
 mysql_innodb_log_file_size: "{{ mysql_innodb_log_file_size }}"
 
-eqpress-docroot: "{{ eqpress-docroot }}"
+eqpress_docroot: "{{ eqpress_docroot }}"
+{% if use_host_lookup == "y" %}
+# if using DNS for host
+public_ipv4_address: "{{ dns_ip_ap.stdout }}"
+{% endif %}
