@@ -60,7 +60,7 @@
 
     - name: "root_cert_email"
       prompt: "Root certificate email address"
-      default: "sysops@example.com"
+      default: "sysop@example.co"
       private: no
 
     - name: "mandrill_username"
@@ -95,7 +95,7 @@
 
     - name: "email_service"
       prompt: "Default email service"
-      default: "mandrill"
+      default: "local"
       private: no
 
     - name: "email_domain"
@@ -105,7 +105,7 @@
 
     - name: "monitoring_email"
       prompt: "Monitoring email address"
-      default: "sysops@example.com"
+      default: "sysop@example.co"
       private: no
 
     - name: "timezone"
