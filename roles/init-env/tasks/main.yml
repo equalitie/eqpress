@@ -1,19 +1,26 @@
 ---
 # roles/init-env/tasks/main.yml
-
-- name: Create group_vars directory.
+- name: create config directory
   local_action:
     module: file
-    path: "{{ playbook_dir }}/group_vars"
+    path: "{{ playbook_dir }}/{{ item }}"
     state: directory
     mode: '0755'
+  loop:
+    - config
+    - config/group_vars
+    - config/host_vars
+    - config/inventory
 
-- name: Create host_vars directory.
+- name: create group_vars, host_vars symlink
   local_action:
     module: file
-    path: "{{ playbook_dir }}/host_vars"
-    state: directory
-    mode: '0755'
+    src: "{{ playbook_dir }}/config/{{ item }}"
+    dest: "{{ playbook_dir }}/{{ item }}"
+    state: link
+  loop:
+    - group_vars
+    - host_vars
 
 - name: Create the main variables file (group_vars/all.yml).
   local_action:
