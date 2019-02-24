@@ -168,8 +168,8 @@
 
 - name: copy webstat index script template
   template:
-    src: "{{ files }}{{ eqpress-docroot }}/webstats/index.php.j2"
-    dest: "{{ eqpress-docroot }}/webstats/index.php"
+    src: "{{ files }}{{ eqpress_docroot }}/webstats/index.php.j2"
+    dest: "{{ eqpress_docroot }}/webstats/index.php"
     owner: www-data
     group: www-data
     mode: '0644'
