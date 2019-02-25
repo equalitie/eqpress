@@ -109,15 +109,21 @@
       - zlib1g-dev
     state: present
 
-# NOTE: left here incase we need to add back. Should not be needed.
-#- name: Set /etc/localtime according to configuration
-#        copy: src=/usr/share/zoneinfo/{{ timezone }}
-#              dest=/etc/localtime
-#              owner=root
-#              group=root
-#              mode=0644
-#              backup=yes
-#        tags: [configuration,timezone]
+- name: Set /etc/localtime according to configuration
+  file:
+    src: "/usr/share/zoneinfo/{{ timezone }}"
+    dest: /etc/localtime
+    owner: root
+    group: root
+    state: link
+  notify:
+    - update tzdata
+    - restart rsyslog
+    - restart ssh
+  when: ansible_os_family == "Debian"
+  tags:
+    - configuration
+    - timezone
 
 - name: set timezone
   timezone:
