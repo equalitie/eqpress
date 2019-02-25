@@ -4,14 +4,14 @@
 - name: Set fact with host's external IPv4 address
   set_fact:
     public_ipv4_address: "{{ansible_default_ipv4.address}}"
-  when: public_ipv4_address is not defined
+  when: public_ipv4_address is not defined or public_ipv4_address == ""
   tags:
     - hostname
 
 - name: Set fact with host's external IPv6 address
   set_fact:
     public_ipv6_address: "{{ansible_default_ipv6.address}}"
-  when: public_ipv6_address is not defined
+  when: public_ipv6_address is not defined or public_ipv6_address == ""
   tags:
     - hostname
 
@@ -43,10 +43,19 @@
 - name: Update the apt-get cache
   apt:
     update_cache: yes
-
-- name: Update all packages to the latest version
-  apt:
+    cache_valid_time: 3600
     upgrade: dist
+  register: apt_updated
+
+- name: Remove useless packages from the cache
+  apt:
+    autoclean: yes
+  when: apt_updated.changed is defined and apt_updated.changed
+
+- name: Remove dependencies that are no longer required
+  apt:
+    autoremove: yes
+  when: apt_updated.changed is defined and apt_updated.changed
 
 - name: Install common packages
   apt:
@@ -133,7 +142,7 @@
 
 - name: Set /etc/default/locale according to our configuration
   template:
-    src: files/etc/default/locale.j2
+    src: "{{ files }}/etc/default/locale.j2"
     dest: /etc/default/locale
   when: ansible_os_family == "Debian"
   tags:
