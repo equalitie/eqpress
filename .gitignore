@@ -1,16 +1,6 @@
 *.swp
 .DS_Store
 .idea/
-*.key
-*.pem
-*.der
-*.csr
-*.txt.attr
-*.txt.old
-*.txt.attr.old
-files/etc/ssl/eqpress/index.txt
-files/etc/ssl/eqpress/serial.txt
-files/etc/ssl/eqpress/genRootCA.conf
 hosts
 host_vars
 group_vars
