@@ -32,7 +32,10 @@
     - ssh_pub_key
 
 - name: Downloading generated SSH public keys
-  fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/id_rsa_{{ inventory_hostname }}.pub flat=yes
+  fetch:
+    src: /root/.ssh/id_rsa.pub
+    dest: "/tmp/id_rsa_{{ inventory_hostname }}.pub"
+    flat: yes
   tags:
     - ssh_config
     - ssh_pub_key
@@ -74,7 +77,8 @@
 
 - name: Scan the public key master
   shell: "{{ ssh_known_hosts_command }} {{ item }} >> {{ ssh_known_hosts_file }}"
-  with_items: mysql_repl_slave
+  loop:
+    - "{{mysql_repl_slave}}"
   when: mysql_repl_role == 'master' and mysql_repl_slave is defined
   tags:
     - ssh_config
