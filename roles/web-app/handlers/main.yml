@@ -1,6 +1,8 @@
 ---
 - name: restart nginx
-  service: name=nginx state=restarted
+  systemd:
+    name: nginx
+    state: restarted
 
 - name: reload nginx
   command: /usr/sbin/nginx -s reload
