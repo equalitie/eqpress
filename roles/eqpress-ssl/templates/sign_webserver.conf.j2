@@ -1,16 +1,17 @@
+# {{ansible_managed}}
 #
 # OpenSSL configuration file for signing client and web server certificate
 #
 [ca]
-default_ca = ca_Default
+default_ca              = ca_Default
 
 [cert_ext]
 basicConstraints        = critical,CA:false
 keyUsage                = digitalSignature,keyEncipherment
 extendedKeyUsage	= serverAuth,clientAuth
-nsCaPolicyUrl           = http://deflect.ca/ca-policy/
+nsCaPolicyUrl           = http://{{org_support_url}}/ca-policy/
 subjectKeyIdentifier    = hash
-crlDistributionPoints   = URI:http://deflect.ca/root_CA_crl.pem
+crlDistributionPoints   = URI:http://{{org_support_url}}/root_CA_crl.pem
 
 [ ca_Default ]
 default_md              = sha256

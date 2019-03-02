@@ -1,3 +1,4 @@
+# {{ansible_managed}}
 #
 # OpenSSL configuration file for Root CA
 #
@@ -27,7 +28,7 @@ private_key                     = ./root_CA.key
 basicConstraints                = critical,CA:true
 keyUsage                        = cRLSign,keyCertSign
 nsCertType                      = objCA
-nsCaPolicyUrl                   = http://example.com/ca-policy/
+nsCaPolicyUrl                   = http://{{org_support_url}}/ca-policy/
 subjectKeyIdentifier            = hash
 
 [ v3_req ]
