@@ -10,7 +10,7 @@
 
 - name: Set fact with host's external IPv6 address
   set_fact:
-    public_ipv6_address: "{{ansible_default_ipv6.address}}"
+    public_ipv6_address: "{{ansible_default_ipv6.address | default()}}"
   when: public_ipv6_address is not defined or public_ipv6_address == ""
   tags:
     - hostname
@@ -95,7 +95,7 @@
       - python-apt
       - python-mysqldb
       - python-keyczar
-      - python-software-properties
+      - python3-software-properties
       - rcconf
       - rng-tools
       - rsync
@@ -157,12 +157,11 @@
 
 - name: Copy custom fail2ban jail.conf
   template:
-    src: "{{ files }}/etc/fail2ban/jail.conf.j2"
-    dest: /etc/fail2ban/jail.conf
+    src: "{{ files }}/etc/fail2ban/jail.d/customisation.local.j2"
+    dest: /etc/fail2ban/jail.d/customisation.local
     owner: root
     group: root
     mode: '0644'
-    backup: yes
   notify:
     - restart fail2ban
   tags:
@@ -323,9 +322,9 @@
     - security
 
 - name: copy sshd_config file containing sftponly subsystem for chroot'ed logins
-  copy:
-    src: "{{ files }}/etc/ssh/sshd_config"
-    dest: /etc/ssh
+  template:
+    src: "{{ files }}/etc/ssh/sshd_config.j2"
+    dest: /etc/ssh/sshd_config
     owner: root
     group: root
     mode: '0644'
