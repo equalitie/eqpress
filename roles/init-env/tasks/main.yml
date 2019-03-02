@@ -27,6 +27,3 @@
     module: template
     src: all.yml.j2
     dest: "group_vars/all.yml"
-
-- name: Load main variables file for next tasks
-  include_vars: "group_vars/all.yml"
