@@ -21,9 +21,9 @@
 
 - name: restart fail2ban
   systemd:
-    name: fail2an
+    name: fail2ban
     state: restarted
-    enabled: ye
+    enabled: yes
   ignore_errors: yes
 
 - name: restart firewall
