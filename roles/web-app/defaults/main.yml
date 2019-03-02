@@ -1,3 +1,4 @@
+php_version: "7.3"
 nginx_etag: "etag on;"
 phpfpm_max_children: 40
 phpfpm_start_servers: 10
