@@ -1,0 +1,30 @@
+# {{ansible_managed}}
+Port 22
+# Don't set any of the HostKey, use default
+# because at this point they are already generated.
+UsePrivilegeSeparation yes
+SyslogFacility AUTH
+LogLevel INFO
+LoginGraceTime 120
+PermitRootLogin prohibit-password
+StrictModes yes
+PubkeyAuthentication yes
+IgnoreRhosts yes
+HostbasedAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+PasswordAuthentication yes
+X11Forwarding no
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+AcceptEnv LANG LC_*
+UsePAM yes
+Subsystem       sftp    internal-sftp
+
+# These lines must appear at the *end* of sshd_config
+Match Group sftponly
+        ChrootDirectory %h
+        ForceCommand internal-sftp
+        AllowTcpForwarding no
