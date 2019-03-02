@@ -120,4 +120,3 @@
 
   roles:
      - init-env
-     - gen-root-cert
