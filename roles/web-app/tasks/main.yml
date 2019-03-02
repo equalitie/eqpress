@@ -11,76 +11,77 @@
   tags:
     - var-www-root
 
-- name: Add apt keys required for dotdeb
+- name: Add apt keys required for https://packages.sury.org/php
   apt_key:
-    url: 'http://www.dotdeb.org/dotdeb.gpg'
+          url: 'https://packages.sury.org/php/apt.gpg'
   tags:
-    - nginx
     - php
 
-- name: Add repos from dotdeb
+- name: Add repos from https://packages.sury.org/php
   apt_repository:
-    repo: 'deb http://packages.dotdeb.org wheezy all'
-  tags:
-    - nginx
-    - php
-
-- name: Add PHP 5.6 repos from dotdeb
-  apt_repository:
-    repo: 'deb http://packages.dotdeb.org wheezy-php56 all'
+    repo: deb https://packages.sury.org/php/ {{ansible_distribution_release}} main
+    state: present
+    filename: sury-php
+  register: suryrepo
   tags:
     - php
 
 - name: Update the apt-get cache
   apt:
     update_cache: yes
+  when: suryrepo.changed is defined and suryrepo.changed
 
 - name: Install packages
   apt:
     name:
       - nginx-extras
       - nginx-common
-      - php5
-      - php5-cli
-      - php5-curl
-      - php5-dev
-      - php5-fpm
-      - php5-gd
-      - php5-imagick
-      - php5-json
-      - php5-mcrypt
-      - php5-memcached
-      - php5-mysqlnd
-      - php5-redis
-      - php5-ssh2
-      - php5-ldap
-      - php5-intl
+      - "php{{php_version}}"
+      - "php{{php_version}}-cli"
+      - "php{{php_version}}-curl"
+      - "php{{php_version}}-dev"
+      - "php{{php_version}}-fpm"
+      - "php{{php_version}}-gd"
+      - "php{{php_version}}-imagick"
+      - "php{{php_version}}-json"
+      - "php{{php_version}}-memcached"
+      - "php{{php_version}}-mysql"
+      - "php{{php_version}}-redis"
+      - "php{{php_version}}-ssh2"
+      - "php{{php_version}}-ldap"
+      - "php{{php_version}}-intl"
+      - "php{{php_version}}-mbstring"
+      - "php{{php_version}}-bz2"
+      - "php{{php_version}}-zip"
+      - "php{{php_version}}-xml"
+      - "php{{php_version}}-bcmath"
+     #- "php{{php_version}}-mcrypt"
     state: present
   tags:
     - nginx
     - php
 
-# FIXME: systemd
 - name: ensure nginx will start at boot
-  service:
+  systemd:
     name: nginx
     enabled: yes
   tags:
     - nginx
 
-- name: ensure php5-fpm will start at boot
-  service:
-    name: php5-fpm
+- name: ensure php{{php_version}}-fpm will start at boot
+  systemd:
+    name: "php{{php_version}}-fpm"
     enabled: yes
   tags:
     - php
 
-- name: ensure nginx is stopped during initial config install
-  service:
-    name: nginx
-    state: stopped
-  tags:
-    - nginx
+# TODO: try to do without this. Remove if not needed.
+#- name: ensure nginx is stopped during initial config install
+#  service:
+#    name: nginx
+#    state: stopped
+#  tags:
+#    - nginx
 
 - name: remove default nginx config symlink
   file:
@@ -89,13 +90,23 @@
   tags:
     - nginx
 
+- name: remove default html directory /var/www/html
+  file:
+    path: /var/www/html
+    state: absent
+  tags:
+    - nginx
+
+
+      ### THIS IS WHERE I LEFT OFF ###
+
 - name: copy the nginx create cache script
   copy:
     src: "{{ files }}/etc/init.d/nginx-create-cachedir"
     dest: /etc/init.d
     owner: root
     group: root
-    mode: 0750
+    mode: '0750'
   tags:
     - nginx
 
@@ -332,7 +343,7 @@
     - limits
 
 - name: start nginx
-  service:
+  systemd:
     name: nginx
     state: started
   tags:
@@ -363,8 +374,8 @@
 
 - name: copy php config
   template:
-    src: "{{ files }}/etc/php5/{{ item.templ }}"
-    dest: "/etc/php5/{{ item.file }}"
+    src: "{{ files }}/etc/php{{php_version}}/{{ item.templ }}"
+    dest: "/etc/php{{php_version}}/{{ item.file }}"
     owner: root
     group: www-data
     mode: '0640'
@@ -383,8 +394,8 @@
 
 - name: copy auto-provision php config
   template:
-    src: "{{ files }}/etc/php5/fpm/pool.d/auto-provision.conf.j2"
-    dest: /etc/php5/fpm/pool.d/auto-provision.conf
+    src: "{{ files }}/etc/php{{php_version}}/fpm/pool.d/auto-provision.conf.j2"
+    dest: /etc/php{{php_version}}/fpm/pool.d/auto-provision.conf
     owner: root
     group: www-data
     mode: '0640'
@@ -396,9 +407,9 @@
     - php-config
     - auto-provision
 
-- name: start php5-fpm
-  service:
-    name: php5-fpm
+- name: start php{{php_version}}-fpm
+  systemd:
+    name: php{{php_version}}-fpm
     state: started
   tags:
     - php
