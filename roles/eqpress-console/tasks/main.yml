@@ -73,7 +73,7 @@
   tags:
     - ep-console
 
-- name: rsync easyPress Console files
+- name: rsync eqpress Console files
   local_action:
     module: command rsync -a --exclude=*.j2 {{ files }}{{ eqpress_docroot }}/console root@{{inventory_hostname}}:{{ eqpress_docroot }}/
   tags:
