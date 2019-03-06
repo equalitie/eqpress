@@ -97,36 +97,34 @@
   tags:
     - nginx
 
-
-      ### THIS IS WHERE I LEFT OFF ###
-
-- name: copy the nginx create cache script
-  copy:
-    src: "{{ files }}/etc/init.d/nginx-create-cachedir"
-    dest: /etc/init.d
-    owner: root
+- name: create directory ramdisk for nginx cache for tmpfs mount
+  file:
+    path: /var/cache/nginx
+    owner: www-data
     group: root
+    state: directory
     mode: '0750'
   tags:
     - nginx
 
-- name: run the nginx create cache script
-  command: /etc/init.d/nginx-create-cachedir start creates=/run/cache
+- name: add tmpfs mount to fstab to /var/cache/nginx
+  lineinfile:
+    dest: /etc/fstab
+    regexp: "/var/cache/nginx"
+    line: "tmpfs /var/cache/nginx tmpfs rw,noexec,nosuid,nodev,mode=0750,uid=www-data 0 0"
+    state: present
+  notify:
+    - remount
   tags:
     - nginx
 
-- name: create rc.d links to nginx create cache script
-  command: update-rc.d nginx-create-cachedir defaults 1 1
-  tags:
-    - nginx
-
-- name: create links from file system to ramdisk for nginx cache
+- name: create nginx-ondisk directory
   file:
-    src: /run/cache/nginx
-    dest: /var/cache/nginx
-    owne: root
+    path: /var/cache/nginx-ondisk
+    state: directory
+    owner: www-data
     group: root
-    state: link
+    mode: '0750'
   tags:
     - nginx
 
@@ -161,10 +159,21 @@
     - nginx
     - nginx_config
 
+- name: create nginx common include directory
+  file:
+    path: /etc/nginx/eqpress
+    state: directory
+    owner: root
+    group: staff
+    mode: '0755'
+  tags:
+    - nginx
+    - nginx_config
+
 - name: copy nginx config files
   copy:
-    src: "{{ files }}/etc/nginx/{{ item }}"
-    dest: /etc/nginx
+    src: "{{ files }}/etc/nginx/eqpress/{{ item }}"
+    dest: "/etc/nginx/eqpress/{{ item }}"
     owner: root
     group: staff
     mode: '0664'
@@ -186,8 +195,8 @@
 
 - name: copy nginx common ssl config template
   template:
-    src: "{{ files }}/etc/nginx/common_easypress_ssl.conf.j2"
-    dest: /etc/nginx/common_easypress_ssl.conf
+    src: "{{ files }}/etc/nginx/eqpress/common_eqpress_ssl.conf.j2"
+    dest: /etc/nginx/eqpress/common_eqpress_ssl.conf
     owner: root
     group: staff
     mode: '0664'
@@ -200,8 +209,8 @@
 
 - name: copy nginx cache config only during initial install
   copy:
-    src: "{{ files }}/etc/nginx/cache.conf"
-    dest: /etc/nginx/cache.conf
+    src: "{{ files }}/etc/nginx/eqpress/cache.conf"
+    dest: /etc/nginx/eqpress/cache.conf
     owner: root
     group: staff
     mode: '0664'
@@ -212,8 +221,8 @@
 
 - name: copy nginx blacklist
   copy:
-    src: "{{ files }}/etc/nginx/blacklist.conf"
-    dest: /etc/nginx
+    src: "{{ files }}/etc/nginx/eqpress/blacklist.conf"
+    dest: /etc/nginxi/eqpress/blacklist.conf
     owner: root
     group: staff
     mode: '0664'
@@ -226,8 +235,8 @@
 
 - name: copy nginx fastcgi config template
   template:
-    src: "{{ files }}/etc/nginx/common_fastcgi.conf.j2"
-    dest: /etc/nginx/common_fastcgi.conf
+    src: "{{ files }}/etc/nginx/eqpress/common_fastcgi.conf.j2"
+    dest: /etc/nginx/eqpress/common_fastcgi.conf
     owner: root
     group: staff
     mode: '0664'
@@ -238,10 +247,10 @@
     - nginx_config
     - nginx_fastcgi
 
-- name: copy nginx.conf as template
+- name: copy common_log_formats.conf.j2 as template
   template:
-    src: "{{ files }}/etc/nginx/nginx.conf.j2"
-    dest: /etc/nginx/nginx.conf
+    src: "{{ files }}/etc/nginx/eqpress/common_log_formats.conf.j2"
+    dest: /etc/nginx/eqpress/common_log_formats.conf
     owner: root
     group: staff
     mode: '0664'
@@ -250,12 +259,11 @@
   tags:
     - nginx
     - nginx_config
-    - nginx_dot_conf
 
-- name: copy common_log_formats.conf.j2 as template
+- name: copy nginx.conf as template
   template:
-    src: "{{ files }}/etc/nginx/common_log_formats.conf.j2"
-    dest: /etc/nginx/common_log_formats.conf
+    src: "{{ files }}/etc/nginx/nginx.conf.j2"
+    dest: /etc/nginx/nginx.conf
     owner: root
     group: staff
     mode: '0664'
