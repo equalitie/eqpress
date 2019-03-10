@@ -1,3 +1,4 @@
+# {{ansible_managed}}
 # When to save a page to the cache. Start by enabling.
 set $do_not_set_cache "";
 
@@ -36,7 +37,7 @@ fastcgi_split_path_info ^(.+\.php)(/.+)$;
 include fastcgi_params;
 fastcgi_index index.php;
 fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-fastcgi_pass php5-fpm-unix-sock;
+fastcgi_pass php-fpm-unix-sock;
 fastcgi_read_timeout 300;
 fastcgi_send_timeout 180;
 fastcgi_buffers 32 32k;

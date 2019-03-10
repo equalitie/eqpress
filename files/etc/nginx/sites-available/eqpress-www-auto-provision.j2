@@ -1,9 +1,11 @@
+# {{ansible_managed}}
+
 server {
 	listen 80;
 	server_name {{ inventory_hostname }};
 	access_log /var/log/nginx/{{ inventory_hostname }}.access.log eq_default;
 	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
-	root /var/www/easypress.ca;
+	root {{ eqpress_docroot }};
 
 	# Only allow this uri for LetsEncrypt certonly webroot
 	location ~ /.well-known/acme-challenge {
@@ -21,10 +23,10 @@ server {
 	server_name {{ inventory_hostname }};
 	access_log /var/log/nginx/{{ inventory_hostname }}.access.log eq_default;
 	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
-	root /var/www/easypress.ca;
+	root {{ eqpress_docroot }};
 
-	include /etc/nginx/common_easypress_ssl.conf;
-	include /etc/nginx/common_location_ep.conf;
+	include /etc/nginx/eqpress/common_eqpress_ssl.conf;
+	include /etc/nginx/eqpress/common_location_ep.conf;
 
 	location / {
 		try_files $uri $uri/ /index.php?$args;
@@ -37,6 +39,6 @@ server {
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
             fastcgi_split_path_info ^(.+\.php)(/.+)$;
             fastcgi_index index.php;
-            fastcgi_pass php5-fpm-auto-provision-sock;
+            fastcgi_pass php-fpm-auto-provision-sock;
 	}
 }

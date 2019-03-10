@@ -55,7 +55,7 @@ http {
 	# cache settings and locations
 	##
 
-	include /etc/nginx/cache.conf;
+	include /etc/nginx/eqpress/cache.conf;
 
 	##
 	# Gzip Settings
@@ -108,6 +108,9 @@ http {
 		root {{ eqpress_docroot }}/catchall;
 		include /etc/nginx/eqpress/common_eqpress_ssl.conf;
 	}
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # Dropping SSLv3, ref: POODLE
+	ssl_prefer_server_ciphers on;
  
         ##
         # Global SSL configuration
