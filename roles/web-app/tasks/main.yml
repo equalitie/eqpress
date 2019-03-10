@@ -135,11 +135,12 @@
     mode: '0755'
   loop:
     - modules-enabled
-    - modules-available
   tags:
     - nginx
     - nginx_config
 
+# TODO: Possible tune. Only link what is needed.
+# Put back what was already there.
 - name: link modules
   file:
     src: "/usr/share/nginx/modules-available/{{ item.file }}"
@@ -171,8 +172,8 @@
     - nginx_config
 
 - name: copy nginx config files
-  copy:
-    src: "{{ files }}/etc/nginx/eqpress/{{ item }}"
+  template:
+    src: "{{ files }}/etc/nginx/eqpress/{{ item }}.j2"
     dest: "/etc/nginx/eqpress/{{ item }}"
     owner: root
     group: staff
@@ -187,78 +188,22 @@
     - lua_block_post_noreferrer.lua
     - lua_block_post_noreferrer_on.lua
     - lua_block_wplogin_noreferrer.lua
-  notify:
-    - reload nginx
-  tags:
-    - nginx
-    - nginx_config
-
-- name: copy nginx common ssl config template
-  template:
-    src: "{{ files }}/etc/nginx/eqpress/common_eqpress_ssl.conf.j2"
-    dest: /etc/nginx/eqpress/common_eqpress_ssl.conf
-    owner: root
-    group: staff
-    mode: '0664'
+    - common_eqpress_ssl.conf
+    - cache.conf
+    - blacklist.conf
+    - common_fastcgi.conf
+    - common_log_formats.conf
   notify:
     - reload nginx
   tags:
     - nginx
     - nginx_config
     - nginx_ssl
-
-- name: copy nginx cache config only during initial install
-  copy:
-    src: "{{ files }}/etc/nginx/eqpress/cache.conf"
-    dest: /etc/nginx/eqpress/cache.conf
-    owner: root
-    group: staff
-    mode: '0664'
-    force: no
-  tags:
-    - nginx
-    - nginx_cache
-
-- name: copy nginx blacklist
-  copy:
-    src: "{{ files }}/etc/nginx/eqpress/blacklist.conf"
-    dest: /etc/nginxi/eqpress/blacklist.conf
-    owner: root
-    group: staff
-    mode: '0664'
-  notify:
-    - reload nginx
-  tags:
-    - nginx
-    - nginx_config
     - nginx_blacklist
-
-- name: copy nginx fastcgi config template
-  template:
-    src: "{{ files }}/etc/nginx/eqpress/common_fastcgi.conf.j2"
-    dest: /etc/nginx/eqpress/common_fastcgi.conf
-    owner: root
-    group: staff
-    mode: '0664'
-  notify:
-    - reload nginx
-  tags:
-    - nginx
-    - nginx_config
     - nginx_fastcgi
 
-- name: copy common_log_formats.conf.j2 as template
-  template:
-    src: "{{ files }}/etc/nginx/eqpress/common_log_formats.conf.j2"
-    dest: /etc/nginx/eqpress/common_log_formats.conf
-    owner: root
-    group: staff
-    mode: '0664'
-  notify:
-    - reload nginx
-  tags:
-    - nginx
-    - nginx_config
+- fail:
+    msg: "STOP HERE"
 
 - name: copy nginx.conf as template
   template:
@@ -273,10 +218,10 @@
     - nginx
     - nginx_config
 
-- name: copy nginx easypress.ca config template
+- name: copy nginx eqpress config template
   template:
-    src: "{{ files }}/etc/nginx/sites-available/easypress.ca.j2"
-    dest: /etc/nginx/sites-available/easypress.ca
+    src: "{{ files }}/etc/nginx/sites-available/eqpress-www.j2"
+    dest: /etc/nginx/sites-available/eqpress-www
     owner: root
     group: staff
     mode: '0664'
@@ -286,12 +231,12 @@
   tags:
     - nginx
     - nginx_config
-    - nginx_config_easypress
+    - nginx_config_eqpress
 
-- name: nginx 'easypress.ca' config template for auto-provision host. ** will not overwrite **
+- name: nginx 'eqpress-www' config template for auto-provision host. ** will not overwrite **
   template:
-    src: "{{ files }}/etc/nginx/sites-available/easypress.ca-auto-provision.j2"
-    dest: "/etc/nginx/sites-available/easypress.ca"
+    src: "{{ files }}/etc/nginx/sites-available/eqpress-www-auto-provision.j2"
+    dest: "/etc/nginx/sites-available/eqpress-www"
     owner: root
     group: staff
     mode: '0664'
@@ -303,7 +248,7 @@
   tags:
     - nginx
     - nginx_config
-    - nginx_config_easypress
+    - nginx_config_eqpress
 
 - name: install nginx htpasswd file for restricted pages
   template:
@@ -320,10 +265,10 @@
     - nginx_config
     - nginx_htpasswd
 
-- name: link easypress.ca nginx config
+- name: link eqpress-www nginx config
   file:
-    src: /etc/nginx/sites-available/easypress.ca
-    dest: /etc/nginx/sites-enabled/easypress.ca
+    src: /etc/nginx/sites-available/eqpress-www
+    dest: /etc/nginx/sites-enabled/eqpress-www
     state: link
   tags:
     - ep-console
@@ -392,7 +337,7 @@
     - { templ: "fpm/php.ini.j2", file: "fpm/php.ini" }
     - { templ: "fpm/php-fpm.conf.j2", file: "fpm/php-fpm.conf" }
     - { templ: "fpm/pool.d/www.conf.j2", file: "fpm/pool.d/www.conf" }
-    - { templ: "fpm/pool.d/easypress-admin.conf.j2", file: "fpm/pool.d/easypress-admin.conf" }
+    - { templ: "fpm/pool.d/eqpress-admin.conf.j2", file: "fpm/pool.d/eqpress-admin.conf" }
     - { templ: "mods-available/opcache.ini.j2", file: "mods-available/opcache.ini" }
   notify:
     - reload php-fpm
