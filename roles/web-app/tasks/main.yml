@@ -202,9 +202,6 @@
     - nginx_blacklist
     - nginx_fastcgi
 
-- fail:
-    msg: "STOP HERE"
-
 - name: copy nginx.conf as template
   template:
     src: "{{ files }}/etc/nginx/nginx.conf.j2"
@@ -217,38 +214,6 @@
   tags:
     - nginx
     - nginx_config
-
-- name: copy nginx eqpress config template
-  template:
-    src: "{{ files }}/etc/nginx/sites-available/eqpress-www.j2"
-    dest: /etc/nginx/sites-available/eqpress-www
-    owner: root
-    group: staff
-    mode: '0664'
-  notify:
-    - reload nginx
-  when: auto_provision_host is not defined
-  tags:
-    - nginx
-    - nginx_config
-    - nginx_config_eqpress
-
-- name: nginx 'eqpress-www' config template for auto-provision host. ** will not overwrite **
-  template:
-    src: "{{ files }}/etc/nginx/sites-available/eqpress-www-auto-provision.j2"
-    dest: "/etc/nginx/sites-available/eqpress-www"
-    owner: root
-    group: staff
-    mode: '0664'
-    force: no
-    backup: yes
-  notify:
-    - reload nginx
-  when: auto_provision_host is defined and auto_provision_host
-  tags:
-    - nginx
-    - nginx_config
-    - nginx_config_eqpress
 
 - name: install nginx htpasswd file for restricted pages
   template:
@@ -264,6 +229,38 @@
     - nginx
     - nginx_config
     - nginx_htpasswd
+
+- name: copy nginx eqpress-www config template
+  template:
+    src: "{{ files }}/etc/nginx/sites-available/eqpress-www.j2"
+    dest: /etc/nginx/sites-available/eqpress-www
+    owner: root
+    group: staff
+    mode: '0664'
+  notify:
+    - reload nginx
+  when: auto_provision_host is not defined
+  tags:
+    - nginx
+    - nginx_config
+    - nginx_config_eqpress
+
+- name: nginx eqpress-www config template for auto-provision host. ** will not overwrite **
+  template:
+    src: "{{ files }}/etc/nginx/sites-available/eqpress-www-auto-provision.j2"
+    dest: "/etc/nginx/sites-available/eqpress-www"
+    owner: root
+    group: staff
+    mode: '0664'
+    force: no
+    backup: yes
+  notify:
+    - reload nginx
+  when: auto_provision_host is defined and auto_provision_host
+  tags:
+    - nginx
+    - nginx_config
+    - nginx_config_eqpress
 
 - name: link eqpress-www nginx config
   file:
@@ -325,10 +322,13 @@
     - php
     - php-config
 
+- fail:
+    msg: "STOP HERE"
+
 - name: copy php config
   template:
-    src: "{{ files }}/etc/php{{php_version}}/{{ item.templ }}"
-    dest: "/etc/php{{php_version}}/{{ item.file }}"
+    src: "{{ files }}/etc/php/{{php_version}}/{{ item.templ }}"
+    dest: "/etc/php/{{php_version}}/{{ item.file }}"
     owner: root
     group: www-data
     mode: '0640'
@@ -347,8 +347,8 @@
 
 - name: copy auto-provision php config
   template:
-    src: "{{ files }}/etc/php{{php_version}}/fpm/pool.d/auto-provision.conf.j2"
-    dest: /etc/php{{php_version}}/fpm/pool.d/auto-provision.conf
+    src: "{{ files }}/etc/php/{{php_version}}/fpm/pool.d/auto-provision.conf.j2"
+    dest: /etc/php/{{php_version}}/fpm/pool.d/auto-provision.conf
     owner: root
     group: www-data
     mode: '0640'
