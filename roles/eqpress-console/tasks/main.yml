@@ -2,8 +2,8 @@
 # roles/easypress-console/tasks/main.yml
 
 - name: copy console install script
-  copy:
-    src: "{{ files }}/usr/local/sbin/ep_install_console.sh"
+  template:
+    src: "{{ files }}/usr/local/sbin/ep_install_console.sh.j2"
     dest: /usr/local/sbin
     owner: root
     group: staff
