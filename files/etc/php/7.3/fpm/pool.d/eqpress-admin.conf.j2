@@ -1,0 +1,22 @@
+; {{anasible_managed}}
+[eqpress-admin]
+user = www-data
+group = www-data
+listen = /var/run/php-fpm-admin.sock
+listen.backlog = 256
+listen.owner = www-data
+listen.group = www-data
+listen.mode = 0666
+pm = dynamic
+pm.max_children = 4
+pm.start_servers = 2
+pm.min_spare_servers = 2
+pm.max_spare_servers = 2
+pm.process_idle_timeout = 10s;
+pm.max_requests = 128
+slowlog = /var/log/php-fpm-slow.log
+php_admin_value[memory_limit] = 256M
+env[TMP] = /var/tmp
+env[TMPDIR] = /var/tmp
+env[TEMP] = /var/tmp
+env[CONSOLE_API_KEY_SECRET] = "{{ console_secret_key }}"
