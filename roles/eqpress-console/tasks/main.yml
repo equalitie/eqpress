@@ -13,9 +13,9 @@
     - ep_install_console.sh
 
 - name: copy console monit scripts
-  copy:
-    src: "{{ files }}/usr/local/sbin/{{ item }}"
-    dest: /usr/local/sbin
+  template:
+    src: "{{ files }}/usr/local/sbin/{{item}}.j2"
+    dest: "/usr/local/sbin/{{item}}"
     owner: root
     group: staff
     mode: '0755'
