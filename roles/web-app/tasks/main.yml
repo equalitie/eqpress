@@ -11,9 +11,42 @@
   tags:
     - var-www-root
 
+- name: create directory ramdisk for nginx cache for tmpfs mount
+  file:
+    path: /var/cache/nginx
+    owner: www-data
+    group: root
+    state: directory
+    mode: '0750'
+  tags:
+    - nginx
+
+- name: add tmpfs mount to fstab to /var/cache/nginx
+  mount:
+    path: /var/cache/nginx
+    src: tmpfs
+    fstype: tmpfs
+    opts: rw,noexec,nosuid,nodev,mode=0750,uid=www-data
+    boot: yes
+    backup: no
+    passno: 0
+    state: mounted
+  tags:
+    - nginx
+
+- name: create nginx-ondisk directory
+  file:
+    path: /var/cache/nginx-ondisk
+    state: directory
+    owner: www-data
+    group: root
+    mode: '0750'
+  tags:
+    - nginx
+
 - name: Add apt keys required for https://packages.sury.org/php
   apt_key:
-          url: 'https://packages.sury.org/php/apt.gpg'
+    url: 'https://packages.sury.org/php/apt.gpg'
   tags:
     - php
 
@@ -55,6 +88,7 @@
       - "php{{php_version}}-zip"
       - "php{{php_version}}-xml"
       - "php{{php_version}}-bcmath"
+      - "php{{php_version}}-opcache"
      #- "php{{php_version}}-mcrypt"
     state: present
   tags:
@@ -75,14 +109,6 @@
   tags:
     - php
 
-# TODO: try to do without this. Remove if not needed.
-#- name: ensure nginx is stopped during initial config install
-#  service:
-#    name: nginx
-#    state: stopped
-#  tags:
-#    - nginx
-
 - name: remove default nginx config symlink
   file:
     path: /etc/nginx/sites-enabled/default
@@ -94,37 +120,6 @@
   file:
     path: /var/www/html
     state: absent
-  tags:
-    - nginx
-
-- name: create directory ramdisk for nginx cache for tmpfs mount
-  file:
-    path: /var/cache/nginx
-    owner: www-data
-    group: root
-    state: directory
-    mode: '0750'
-  tags:
-    - nginx
-
-- name: add tmpfs mount to fstab to /var/cache/nginx
-  lineinfile:
-    dest: /etc/fstab
-    regexp: "/var/cache/nginx"
-    line: "tmpfs /var/cache/nginx tmpfs rw,noexec,nosuid,nodev,mode=0750,uid=www-data 0 0"
-    state: present
-  notify:
-    - remount
-  tags:
-    - nginx
-
-- name: create nginx-ondisk directory
-  file:
-    path: /var/cache/nginx-ondisk
-    state: directory
-    owner: www-data
-    group: root
-    mode: '0750'
   tags:
     - nginx
 
@@ -194,7 +189,7 @@
     - common_fastcgi.conf
     - common_log_formats.conf
   notify:
-    - reload nginx
+    - restart nginx
   tags:
     - nginx
     - nginx_config
@@ -210,7 +205,7 @@
     group: staff
     mode: '0664'
   notify:
-    - reload nginx
+    - restart nginx
   tags:
     - nginx
     - nginx_config
@@ -267,6 +262,8 @@
     src: /etc/nginx/sites-available/eqpress-www
     dest: /etc/nginx/sites-enabled/eqpress-www
     state: link
+  notify:
+    - reload nginx
   tags:
     - ep-console
 
@@ -288,16 +285,11 @@
     owner: root
     group: root
     mode: '0644'
+  notify:
+    - reload nginx
   tags:
     - nginx
     - limits
-
-- name: start nginx
-  systemd:
-    name: nginx
-    state: started
-  tags:
-    - nginx
 
 - name: create PHP opcache error log
   file:
@@ -321,9 +313,6 @@
   tags:
     - php
     - php-config
-
-- fail:
-    msg: "STOP HERE"
 
 - name: copy php config
   template:
@@ -367,3 +356,9 @@
   tags:
     - php
 
+- name: start nginx
+  systemd:
+    name: nginx
+    state: started
+  tags:
+    - nginx
