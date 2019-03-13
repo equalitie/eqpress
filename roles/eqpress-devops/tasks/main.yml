@@ -69,9 +69,6 @@
   tags:
     - ep-sbin
 
-- fail:
-    msg: "STOP"
-
 - name: copy all sbin eqpress admin scripts
   copy:
     src: "{{ files }}/usr/local/sbin/{{ item }}"
@@ -91,7 +88,6 @@
     - ep_deactivate_site.sh
     - ep_deploy_must_use_plugins.sh
     - ep_get_sftp_user.sh
-    - ep_install_console.sh
     - ep_install_cache_purge.sh
     - ep_plugin_blacklist.php
     - ep_purge_site.sh
@@ -101,11 +97,7 @@
     - ep_setup_replication.sh
     - ep_unprovision.sh
     - ep_update_wp.sh
-    - harden_ip.sh
     - monit_check_mailq.sh
-    - monit_connections.sh
-    - monit_ep_console_lockdown.sh
-    - monit_ep_console_perms.sh
     - monit_php-fpm_procs.sh
     - monitor_nginx.pl
     - resident-ram
@@ -118,6 +110,9 @@
     - wp_update_plugins.sh
   tags:
     - ep-sbin
+
+- fail:
+    msg: "STOP HERE checking above files for easypress"
 
 - name: copy sbin script templates
   template:
