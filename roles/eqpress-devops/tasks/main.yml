@@ -15,7 +15,7 @@
     path: /etc/skel/.ssh/authorized_keys
     owner: root
     group: root
-    mode: '0644'
+    mode: '0600'
     state: touch
   tags:
     - users
@@ -40,25 +40,9 @@
     name: "{{ item.user }}"
     group: "{{ item.group }}"
     shell: /bin/bash
-  loop:
-    - { user: "monitor", group: "monitor" }
-    - { user: "wordpress", group: "wordpress" }
-  tags:
-    - users
-
-- name: copy user specific files (authorized_keys etc) to server
-  local_action:
-    module: shell rsync -a {{ files }}/home root@{{ inventory_hostname }}:/
-  tags:
-    - users
-
-- name: reset users home directory ownerships
-  file:
-    path: "/home/{{ item.user }}"
-    owner: "{{ item.user }}"
-    group: "{{ item.group }}"
-    state: directory
-    recurse: yes
+    create_home: yes
+    skeleton: /etc/skel
+    state: present
   loop:
     - { user: "monitor", group: "monitor" }
     - { user: "wordpress", group: "wordpress" }
@@ -76,15 +60,17 @@
     - users
     - sudo
 
-- name: remove setuid bit on sbin directory
-  command: /bin/chmod g-s /usr/local/sbin
+- name: chmod /usr/local/sbin (remove setuid bit)
+  file:
+    path: /usr/local/sbin
+    owner: root
+    group: staff
+    mode: '0755'
   tags:
     - ep-sbin
 
-- name: set permissions on sbin directory
-  command: /bin/chmod 0755 /usr/local/sbin
-  tags:
-    - ep-sbin
+- fail:
+    msg: "STOP"
 
 - name: copy all sbin eqpress admin scripts
   copy:
@@ -168,7 +154,7 @@
 
 - name: copy webstat index script template
   template:
-    src: "{{ files }}{{ eqpress_docroot }}/webstats/index.php.j2"
+    src: "{{ files }}/var/eqpress-www/webstats/index.php.j2"
     dest: "{{ eqpress_docroot }}/webstats/index.php"
     owner: www-data
     group: www-data
