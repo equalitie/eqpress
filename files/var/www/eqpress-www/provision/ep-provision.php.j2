@@ -1,0 +1,126 @@
+<?php
+/**
+ * ep-provision.php
+ *
+ * WordPress Auto Provisioning
+ *
+ * version 1.1
+ *
+ */
+
+require( 'includes/class-ep-provision-util.php' );
+require( 'includes/class-ep-provision-view.php' );
+require( 'includes/Mustache/Autoloader.php' );
+require( 'includes/class-curl-request.php' );
+
+$util = new EP_Provision_Util;
+$view = new EP_Provision_View;
+$params = array(
+    'status'            => array( 'errors' => 0, 'messages' => array() ),
+    'request_id'        => $util->random( 8 ),
+    'bcc_email'         => '{{ org_support_email }}',
+    'alert_email'       => '{{ org_support_email }}',
+    'org_name'          => '{{ org_name }}',
+    'org_email'         => '{{ org_support_email }}',
+    'org_twitter'       => '{{ org_twitter }}',
+    'org_tos_link'      => '{{ org_tos_link }}',
+    'org_support_url'   => '{{ org_support_url }}',
+    'ldap_auth_server'  => '{{ auto_provision_ldap_server }}',
+    'ldap_auth_port'    => '{{ auto_provision_ldap_port }}',
+    'ldap_auth_basedn'  => '{{ auto_provision_ldap_basedn }}',
+    'ldap_auth_attrib'  => '{{ auto_provision_ldap_authattr }}',
+    'domain'            => '',
+    'email'             => '',
+    'real_first_name'   => '',
+    'real_last_name'    => '',
+    'first_name'        => '',
+    'last_name'         => '',
+    'location'          => '',
+    'multisite'         => false,
+    'ep_api_key'        => '',
+    'db_host'           => '{{ auto_provision_db_host }}',
+    'db_name'           => '',
+    'db_user'           => '',
+    'db_pass'           => '',
+    'db_prefix'         => '',
+    'db_charset'        => '{{ auto_provision_db_charset }}',
+    'db_collate'        => '{{ auto_provision_db_collate }}',
+    'wpadmin_pass'      => '',
+    'sftp_pass'         => '',
+    'web_user'          => '{{ auto_provision_web_server_user }}',
+    'web_group'         => '{{ auto_provision_web_server_group }}',
+    'pwp'               => array( 'db' => '', 'sftp' => '', 'wp' => '' ),
+    'nodes'             => json_decode( '{{ auto_provision_nodes }}', true )
+); // close $params
+
+$step = isset( $_GET['step'] ) ? (int) $_GET['step'] : 0;
+switch($step) {
+    case 0: // Step 1
+
+    case 1: // Step 1, direct link.
+        $view->display_header();
+        $view->display_setup_form();
+        $view->display_footer();
+        break;
+
+    case 2:
+        // Define the constants holding the file system paths
+        define( 'EP_PROV_DIR', '{{ auto_provision_base_directory }}' . '/' );
+        define( 'EP_PEND_DIR', EP_PROV_DIR . 'pending/' );
+
+        // Log the incoming request.
+// FIXME: We need to format this log. Do not want to log passwords
+/****        file_put_contents( EP_PROV_DIR . '{{ auto_provision_log_file }}',
+            "\n" . date( DATE_RFC850 ) .
+            ' (request ' . $params['request_id'] . ' received): ' .
+            serialize( $_POST ) . "\n", FILE_APPEND | LOCK_EX );
+******/
+
+        // Validate and sanitize the request
+        $util->validate_post_parameters();
+
+        // Authenticate the request
+        $util->authenticate( $_POST['username'], $_POST['password'], $_POST['api_key'] );
+
+        // More constants for paths
+        if (!empty($_SERVER['TMP'])) {
+            define( 'EP_TMP_DIR', $_SERVER['TMP'] . '/' . $params['request_id'] . '/' . $params['domain'] );
+            define( 'EP_TMP', $_SERVER['TMP'] . '/' . $params['request_id'] );
+        } else {
+            define( 'EP_TMP_DIR', '{{ auto_provision_tmp_directory }}' . $params['request_id'] . '/' . $params['domain'] );
+            define( 'EP_TMP', '{{ auto_provision_tmp_directory }}' . $params['request_id'] );
+        }
+
+        // Process the request if there are no errors
+        if ( $params['status']['errors'] == 0 ) {
+
+            // Start the templating engine
+            Mustache_Autoloader::register();
+            $mustache = new Mustache_Engine( array(
+                'loader' => new Mustache_Loader_FilesystemLoader( EP_PROV_DIR . 'templates'),
+                'logger' => new Mustache_Logger_StreamLogger('php://stderr'),
+                'strict_callables' => true,
+                'entity_flags' => ENT_NOQUOTES
+            ) );
+
+            $util->create_config_dir();
+            $util->generate_credentials();
+            $util->create_wp_config();
+            $util->create_nginx_config();
+            $util->create_welcome_email();
+            $util->create_ansible_playbook();
+            $util->move_config_dir();
+        }
+
+        // Let the requester know the status
+        header( 'Content-Type: application/json; charset=utf-8' );
+        echo json_encode( $params['status'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+
+        // Log the results of processing the request
+        $util->sanitize_params();
+        file_put_contents( EP_PROV_DIR . '{{ auto_provision_log_file }}',
+            "\n" . date( DATE_RFC850 ) .
+            ' (request ' . $params['request_id'] . ' processed): ' .
+            serialize( $params ) . "\n", FILE_APPEND | LOCK_EX );
+        break;
+}
