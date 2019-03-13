@@ -1,6 +1,8 @@
 ---
 - name: reload nginx
-  service: name=nginx state=reloaded
+  systemd:
+    name: nginx
+    state: reloaded
 
 - name: reset permissions
-  command: /usr/local/sbin/chwebown /var/www/easypress.ca/console
+  command: /usr/local/sbin/chwebown {{eqpress_docroot}}/console
