@@ -12,13 +12,15 @@ Defaults	secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/b
 
 # Host alias specification
 
+# User alias specification
+
 # Cmnd alias specification
 
 # User privilege specification
 root	ALL=(ALL:ALL) ALL
 
 # Allow members of group sudo to execute any command
-# %adm	ALL=(ALL:ALL) ALL
+%sudo	ALL=(ALL:ALL) ALL
 
 # See sudoers(5) for more information on "#include" directives:
 
