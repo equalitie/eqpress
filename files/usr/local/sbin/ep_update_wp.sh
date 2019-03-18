@@ -26,8 +26,8 @@ do_upgrade() {
 		return
 	fi
 	echo "$DOMAIN current version is $CURRENT_VERSION so updating"
-	if [ ! -e /home/easypress/wordpress-${LATEST_VERSION}-no-content.zip ]; then
-		cd /home/easypress
+	if [ ! -e /home/wordpress/wordpress-${LATEST_VERSION}-no-content.zip ]; then
+		cd /home/wordpress
 		/usr/bin/wget http://wordpress.org/wordpress-${LATEST_VERSION}-no-content.zip
 		cd $ROOT
 	fi
@@ -37,7 +37,7 @@ do_upgrade() {
 		echo "done."
 		mv *.sql ../
 		echo -n "Updating WordPress for $DOMAIN ..."
-		WP_SUCCESS=`wp --allow-root core update /home/easypress/wordpress-${LATEST_VERSION}-no-content.zip --version=${LATEST_VERSION}|grep -i uccess`
+		WP_SUCCESS=`wp --allow-root core update /home/wordpress/wordpress-${LATEST_VERSION}-no-content.zip --version=${LATEST_VERSION}|grep -i uccess`
 		chwebown /var/www/$DOMAIN/wordpress/
 		chepown /var/www/$DOMAIN
 		if [ -n "$WP_SUCCESS" ]; then
@@ -85,7 +85,7 @@ case "$1" in
 			done
 		else
 			echo "Error: Please enter the domain name of the site(s) to upgrade."
-			echo "e.g. wp_upgrade.sh site switchwp.com easypress.co"
+			echo "e.g. wp_upgrade.sh site switchwp.com eqpress.co"
 			exit 1
 		fi
 	;;
