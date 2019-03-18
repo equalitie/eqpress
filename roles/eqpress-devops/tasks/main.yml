@@ -86,7 +86,6 @@
     - ep_admin_emails.sh
     - ep_deactivate_site.sh
     - ep_get_sftp_user.sh
-    - ep_install_cache_purge.sh
     - ep_plugin_blacklist.php
     - ep_purge_site.sh
     - ep_purge_cache.sh
@@ -119,6 +118,7 @@
   loop:
     - ep_bruteprotect.sh
     - ep_deploy_must_use_plugins.sh
+    - ep_install_cache_purge.sh
   tags:
     - ep-sbin
 
