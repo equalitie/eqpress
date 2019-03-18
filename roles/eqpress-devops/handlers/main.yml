@@ -1,12 +1,22 @@
 ---
 - name: restart nginx
-  service: name=nginx state=reloaded
+  systemd:
+    name: nginx
+    state: reloaded
 
 - name: restart php-fpm
-  service: name=php5-fpm state=restarted
+  systemd:
+    name: php{{php_version}}-fpm
+    state: restarted
 
 - name: restart monit
-  service: name=monit state=restarted
+  systemd:
+    name: monit
+    daemon_reload: yes
+    state: restarted
 
 - name: start monit
-  service: name=monit state=started
+  systemd:
+    name: monit
+    daemon_reload: yes
+    state: started

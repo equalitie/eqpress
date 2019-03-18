@@ -1,5 +1,13 @@
 ---
 
+- name: install monit
+  apt:
+    name: monit
+    state: present
+  tags:
+    - ep-console
+    - monit
+
 - name: add .ssh dir to user skel
   file:
     path: /etc/skel/.ssh
@@ -166,9 +174,6 @@
   tags:
     - webstats
 
-- fail:
-    msg: "STOP HERE checking above files for easypress"
-
 - name: copy failover script template to slave
   template:
     src: "{{ files }}/usr/local/sbin/master_or_slave.sh.j2"
@@ -203,9 +208,10 @@
   tags:
     - tarsnap
 
-# FIXME: systemd or a flush
 - name: stop monit process
-  service: name=monit state=stopped
+  systemd:
+    name: monit
+    state: stopped
   ignore_errors: yes
   tags:
     - ep-console
@@ -226,7 +232,6 @@
     - monit-config
     - monitoring-email
 
-# FIXME: systemd
 - name: copy custom monit startup script
   copy:
     src: "{{ files }}/etc/init.d/monit"
@@ -240,18 +245,22 @@
     - ep-console
     - monit
 
-- name: copy compiled from source monit version
-  copy:
-    src: "{{ files }}/usr/local/bin/monit"
-    dest: /usr/local/bin
-    owner: root
-    group: root
-    mode: '0750'
-  notify:
-    - start monit
-  tags:
-    - ep-console
-    - monit
+#- fail:
+#msg: "STOP HERE checking above files for easypress"
+
+# TODO: Cleanup
+#- name: copy compiled from source monit version
+#  copy:
+#    src: "{{ files }}/usr/local/bin/monit"
+#    dest: /usr/local/bin
+#    owner: root
+#    group: root
+#    mode: '0750'
+#  notify:
+#    - start monit
+#  tags:
+#    - ep-console
+#    - monit
 
 - name: install auto-provision GPG key
   shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ auto_provision_gpg_id }}

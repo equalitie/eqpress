@@ -1,4 +1,5 @@
 #!/bin/bash
+# {{ansible_managed}}
 #
 # backup_from_master.sh
 #
@@ -12,10 +13,10 @@ export PATH=/bin:/usr/bin
 if ping -c 1 ${master} > /dev/null 2>&1; then
     RSYNCSTART=$(date +%s%3N)
     rsync -av --delete \
-	    --exclude 'easypress.ca/' \
+	    --exclude 'eqpress-www/' \
 	    --exclude '.sessions/*' \
 	    ${master}:/var/www /var
-    rsync -av --delete --exclude 'easypress.ca' ${master}:/etc/nginx /etc
+    rsync -av --delete --exclude 'eqpress-www' ${master}:/etc/nginx /etc
     rsync -av ${master}:/etc/ssl /etc
     RSYNCEND=$(date +%s%3N)
     DURATION_MS=$(($RSYNCEND - $RSYNCSTART))

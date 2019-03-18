@@ -1,9 +1,11 @@
 #!/bin/bash
+# {{ansible_managed}}
+#
 echo -n "Do you wish to turn me into the master? [yes/no]: "
 read master
 if [ "$master" = "yes" ]; then
 	ip addr add {{ hostvars[mysql_repl_master].public_ipv4_address }}/24 brd + dev eth0
-	# FIXME: ansible_default_ipv4.gateway prob is not righ if using dns for host
+	# FIXME: ansible_default_ipv4.gateway prob is not right if using dns for host
 	ping -c5 {{ hostvars[mysql_repl_master].ansible_default_ipv4.gateway }}
 else
 	echo -n "Do you wish to turn me into a slave? [yes/no]: "

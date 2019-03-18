@@ -1,5 +1,8 @@
 ###############################################################################
+# {{ansible_managed}}
+#
 ## Global section
+#
 ###############################################################################
 set daemon 60
 set expectbuffer 20 kb
@@ -10,19 +13,19 @@ set idfile /var/run/monit-60.id
 set mailserver localhost
 set alert {{ monitoring_email }} with mail-format { subject: monit-60 $SERVICE $EVENT }
 #
-# easyPress console monitoring
+# eqPress console monitoring
 #
 
-# reset permissions when easypress console sends command
-check program easypress-console-perms with path /usr/local/sbin/monit_ep_console_perms.sh
+# reset permissions when eqpress console sends command
+check program eqpress-console-perms with path /usr/local/sbin/monit_ep_console_perms.sh
 	if status != 0 then alert
 #
-# reset permissions when easypress console sends command
-check program easypress-console-lockdown with path /usr/local/sbin/monit_ep_console_lockdown.sh
+# reset permissions when eqpress console sends command
+check program eqpress-console-lockdown with path /usr/local/sbin/monit_ep_console_lockdown.sh
 	if status != 0 then alert
 #
-# reset SFTP password via easypress console
-check program easypress-reset-password with path /usr/local/sbin/monit_ep_console_reset_password.sh
+# reset SFTP password via eqpress console
+check program eqpress-reset-password with path /usr/local/sbin/monit_ep_console_reset_password.sh
 	if status != 0 then alert
 
 #

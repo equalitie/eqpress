@@ -3,11 +3,12 @@
   gather_facts: true
   roles:
      - common
+     - gen-root-cert
      - ssh-config
      - eqpress-ssl
      - web-app
      - eqpress-console
      - eqpress-devops
-     - mysql-percona-replication
-     - mysql-enable-replication
-     - nagios
+#     - mysql-percona-replication
+#     - mysql-enable-replication
+#     - nagios
