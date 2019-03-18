@@ -85,7 +85,6 @@
     - class-http-log-parser.php
     - ep_admin_emails.sh
     - ep_deactivate_site.sh
-    - ep_deploy_must_use_plugins.sh
     - ep_get_sftp_user.sh
     - ep_install_cache_purge.sh
     - ep_plugin_blacklist.php
@@ -119,6 +118,7 @@
     mode: '0755'
   loop:
     - ep_bruteprotect.sh
+    - ep_deploy_must_use_plugins.sh
   tags:
     - ep-sbin
 
