@@ -1,9 +1,11 @@
 #!/bin/bash
+# {{ansible_managed}}
+$
 ionice -c 3 chown -R www-data:www-data $1
 ionice -c 3 find $1 -type d -exec chmod 775 {} \;
 ionice -c 3 find $1 -type f -exec chmod 664 {} \;
 chown root:root $1
 chmod 755 $1
-ionice -c 3 chown -R root:root $1/wordpress/wp-content/mu-plugins/easypress*
-ionice -c 3 find $1/wordpress/wp-content/mu-plugins/easypress* -type d -exec chmod 755 {} \;
-ionice -c 3 find $1/wordpress/wp-content/mu-plugins/easypress* -type f -exec chmod 644 {} \;
+ionice -c 3 chown -R root:root $1/wordpress/wp-content/mu-plugins/eqpress*
+ionice -c 3 find $1/wordpress/wp-content/mu-plugins/eqpress* -type d -exec chmod 755 {} \;
+ionice -c 3 find $1/wordpress/wp-content/mu-plugins/eqpress* -type f -exec chmod 644 {} \;

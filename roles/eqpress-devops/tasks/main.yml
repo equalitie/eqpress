@@ -90,7 +90,6 @@
     - ep_purge_site.sh
     - ep_purge_cache.sh
     - ep_security_scan.sh
-    - ep_setperms
     - ep_setup_replication.sh
     - ep_unprovision.sh
     - ep_update_wp.sh
@@ -119,6 +118,7 @@
     - ep_bruteprotect.sh
     - ep_deploy_must_use_plugins.sh
     - ep_install_cache_purge.sh
+    - ep_setperms
   tags:
     - ep-sbin
 
