@@ -84,7 +84,6 @@
     - chwebown
     - class-http-log-parser.php
     - ep_admin_emails.sh
-    - ep_bruteprotect.sh
     - ep_deactivate_site.sh
     - ep_deploy_must_use_plugins.sh
     - ep_get_sftp_user.sh
@@ -108,6 +107,18 @@
     - wp_check_plugins.php
     - wp_db_backup.sh
     - wp_update_plugins.sh
+  tags:
+    - ep-sbin
+
+- name: copy all sbin eqpress admin scripts from template
+  template:
+    src: "{{ files }}/usr/local/sbin/{{ item }}.j2"
+    dest: "/usr/local/sbin/{{item}}"
+    owner: root
+    group: staff
+    mode: '0755'
+  loop:
+    - ep_bruteprotect.sh
   tags:
     - ep-sbin
 
