@@ -245,23 +245,6 @@
     - ep-console
     - monit
 
-#- fail:
-#msg: "STOP HERE checking above files for easypress"
-
-# TODO: Cleanup
-#- name: copy compiled from source monit version
-#  copy:
-#    src: "{{ files }}/usr/local/bin/monit"
-#    dest: /usr/local/bin
-#    owner: root
-#    group: root
-#    mode: '0750'
-#  notify:
-#    - start monit
-#  tags:
-#    - ep-console
-#    - monit
-
 - name: install auto-provision GPG key
   shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ auto_provision_gpg_id }}
   when: auto_provision_host is defined
