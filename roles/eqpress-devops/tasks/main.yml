@@ -122,9 +122,6 @@
   tags:
     - ep-sbin
 
-- fail:
-    msg: "STOP HERE checking above files for easypress"
-
 - name: copy sbin script templates
   template:
     src: "{{ files }}/usr/local/sbin/{{ item }}.j2"
@@ -160,7 +157,7 @@
 
 - name: copy webstat index script template
   template:
-    src: "{{ files }}/var/eqpress-www/webstats/index.php.j2"
+    src: "{{ files }}/var/www/eqpress-www/webstats/index.php.j2"
     dest: "{{ eqpress_docroot }}/webstats/index.php"
     owner: www-data
     group: www-data
@@ -168,6 +165,9 @@
   when: mysql_webstats is defined
   tags:
     - webstats
+
+- fail:
+    msg: "STOP HERE checking above files for easypress"
 
 - name: copy failover script template to slave
   template:
