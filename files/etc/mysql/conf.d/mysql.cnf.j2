@@ -1,0 +1,10 @@
+# {{ansible_managed}}
+#
+[mysql]
+
+# CLIENT #
+port                           = 3306
+socket                         = /var/run/mysqld/mysqld.sock
+ssl-ca                         = /etc/ssl/eqpress/root_CA.pem
+ssl-cert                       = /etc/ssl/eqpress/{{ inventory_hostname }}.pem
+ssl-key                        = /etc/ssl/eqpress/{{ inventory_hostname }}.key
