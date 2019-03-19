@@ -1,10 +1,5 @@
 ---
 # roles/mysql-percona-replication/tasks/main.yml
-- name: remove old apt keys required for Percona
-  apt_key:
-    url: "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x1C4CBDCDCD2EFD2A"
-    state: absent
-  ignore_errors: true
 
 - name: Add apt keys required for Percona
   apt_key:
@@ -13,51 +8,62 @@
 
 - name: Add repos for Percona
   apt_repository:
-    repo: 'deb http://repo.percona.com/apt wheezy main'
-  tags:
-    - mysql
-
-- name: Update the apt-get cache
-  apt:
+    repo: 'deb http://repo.percona.com/apt {{ansible_distribution_release}} main'
+    state: present
     update_cache: yes
   tags:
     - mysql
 
 - name: create mysql config directory
   file:
-    path: /etc/mysql
+    path: "/etc/{{item}}"
     owner: root
     group: root
     mode: '0755'
     state: directory
-  tags:
+  loop:
     - mysql
-    - mysql_config
-
-- name: Copy main database configuation file my.cnf
-  template:
-    src: "{{ files }}/etc/mysql/my.cnf.j2"
-    dest: /etc/mysql/my.cnf
+    - conf.d
+    - mysql/percona-server.conf.d
   tags:
     - mysql
     - mysql_config
 
 - name: Install packages
-  action: apt pkg={{ item }} state=installed
-  with_items:
-    - percona-server-server-5.6
-    - percona-server-client-5.6
-    - percona-toolkit
-    - percona-xtrabackup
+  apt:
+    name:
+      - percona-server-server-{{mysql_percona_version}}
+      - percona-server-client-{{mysql_percona_version}}
+      - percona-toolkit
+      - percona-xtrabackup
+      - python-mysqldb
+    state: present
   tags:
    - mysql
    - apt-mysql
   register: pkg_install
 
-#- name: remove existing .my.cnf files for initial install
-#  file: path=/root/.my.cnf state=absent
-#  when: pkg_install.changed == true
-#  tags: [mysql, apt-mysql]
+- name: install new config
+  template:
+    src: "{{files}}/etc/mysql/{{item}}.j2"
+    dest: "/etc/mysql/{{item}}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - conf.d/mysql.cnf
+    - percona-server.conf.d/mysqld.cnf
+  tags:
+    - mysql
+    - mysql_config
+
+- name: restart mysql when first install w/new config
+  systemd:
+    name: mysql
+    state: restarted
+  when: pkg_install.changed is defined and pkg_install.changed == true
+  tags:
+    - mysql
 
 - name: Update mysql root password for all root accounts.
   mysql_user:
@@ -66,12 +72,13 @@
     host: "{{ item }}"
     password: "{{ mysql_root_db_pass }}"
     state: present
-  with_items:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  loop:
+    - "{{ ansible_hostname }}"
+    - "{{ inventory_hostname }}"
     - localhost
     - 127.0.0.1
     - ::1
-    - "{{ ansible_hostname }}"
-    - "{{ inventory_hostname }}"
   #when: mysql_repl_role == 'master'
   tags:
     - mysql
@@ -119,6 +126,17 @@
   tags:
     - mysql
     - mysql_resync
+
+- fail:
+    msg: "XXXXX"
+
+- name: Copy main database configuation file my.cnf
+  template:
+    src: "{{ files }}/etc/mysql/my.cnf.j2"
+    dest: /etc/mysql/my.cnf
+  tags:
+    - mysql
+    - mysql_config
 
 - name: Create the mysqladmin user mysql server monitoring on slave
   mysql_user:
