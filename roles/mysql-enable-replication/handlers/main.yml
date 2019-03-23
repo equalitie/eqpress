@@ -1,3 +1,5 @@
 ---
 - name: restart mysql
-  service: name=mysql state=restarted
+  systemd:
+    name: mysql
+    state: restarted
