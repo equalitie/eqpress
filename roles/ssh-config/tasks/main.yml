@@ -7,7 +7,9 @@
     regexp: "{{ mysql_repl_master }}"
     line: "{{ hostvars[mysql_repl_master].public_ipv4_address + ' ' + mysql_repl_master }}"
     state: present
-  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  when: mysql_repl_role is defined and
+        mysql_repl_role == 'slave' and
+        mysql_repl_master is defined
   tags:
     - mysql
     - repl
@@ -18,7 +20,9 @@
     regexp: "{{ mysql_repl_slave }}"
     line: "{{ hostvars[mysql_repl_slave].public_ipv4_address + ' ' + mysql_repl_slave }}"
     state: present
-  when: mysql_repl_role == 'master' and mysql_repl_slave is defined
+  when: mysql_repl_role is defined and
+        mysql_repl_role == 'master' and
+        mysql_repl_slave is defined
   tags:
     - mysql
     - repl
@@ -45,7 +49,9 @@
     user: root
     state: present
     key: "{{ lookup('file', '/tmp/id_rsa_' + mysql_repl_slave + '.pub') }}"
-  when: mysql_repl_role == 'master' and mysql_repl_slave is defined
+  when: mysql_repl_role is defined and
+        mysql_repl_role == 'master' and
+        mysql_repl_slave is defined
   tags:
     - ssh_config
     - ssh_pub_key
@@ -55,7 +61,9 @@
     user: root
     state: present
     key: "{{ lookup('file', '/tmp/id_rsa_' + mysql_repl_master + '.pub') }}"
-  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  when: mysql_repl_role is defined and
+        mysql_repl_role == 'slave' and
+        mysql_repl_master is defined
   tags:
     - ssh_config
     - ssh_pub_key
@@ -70,7 +78,9 @@
 
 - name: Scan the public key slave
   shell: "{{ ssh_known_hosts_command }} {{ mysql_repl_master }} >> {{ ssh_known_hosts_file }}"
-  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
+  when: mysql_repl_role is defined and
+        mysql_repl_role == 'slave' and
+        mysql_repl_master is defined
   tags:
     - ssh_config
     - ssh_known_hosts
@@ -79,7 +89,9 @@
   shell: "{{ ssh_known_hosts_command }} {{ item }} >> {{ ssh_known_hosts_file }}"
   loop:
     - "{{mysql_repl_slave}}"
-  when: mysql_repl_role == 'master' and mysql_repl_slave is defined
+  when: mysql_repl_role is defined and
+        mysql_repl_role == 'master' and
+        mysql_repl_slave is defined
   tags:
     - ssh_config
     - ssh_known_hosts
