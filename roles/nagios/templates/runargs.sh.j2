@@ -1,5 +1,6 @@
 #!/bin/sh
-
+# {{ansible_managed}}
+#
 export A=`echo $1 | sed 's#.*/##g'`
 export C=/etc/nagios/args/$A.args
 

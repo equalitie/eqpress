@@ -1,3 +1,5 @@
+# {{ansible_managed}}
+#
 {% if nagios_server_ips is defined and nagios_server_ips|length > 7 %}
 allowed_hosts=127.0.0.1,{{nagios_server_ips}}
 {% else %}
