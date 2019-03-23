@@ -18,7 +18,7 @@
     owner: www-data
     group: www-data
     mode: '0755'
-    recursive: yes
+    recurse: yes
   tags:
     - auto-provision
 
@@ -85,23 +85,32 @@
   tags:
     - sbin
 
-- name: copy all sbin easyPress admin scripts
+- name: copy all sbin eqpress admin scripts
   copy:
     src: "{{ files }}/usr/local/sbin/{{ item }}"
     dest: /usr/local/sbin
     owner: root
     group: staff
     mode: '0755'
- loop:
+  loop:
     - check-mem.pl
     - class-http-log-parser.php
     - harden_ip.sh
-    - monit_check_mailq.sh
-    - monit_connections.sh
     - resident-ram
     - top_ram_procs.sh
+    - monit_check_mailq.sh
   tags:
     - sbin
+
+- name: copy all sbin eqpress admin scripts templates
+  template:
+    src: "{{ files }}/usr/local/sbin/{{ item }}.j2"
+    dest: /usr/local/sbin
+    owner: root
+    group: staff
+    mode: '0755'
+  loop:
+    - monit_connections.sh
 
 - name: copy custom monit startup script
   copy:
