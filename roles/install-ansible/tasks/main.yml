@@ -64,6 +64,7 @@
     recursive: yes
     version: "{{ auto_provision_ansible_version }}"
     accept_hostkey: yes
+    force: true
   when: auto_provision_host is defined
   tags:
     - auto-provision
