@@ -4,7 +4,7 @@
   roles:
      - common
      - ssh-config
-     - easypress-ssl
+     - eqpress-ssl
      - web-app
      - build-auto-provision-server
      - install-ansible
