@@ -29,13 +29,37 @@
     - mysql
     - mysql_config
 
+- name: Check if percona-server-server-{{mysql_percona_version}} is installed
+  shell: dpkg-query -s percona-server-server-{{mysql_percona_version}} 2<&1 >/dev/null || echo "yes"
+  register: dpkg_check
+  tags:
+    - mysql
+    - mysql_config
+
+- name: blank pre-install files
+  copy:
+    content: "[mysql]"
+    dest: "{{item}}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: dpkg_check.stdout is defined and dpkg_check.stdout != ""
+  loop:
+    - /etc/mysql/conf.d/mysql.cnf
+    - /root/.my.cnf
+  tags:
+    - mysql
+    - mysql_config
+
+# Note: percona-xtrabackup-24 needs to be installed with
+# percona 5.7. This could change to later versions
 - name: Install packages
   apt:
     name:
       - percona-server-server-{{mysql_percona_version}}
       - percona-server-client-{{mysql_percona_version}}
       - percona-toolkit
-      - percona-xtrabackup
+      - percona-xtrabackup-24
       - python-mysqldb
     state: present
   tags:
@@ -43,46 +67,15 @@
    - apt-mysql
   register: pkg_install
 
-- name: install new config
-  template:
-    src: "{{files}}/etc/mysql/{{item}}.j2"
-    dest: "/etc/mysql/{{item}}"
-    owner: root
-    group: root
-    mode: '0644'
-  loop:
-    - conf.d/mysql.cnf
-    - percona-server.conf.d/mysqld.cnf
-  tags:
-    - mysql
-    - mysql_config
-
-- name: restart mysql when first install w/new config
-  systemd:
-    name: mysql
-    state: restarted
-  when: pkg_install.changed is defined and pkg_install.changed == true
-  tags:
-    - mysql
-
-- name: Update mysql root password for all root accounts.
+- name: Update mysql root password for root account localhost.
   mysql_user:
     name: root
-    login_host: localhost
-    host: "{{ item }}"
+    host: localhost
     password: "{{ mysql_root_db_pass }}"
     state: present
     login_unix_socket: /var/run/mysqld/mysqld.sock
-  loop:
-    - "{{ ansible_hostname }}"
-    - "{{ inventory_hostname }}"
-    - localhost
-    - 127.0.0.1
-    - ::1
-  #when: mysql_repl_role == 'master'
   tags:
     - mysql
-    - mysql_resync
 
 - name: Copy .my.cnf file to /root/
   template:
@@ -92,6 +85,22 @@
   tags:
     - mysql
     - mysql_config
+    - mysql_resync
+
+- name: Update mysql root password for all root accounts except localhost.
+  mysql_user:
+    name: root
+    login_host: localhost
+    host: "{{ item }}"
+    password: "{{ mysql_root_db_pass }}"
+    state: present
+  loop:
+    - 127.0.0.1
+    - ::1
+    - "{{ ansible_hostname }}"
+    - "{{ inventory_hostname }}"
+  tags:
+    - mysql
     - mysql_resync
 
 - name: Copy .my.cnf-mysqladmin file to /root/
@@ -110,10 +119,9 @@
     name: ''
     host: "{{ item }}"
     state: absent
-  with_items:
+  loop:
     - localhost
     - "{{ inventory_hostname }}"
-  #when: mysql_repl_role == 'master'
   tags:
     - mysql
     - mysql_resync
@@ -122,32 +130,18 @@
   mysql_db:
     name: test
     state: absent
-  when: mysql_repl_role == 'master'
   tags:
     - mysql
     - mysql_resync
-
-- fail:
-    msg: "XXXXX"
-
-- name: Copy main database configuation file my.cnf
-  template:
-    src: "{{ files }}/etc/mysql/my.cnf.j2"
-    dest: /etc/mysql/my.cnf
-  tags:
-    - mysql
-    - mysql_config
 
 - name: Create the mysqladmin user mysql server monitoring on slave
   mysql_user:
     name: "{{ mysql_admin_user.username }}"
     host: "{{ item }}"
-    password: "{{ mysql_admin_user.password|default('password') }}"
+    password: "{{ mysql_admin_user.password }}"
     priv: '*.*:SUPER,PROCESS'
     state: present
-  # comment out line above and uncomment line below to change the mysqladmin user password
-  #mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password }}
-  with_items:
+  loop:
     - localhost
     - "{{ inventory_hostname }}"
   when: mysql_repl_role == 'slave'
@@ -160,12 +154,10 @@
   mysql_user:
     name: "{{ mysql_admin_user.username }}"
     host: "{{ item }}"
-    password: "{{ mysql_admin_user.password|default('password') }}"
+    password: "{{ mysql_admin_user.password }}"
     priv: '*.*:SUPER,PROCESS'
     state: present
-  # comment out lines above and uncomment line below to change the mysqladmin user password
-  #mysql_user: name={{ mysql_admin_user.username }}  host="{{ item }}" password={{ mysql_admin_user.password }}
-  with_items:
+  loop:
     - localhost
     - "{{ inventory_hostname }}"
     - "{{ mysql_repl_slave }}"
@@ -193,44 +185,6 @@
     - monitoring-email
     - mysql_resync
 
-#- name: reset permissions on SSL key
-#  file: path=/etc/ssl/easypress/{{ inventory_hostname}}.key owner=root group=mysql mode=0640
-#  tags: [mysql, ssl]
-#
-#- name: Check if slave is already configured for replication
-#  mysql_replication: mode=getslave
-#  ignore_errors: true
-#  register: slave
-#  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
-#  tags: [mysql, repl]
-#
-#- name: Get the current master servers replication status
-#  mysql_replication: mode=getmaster
-#  delegate_to: "{{ mysql_repl_master }}"
-#  register: repl_stat
-#  when: slave|failed and mysql_repl_role == 'slave' and mysql_repl_master is defined
-#  tags: [mysql, repl]
-#
-#- name: Change the master in slave to start the replication
-#  mysql_replication: mode=changemaster master_host={{ mysql_repl_master }} master_log_file={{ repl_stat.File }} master_log_pos={{ repl_stat.Position }} master_user={{ mysql_repl_creds.username }} master_password={{ mysql_repl_creds.password }} master_ssl=1 master_ssl_ca=/etc/ssl/easypress/root_CA.pem master_ssl_cert=/etc/ssl/easypress/{{ inventory_hostname }}.pem master_ssl_key=/etc/ssl/easypress/{{ inventory_hostname }}.key
-#  when: slave|failed and mysql_repl_role == 'slave' and mysql_repl_master is defined
-#  ignore_errors: True
-#  tags: [mysql, repl]
-#
-#- name: Start slave
-#  mysql_replication: mode=startslave
-#  when: mysql_repl_role == 'slave' and mysql_repl_master is defined
-#  tags: [mysql, repl]
-
-- name: Copy webstats DB table structure to server
-  copy:
-    src: "{{ files }}/etc/mysql/webstats.sql"
-    dest: /tmp
-  when: mysql_repl_role == 'master'
-  tags:
-    - webstats-db
-    - mysql
-
 - name: Create webstats user
   mysql_user:
     name: "{{ mysql_webstats.username }}"
@@ -249,6 +203,16 @@
     name: "{{ mysql_webstats.db }}"
     state: present
   when: mysql_repl_role == 'master'
+  register: created_webstats
+  tags:
+    - webstats-db
+    - mysql
+
+- name: Copy webstats DB table structure to server
+  template:
+    src: "{{ files }}/etc/mysql/webstats.sql.j2"
+    dest: /tmp/webstats.sql
+  when: mysql_repl_role == 'master'
   tags:
     - webstats-db
     - mysql
@@ -258,8 +222,52 @@
     name: "{{ mysql_webstats.db }}"
     state: import
     target: /tmp/webstats.sql
-  when: mysql_repl_role == 'master'
+  when: mysql_repl_role == 'master' and
+        created_webstats is defined and
+        created_webstats.changed is defined and created_webstats.changed == True
   tags:
     - webstats-db
     - mysql
 
+- name: install new config
+  template:
+    src: "{{files}}/etc/mysql/{{item}}.j2"
+    dest: "/etc/mysql/{{item}}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - conf.d/mysql.cnf
+    - percona-server.conf.d/mysqld.cnf
+  tags:
+    - mysql
+    - mysql_config
+
+#- name: get list of certs/keys in /var/lib/mysql
+#  find:
+#    paths: /var/lib/mysql
+#    patterns: '*.pem'
+#    recurse: false
+#  register: pem_delete
+#  tags:
+#    - mysql
+#    - mysql_config
+
+# TODO: change from with_items to loop?
+#- name: remove certs from /var/lib/mysql
+#  file:
+#    path: "{{ item.path }}"
+#    state: absent
+#  with_items:
+#    - "{{ pem_delete.files }}"
+#  tags:
+#    - mysql
+#    - mysql_config
+
+- name: restart mysql when first install w/new config
+  systemd:
+    name: mysql
+    state: restarted
+  when: pkg_install.changed is defined and pkg_install.changed == true
+  tags:
+    - mysql

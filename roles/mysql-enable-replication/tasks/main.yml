@@ -1,8 +1,8 @@
 ---
 # roles/mysql-enable-replication/tasks/main.yml
-# FIXME: systemd
+
 - name: stop the mysql server on the slave
-  service:
+  systemd:
     name: mysql
     state: stopped
   when: mysql_repl_role == 'slave'
@@ -53,7 +53,7 @@
     password: "{{ mysql_repl_creds.password|default('password') }}"
     priv: '*.*:REPLICATION SLAVE'
     state: present
-  with_items:
+  loop:
     - "{{ mysql_repl_slave }}"
     - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
   when: mysql_repl_role == 'master'
@@ -142,7 +142,7 @@
     - innobackupex
     - mysql_resync
 
-- name: mv current_snap.tar.gz to slave
+- name: scp current_snap.tar.gz to slave
   shell: scp /tmp/current_snap.tar.gz "{{ mysql_repl_slave }}:/tmp/"
   when: mysql_repl_role == 'master'
   tags:
@@ -169,7 +169,7 @@
 
 - name: reset permissions on SSL key
   file:
-    path: "/etc/ssl/easypress/{{ inventory_hostname}}.key"
+    path: "/etc/ssl/eqpress/{{ inventory_hostname}}.key"
     owner: root
     group: mysql
     mode: '0640'
@@ -187,7 +187,12 @@
     - mysql_resync
 
 - name: create debian flag to avoid downgrades
-  command: touch /var/lib/mysql/debian-5.6.flag
+  file:
+    path: /var/lib/mysql/debian-{{mysql_percona_version}}.flag
+    state: touch
+    owner: root
+    group: root
+    mode: '0644'
   when: mysql_repl_role == 'slave'
   tags:
     - mysql
@@ -196,6 +201,18 @@
 - name: reset permissions on mysql directory
   shell: find /var/lib/mysql -type f -exec chmod 660 {} \; && find /var/lib/mysql -type d -exec chmod 700 {} \; && chown -R mysql:mysql /var/lib/mysql
   when: mysql_repl_role == 'slave'
+  tags:
+    - mysql
+    - mysql_resync
+
+# NOTE: Probably not needed, might be in future again
+- name: create /etc/mysql/debian.cnf if does not exist
+  file:
+    path: /etc/mysql/debian.cnf
+    state: touch
+    owner: root
+    group: root
+    mode: '0600'
   tags:
     - mysql
     - mysql_resync
@@ -263,9 +280,9 @@
     master_user: "{{ mysql_repl_creds.username }}"
     master_password: "{{ mysql_repl_creds.password }}"
     master_ssl: true
-    master_ssl_ca: /etc/ssl/easypress/root_CA.pem
-    master_ssl_cert: "/etc/ssl/easypress/{{ inventory_hostname }}.pem"
-    master_ssl_key: "/etc/ssl/easypress/{{ inventory_hostname }}.key"
+    master_ssl_ca: /etc/ssl/eqpress/root_CA.pem
+    master_ssl_cert: "/etc/ssl/eqpress/{{ inventory_hostname }}.pem"
+    master_ssl_key: "/etc/ssl/eqpress/{{ inventory_hostname }}.key"
   when: mysql_repl_role == 'slave' and mysql_repl_master is defined
   ignore_errors: yes
   tags:
@@ -283,3 +300,14 @@
     - repl
     - slaveon
     - mysql_resync
+
+- name: remove the tmp current_snap.tar.gz
+  file:
+    path: /tmp/current_snap.tar.gz
+    state: absent
+  tags:
+    - mysql
+    - repl
+    - slaveon
+    - mysql_resync
+
