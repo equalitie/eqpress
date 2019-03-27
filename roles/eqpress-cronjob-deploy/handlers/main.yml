@@ -1,3 +1,5 @@
 ---
 - name: restart cron
-  service: name=cron state=restarted
+  systemd:
+    name: cron
+    state: restarted
