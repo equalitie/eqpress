@@ -2,8 +2,8 @@
 
 - name: copy webstats cron jobs for master
   template:
-    src: "{{ files }}/etc/cron.d/easypress_webstats.j2"
-    dest: /etc/cron.d/easypress_webstats
+    src: "{{ files }}/etc/cron.d/eqpress_webstats.j2"
+    dest: /etc/cron.d/eqpress_webstats
     owner: root
     group: root
     mode: '0640'
@@ -15,8 +15,8 @@
 
 - name: copy backup cron jobs
   copy:
-    src: "{{ files }}/etc/cron.d/easypress_backups.{{ mysql_repl_role }}"
-    dest: /etc/cron.d/easypress_backups
+    src: "{{ files }}/etc/cron.d/eqpress_backups.{{ mysql_repl_role }}"
+    dest: /etc/cron.d/eqpress_backups
     owner: root
     group: root
     mode: '0640'
@@ -26,18 +26,17 @@
 
 - name: copy system checks cron jobs
   copy:
-    src: "{{ files }}/etc/cron.d/easypress_system_checks.{{ mysql_repl_role }}"
-    dest: /etc/cron.d/easypress_system_checks
+    src: "{{ files }}/etc/cron.d/eqpress_system_checks.{{ mysql_repl_role }}"
+    dest: /etc/cron.d/eqpress_system_checks
     owner: root
     group: root
     mode: '0640'
   tags:
     - cron
 
-# FIXME: fix php5 file name
 - name: copy cronjob to purge PHP sessions
   copy:
-    src: "{{ files }}/etc/cron.d/php5"
+    src: "{{ files }}/etc/cron.d/php"
     dest: /etc/cron.d
     owner: root
     group: root
