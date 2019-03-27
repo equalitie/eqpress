@@ -7,7 +7,7 @@ class CurlRequest {
      */
     public function init( $params ) {
         $this->ch = curl_init();
-        $user_agent = 'Mozilla/5.0 (easyPress; Intel Mac OS X 10_10; rv:33.0) Gecko/20100101 Firefox/33.0';
+        $user_agent = 'Mozilla/5.0 (eqPress; Intel Mac OS X 10_10; rv:33.0) Gecko/20100101 Firefox/33.0';
         //$header = array( 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8,application/json', 'Accept-Language: en-US,en;q=0.8', 'Accept-Charset: UTF-8', 'Keep-Alive: 300');
         //$header = array( 'Accept: */*', 'Keep-Alive: 300');
         $header = array();

@@ -1,3 +1,5 @@
+fastcgi_cache_path /var/cache/nginx/{{domain}} levels=1:2 keys_zone={{domain}}:10m inactive=600m max_size=24m;
+
 server {
     listen 80;
     server_name {{domain}};
@@ -7,7 +9,7 @@ server {
     access_log /var/log/nginx/{{domain}}.access.log eq_default;
     error_log /var/log/nginx/{{domain}}.error.log;
 
-    include /etc/nginx/common_location.conf;
+    include /etc/nginx/eqpress/common_location.conf;
 {{multisite_subdir_config}}
 
     location / {
@@ -16,15 +18,15 @@ server {
     }
 
     location ~* xmlrpc\.php {
-        include /etc/nginx/common_login_limiter.conf;
+        include /etc/nginx/eqpress/common_login_limiter.conf;
     }
 
     location ~ \.php$ {
         location ~* wp\-login\.php {
-            include /etc/nginx/common_login_limiter.conf;
+            include /etc/nginx/eqpress/common_login_limiter.conf;
         }
 {{lua_config_php}}
-        include /etc/nginx/common_fastcgi.conf;
+        include /etc/nginx/eqpress/common_fastcgi.conf;
         fastcgi_cache {{domain}};
     }
 
@@ -46,8 +48,8 @@ server {
     access_log /var/log/nginx/{{domain}}.access.log eq_default;
     error_log /var/log/nginx/{{domain}}.error.log;
 
-    include /etc/nginx/common_easypress_ssl.conf;
-    include /etc/nginx/common_location.conf;
+    include /etc/nginx/eqpress/common_eqpress_ssl.conf;
+    include /etc/nginx/eqpress/common_location.conf;
 {{multisite_subdir_config}}
 
     location / {
@@ -57,10 +59,10 @@ server {
 
     location ~ \.php$ {
         location ~* wp\-login\.php {
-            include /etc/nginx/common_login_limiter.conf;
+            include /etc/nginx/eqpress/common_login_limiter.conf;
         }
 {{lua_config_php}}
-        include /etc/nginx/common_fastcgi.conf;
+        include /etc/nginx/eqpress/common_fastcgi.conf;
         fastcgi_cache {{domain}};
     }
 
@@ -68,5 +70,5 @@ server {
         fastcgi_cache_purge {{domain}} "$scheme$request_method$host$1";
     }
 
-    include /etc/nginx/common_adminer.conf;
+    include /etc/nginx/eqpress/common_adminer.conf;
 }

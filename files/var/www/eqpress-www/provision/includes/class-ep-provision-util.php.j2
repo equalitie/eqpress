@@ -2,7 +2,7 @@
 /**
  * class-ep-provision-util.php
  *
- * easyPress provisioning utility class
+ * eqPress provisioning utility class
  *
  */
 
@@ -438,20 +438,20 @@ class EP_Provision_Util {
 EOT;
             if ( $params['multisite'] == 'subdirectory' ) {
                 $multisite_subdir_config = <<<EOT
-    include /etc/nginx/common_multisite_3.5.conf;
+    include /etc/nginx/eqpress/common_multisite_3.5.conf;
 EOT;
             }
         }
 
         if ( $params['location'] != 'ca1') {
             $lua_config_root = <<<EOLUA
-        access_by_lua_file /etc/nginx/lua_block_post_noreferrer.lua;
+        access_by_lua_file /etc/nginx/eqpress/lua_block_post_noreferrer.lua;
 EOLUA;
         }
 
         if ( $params['location'] != 'ca1') {
             $lua_config_php = <<<EOLUA
-        access_by_lua_file /etc/nginx/lua_block_wplogin_noreferrer.lua;
+        access_by_lua_file /etc/nginx/eqpress/lua_block_wplogin_noreferrer.lua;
 EOLUA;
         }
 
@@ -517,7 +517,7 @@ EOT;
 
         $console = <<<EOE
   - name: Install Console as must-use plugins for $domain
-    command: /usr/local/sbin/ep_install_console.sh $domain creates=/var/www/$domain/wordpress/wp-content/mu-plugins/easypress.php
+    command: /usr/local/sbin/ep_install_console.sh $domain creates=/var/www/$domain/wordpress/wp-content/mu-plugins/eqpress.php
     ignore_errors: yes
 
 EOE;

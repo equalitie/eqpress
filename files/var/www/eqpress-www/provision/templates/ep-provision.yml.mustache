@@ -7,28 +7,51 @@
 
   tasks:
   - name: Create the document root for {{domain}}
-    file: path=/var/www/{{domain}} state=directory mode=0755
+    file:
+      path: "/var/www/{{domain}}"
+      state: directory
+      mode: '0755'
 
   - name: Ensure directory containing WordPress archive exists for {{domain}}
-    file: path=/home/wordpress state=directory mode=0755
+    file:
+      path: /home/wordpress
+      state: directory
+      mode: '0755'
 
   - name: Ensure WordPress archive exists and it's the latest version for {{domain}}
-    copy: src=/home/wordpress/latest.tar.gz dest=/home/wordpress/latest.tar.gz
+    copy:
+      src: /home/wordpress/latest.tar.gz
+      dest: /home/wordpress/latest.tar.gz
 
   - name: Extract WordPress archive for {{domain}}
     command: chdir=/var/www/{{domain}} /bin/tar xfz /home/wordpress/latest.tar.gz creates=/var/www/{{domain}}/wordpress
 
   - name: Create the .sessions directory for {{domain}}
-    file: path=/var/www/{{domain}}/wordpress/.sessions state=directory mode=0755
+    file:
+      path: "/var/www/{{domain}}/wordpress/.sessions"
+      state: directory
+      mode: '0755'
 
   - name: Create WordPress database for {{domain}}
-    mysql_db: name={{db_name}} state=present collation={{db_collate}} encoding={{db_charset}}
+    mysql_db:
+      name: "{{db_name}}"
+      state: present
+      collation: "{{db_collate}}"
+      encoding: "{{db_charset}}"
   
   - name: Create WordPress database user for {{domain}}
-    mysql_user: name={{db_user}} password={{db_pass}} priv={{db_name}}.*:ALL host='{{db_host}}' state=present
+    mysql_user:
+      name: "{{db_user}}"
+      password: "{{db_pass}}"
+      priv: "{{db_name}}.*:ALL"
+      host: "{{db_host}}"
+      state: present
   
   - name: Copy wp-config.php for {{domain}}
-    copy: src={{prov_dir}}processing/{{domain}}/wp-config.php dest=/var/www/{{domain}}/wordpress/wp-config.php force=yes
+    copy:
+      src: "{{prov_dir}}processing/{{domain}}/wp-config.php"
+      dest: "/var/www/{{domain}}/wordpress/wp-config.php"
+      force: yes
   
   - name: Install cache-purge as must-use plugins for {{domain}}
     command: /usr/local/sbin/ep_install_cache_purge.sh {{domain}} creates=/var/www/{{domain}}/wordpress/wp-content/mu-plugins/nginx-helper.php
@@ -47,28 +70,51 @@
     command: /usr/local/sbin/chwebown /var/www/{{domain}}/wordpress
 
   - name: Add SFTP user for {{domain}}
-    user: name={{sftp_user}} group=sftponly groups=www-data shell=/bin/false home=/var/www/{{domain}} createhome=no
+    user:
+      name: "{{sftp_user}}"
+      group: sftponly
+      groups: www-data
+      shell: /bin/false
+      home: "/var/www/{{domain}}"
+      createhome: no
   
   - name: Set SFTP user password for {{domain}}
     shell: /bin/echo {{sftp_user}}:{{sftp_pass}} | /usr/sbin/chpasswd
 
   - name: Create .ssh directory for {{domain}}
-    file: path=/var/www/{{domain}}/.ssh state=directory mode=0700 owner={{sftp_user}} group=root
+    file:
+      path: "/var/www/{{domain}}/.ssh"
+      state: directory
+      mode: '0700'
+      owner: "{{sftp_user}}"
+      group: root
   
   - name: Create SSH authorized keys file for {{domain}}
-    file: path=/var/www/{{domain}}/.ssh/authorized_keys state=touch mode=0600 owner={{sftp_user}} group=root
+    file:
+      path: "/var/www/{{domain}}/.ssh/authorized_keys"
+      state: touch
+      mode: '0600'
+      owner: "{{sftp_user}}"
+      group: root
 
   - name: Copy nginx config for {{domain}}
-    copy: src={{prov_dir}}processing/{{domain}}/{{domain}}_ngx.conf dest=/etc/nginx/sites-available/{{domain}} owner=root group=staff mode=0664
+    copy:
+      src: "{{prov_dir}}processing/{{domain}}/{{domain}}_ngx.conf"
+      dest: "/etc/nginx/sites-available/{{domain}}"
+      owner: root
+      group: staff
+      mode: '0664'
 
   - name: Link to nginx config for {{domain}}
-    file: src=/etc/nginx/sites-available/{{domain}} dest=/etc/nginx/sites-enabled/{{domain}} state=link
-
-  - name: Add cache zone to nginx config for {{domain}}
-    lineinfile: dest=/etc/nginx/cache.conf line="fastcgi_cache_path /var/cache/nginx/{{domain}} levels=1:2 keys_zone={{domain}}:10m inactive=600m max_size=24m;"
+    file:
+      src: "/etc/nginx/sites-available/{{domain}}"
+      dest: "/etc/nginx/sites-enabled/{{domain}}"
+      state: link
 
   - name: Reload nginx configuration for {{domain}}
-    command: /usr/sbin/nginx -s reload
+    systemd:
+      name: nginx
+      state: reloaded
 
 {{=<% %>=}}
   - name: send welcome email for <% domain %>
