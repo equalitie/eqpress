@@ -18,7 +18,11 @@ default_storage_engine         = InnoDB
 socket                         = /var/run/mysqld/mysqld.sock
 pid-file                       = /var/run/mysqld/mysqld.pid
 tmpdir                         = /var/tmp
+{% if (auto_provision_host is not defined) or (auto_provision_host is defined and auto_provision_host == False) %}
 bind_address                   = 0.0.0.0
+{% elif auto_provision_host is defined and auto_provision_host == True %}
+bind_address                   = 127.0.0.1
+{% endif %}
 server_id                      = {{ mysql_server_id }}
 performance_schema             = 0
 lc-messages-dir                = /usr/share/mysql
@@ -40,6 +44,7 @@ expire_logs_days               = 4
 sync_binlog                    = 0
 binlog_format                  = MIXED
 
+{% if (auto_provision_host is not defined) or (auto_provision_host is defined and auto_provision_host == False) %}
 # REPLICATION #
 read_only                      = {{ mysql_is_read_only }}
 log_slave_updates              = 1
@@ -48,6 +53,7 @@ slave_net_timeout              = 60
 
 replicate-ignore-db            = information_schema
 replicate-ignore-db            = performance_schema
+{% endif %}
 
 # CACHES AND LIMITS #
 tmp_table_size                 = 32M
@@ -86,10 +92,12 @@ slow_query_log_file            = /var/lib/mysql/mysql_slow.log
 general_log                    = 0
 general_log_file               = /var/log/mysql/mysql.log
 
+{% if (auto_provision_host is not defined) or (auto_provision_host is defined and auto_provision_host == False) %}
 # SSL #
 ssl-ca                         = /etc/ssl/eqpress/root_CA.pem
 ssl-cert                       = /etc/ssl/eqpress/{{ inventory_hostname }}.pem
 ssl-key                        = /etc/ssl/eqpress/{{ inventory_hostname }}.key
+{% endif %}
 
 explicit_defaults_for_timestamp
 
