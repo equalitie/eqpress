@@ -7,6 +7,16 @@
   when: use_host_lookup == "y"
   register: dns_ip_ap
 
+- name: generate random strings
+  local_action:
+    module: shell < /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c {{ item.size }}
+  register: rand_result
+  loop:
+    - { size: '{{15|random(10,1)}}' }
+    - { size: '{{15|random(10,1)}}' }
+    - { size: '32' }
+    - { size: '{{15|random(10,1)}}' }
+
 - name: Create the main variables file.
   local_action:
     module: template
