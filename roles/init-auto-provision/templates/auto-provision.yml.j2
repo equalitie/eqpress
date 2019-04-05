@@ -41,7 +41,6 @@ phpfpm_max_requests: "{{ phpfpm_max_requests }}"
 php_opcache_memory_size: "{{ php_opcache_memory_size }}"
 
 # mysql
-mysql_bind_address: "127.0.0.1"
 mysql_root_db_pass: "{{ rand_result.results[0].stdout }}"
 mysql_innodb_buffer_pool_size: "{{ mysql_innodb_buffer_pool_size }}"
 mysql_innodb_log_file_size: "{{ mysql_innodb_log_file_size }}"
