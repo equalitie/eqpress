@@ -23,7 +23,7 @@ bind_address                   = 0.0.0.0
 {% elif auto_provision_host is defined and auto_provision_host == True %}
 bind_address                   = 127.0.0.1
 {% endif %}
-server_id                      = {{ mysql_server_id }}
+server_id                      = {{ mysql_server_id |default('1') }}
 performance_schema             = 0
 lc-messages-dir                = /usr/share/mysql
 
