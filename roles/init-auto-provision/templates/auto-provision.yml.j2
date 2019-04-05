@@ -41,9 +41,17 @@ phpfpm_max_requests: "{{ phpfpm_max_requests }}"
 php_opcache_memory_size: "{{ php_opcache_memory_size }}"
 
 # mysql
-mysql_root_db_pass: "{{ mysql_root_db_pass }}"
+mysql_bind_address: "127.0.0.1"
+mysql_root_db_pass: "{{ rand_result.results[0].stdout }}"
 mysql_innodb_buffer_pool_size: "{{ mysql_innodb_buffer_pool_size }}"
 mysql_innodb_log_file_size: "{{ mysql_innodb_log_file_size }}"
+
+# Password Pusher
+eq_pwpusher_db: "eqpwpdb"
+eq_pwpusher_user: "eqpwp"
+eq_pwpusher_pw: "{{ rand_result.results[1].stdout }}"
+eq_pwpusher_key: "{{ rand_result.results[2].stdout }}"
+eq_pwpusher_salt: "{{ rand_result.results[3].stdout }}"
 
 eqpress_docroot: "{{ eqpress_docroot }}"
 {% if use_host_lookup == "y" %}
