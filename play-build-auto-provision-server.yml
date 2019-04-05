@@ -6,6 +6,7 @@
      - ssh-config
      - eqpress-ssl
      - web-app
+     - mysql-percona-replication
      - build-auto-provision-server
      - install-ansible
      - deploy-auto-provision-code
