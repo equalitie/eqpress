@@ -108,6 +108,7 @@
     src: "{{ files }}/root/.my.cnf-mysqladmin.j2"
     dest: /root/.my.cnf-mysqladmin
     mode: '0600'
+  when: mysql_repl_role is defined
   tags:
     - mysql
     - mysql_config
@@ -202,7 +203,7 @@
   mysql_db:
     name: "{{ mysql_webstats.db }}"
     state: present
-  when: mysql_repl_role and mysql_repl_role == 'master'
+  when: mysql_repl_role is defined and mysql_repl_role == 'master'
   register: created_webstats
   tags:
     - webstats-db
