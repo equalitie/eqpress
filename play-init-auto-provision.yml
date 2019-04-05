@@ -143,6 +143,11 @@
       default: "32M"
       private: no
 
+    - name: "pwpush_domain"
+      prompt: "Password Pusher domain name (should have some used in url already set)"
+      default: "passwords.deflect.ca"
+      private: no
+
   roles:
      - init-auto-provision
 
