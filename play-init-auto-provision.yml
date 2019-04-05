@@ -133,11 +133,6 @@
       default: "128"
       private: no
 
-    - name: "mysql_root_db_pass"
-      prompt: "MySQL root user password"
-      default: "enter_password"
-      private: yes
-
     - name: "mysql_innodb_buffer_pool_size"
       prompt: "MySQL InnoDB buffer pool size"
       default: "256M"
