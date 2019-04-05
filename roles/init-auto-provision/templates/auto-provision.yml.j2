@@ -51,6 +51,7 @@ eq_pwpusher_user: "eqpwp"
 eq_pwpusher_pw: "{{ rand_result.results[1].stdout }}"
 eq_pwpusher_key: "{{ rand_result.results[2].stdout }}"
 eq_pwpusher_salt: "{{ rand_result.results[3].stdout }}"
+pwpush_domain: "{{pwpush_domain}}"
 
 eqpress_docroot: "{{ eqpress_docroot }}"
 {% if use_host_lookup == "y" %}
