@@ -34,6 +34,6 @@ server {
                 fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
                 fastcgi_split_path_info ^(.+\.php)(/.+)$;
                 fastcgi_index index.php;
-                fastcgi_pass php7.0-fpm-unix-sock;
+                fastcgi_pass unix:/run/php-fpm.sock;
         }
 }
