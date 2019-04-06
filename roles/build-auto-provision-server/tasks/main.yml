@@ -159,3 +159,5 @@
   tags:
     - auto-provision
     - gpg
+
+- include_tasks: install-password-pusher.yml
