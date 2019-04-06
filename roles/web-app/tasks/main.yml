@@ -349,6 +349,8 @@
     - php-config
     - auto-provision
 
+- meta: flush_handlers
+
 - name: start php{{php_version}}-fpm
   systemd:
     name: php{{php_version}}-fpm
