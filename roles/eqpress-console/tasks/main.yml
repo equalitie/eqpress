@@ -202,15 +202,65 @@
     - ep-console
     - bruteprotect
 
-- name: synchronize adminer files
-  synchronize:
-    src: "{{ files }}/var/www/eqpress-www/adminer"
-    dest: "{{ eqpress_docroot }}/"
-    mode: push
-    checksum: true
-    rsync_opts:
-      - '--exclude=*.j2'
-      - '--chown=www-data:www-data'
+- name: create adminer directories
+  file:
+    path: "{{ eqpress_docroot }}/{{item}}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - adminer
+    - adminer/plugins
+  tags:
+    - ep-console
+    - adminer
+
+- name: download and install adminer
+  get_url:
+    url: "{{ adminer_download }}"
+    dest: "{{ eqpress_docroot }}/adminer/adminer.php"
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - ep-console
+    - adminer
+
+- name: install adminer plugins
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ eqpress_docroot }}/adminer/plugins/{{ item.plugin }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - { url: "{{ adminer_plugin_url }}", plugin: "plugin.php" }
+    - { url: "{{ adminer_dump_json_url }}", plugin: "dump-json.php" }
+    - { url: "{{ adminer_dump_date_url }}", plugin: "dump-date.php" }
+    - { url: "{{ adminer_database_hide_url }}", plugin: "database-hide.php" }
+  tags:
+    - ep-console
+    - adminer
+
+- name: install adminer css
+  get_url:
+    url: "{{ adminer_css }}"
+    dest: "{{ eqpress_docroot }}/adminer/adminer.css"
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - ep-console
+    - adminer
+
+- name: install adminer index to enable plugins
+  copy:
+    src: "{{files}}/var/www/eqpress-www/adminer/index.php"
+    dest: "{{ eqpress_docroot }}/adminer/index.php"
+    owner: root
+    group: root
+    mode: '0644'
   tags:
     - ep-console
     - adminer
