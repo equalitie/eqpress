@@ -106,7 +106,6 @@
     - monitor_nginx.pl
     - resident-ram
     - top_ram_procs.sh
-    - wp
     - wpcli_woocommerce_disable_redirect.php
     - wpcli_wordfence_no_scan.php
     - wp_check_plugins.php
@@ -146,6 +145,17 @@
     - ep-sbin
     - ep-sbin-templates
     - monitoring-email
+
+- name: download and install wp-cli
+  get_url:
+    url: "{{ wp_cli_download }}"
+    dest: /usr/local/sbin/wp
+    owner: root
+    group: root
+    mode: '0755'
+    force: yes
+  tags:
+    - ep-sbin
 
 - name: copy webstat script templates
   template:
