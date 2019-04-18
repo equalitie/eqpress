@@ -29,7 +29,12 @@
     - ansible
 
 - name: create the ansible log file
-  shell: touch /var/log/ansible.log && chmod 0640 /var/log/ansible.log && chown root:root /var/log/ansible.log
+  file:
+    path: /var/log/ansible.log
+    state: touch
+    owner: root
+    group: root
+    mode: '0640'
   tags:
     - auto-provision
     - install-ansible
