@@ -75,13 +75,13 @@
   tags:
     - users
 
-- name: remove setuid bit on sbin directory
-  command: /bin/chmod g-s /usr/local/sbin
-  tags:
-    - sbin
-
-- name: set permissions on sbin directory
-  command: /bin/chmod 0755 /usr/local/sbin
+- name: set mode on sbin directory with no setuid bit
+  file:
+    path: /usr/local/sbin
+    state: directory
+    owner: root
+    group: staff
+    mode: 'u=rwx,g-s,g=rx,o=rx'
   tags:
     - sbin
 
