@@ -12,6 +12,7 @@
       - python-jinja2
       - python-yaml
       - python-six
+      - python-paramiko
     state: present 
   tags:
     - auto-provision
