@@ -1,0 +1,43 @@
+---
+
+- name: install prerequisite for mcrypt
+  apt:
+    name:
+      - php-pear
+      - libmcrypt-dev
+    state: present
+  tags:
+    - nginx
+    - php
+
+- name: install mcrypt with pecl
+  pear:
+    name: pecl/mcrypt-1.0.2
+    state: latest
+  notify: reload php-fpm 
+  tags:
+    - nginx
+    - php
+
+- name: install 20-mcrypt.ini in mods-available
+  template:
+    src: "{{files}}/etc/php/{{php_version}}/mods-available/mcrypt.ini.j2"
+    dest: "/etc/php/{{php_version}}/mods-available/mcrypt.ini"
+    mode: '0644'
+    owner: root
+    group: root
+  notify: reload php-fpm 
+  tags:
+    - nginx
+    - php
+
+- name: link mcrypt.ini enable
+  file:
+    src: "/etc/php/{{php_version}}/mods-available/mcrypt.ini"
+    path: "/etc/php/{{php_version}}/fpm/conf.d/20-mcrypt.ini"
+    state: link
+  notify: reload php-fpm 
+  tags:
+    - nginx
+    - php
+
