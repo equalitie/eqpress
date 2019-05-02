@@ -10,14 +10,43 @@
     - nginx
     - php
 
-- name: install mcrypt with pecl
-  pear:
-    name: pecl/mcrypt-1.0.2
-    state: latest
-  notify: reload php-fpm 
+- name: get php extention directory
+  shell: "/usr/bin/php --info 2>/dev/null | grep 'PHP Extension => ' | cut -d' ' -f4"
+  register: php_extension
+  changed_when: False
   tags:
     - nginx
     - php
+
+- debug:
+    msg: "Detected extension_dir = /usr/lib/php/{{php_extension.stdout}}"
+
+- name: install mcrypt with pecl
+  shell: |
+    set timeout 300
+    spawn pecl install mcrypt-1.0.2
+    expect "autodetect\] : "
+    send "\r"
+    expect "You should add \"extension=mcrypt.so\" to php.ini\r"
+
+    exit 0
+  args:
+    executable: /usr/bin/expect
+    creates: "/usr/lib/php/{{php_extension.stdout}}/mcrypt.so"
+  notify: reload php-fpm
+  tags:
+    - nginx
+    - php
+
+# This did not work because the pecl waits for input
+#- name: install mcrypt with pecl
+#  pear:
+#    name: pecl/mcrypt-1.0.2
+#    state: latest
+#  notify: reload php-fpm
+#  tags:
+#    - nginx
+#    - php
 
 - name: install 20-mcrypt.ini in mods-available
   template:
@@ -26,7 +55,7 @@
     mode: '0644'
     owner: root
     group: root
-  notify: reload php-fpm 
+  notify: reload php-fpm
   tags:
     - nginx
     - php
@@ -36,7 +65,7 @@
     src: "/etc/php/{{php_version}}/mods-available/mcrypt.ini"
     path: "/etc/php/{{php_version}}/fpm/conf.d/20-mcrypt.ini"
     state: link
-  notify: reload php-fpm 
+  notify: reload php-fpm
   tags:
     - nginx
     - php
