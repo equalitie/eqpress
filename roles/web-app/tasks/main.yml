@@ -95,6 +95,8 @@
     - nginx
     - php
 
+- include_tasks: php-mcrypt.yml
+
 - name: ensure nginx will start at boot
   systemd:
     name: nginx
