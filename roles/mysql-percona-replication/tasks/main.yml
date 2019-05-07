@@ -3,8 +3,10 @@
 
 - name: Add apt keys required for Percona
   apt_key:
-    url: "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9334A25F8507EFA5"
+    url: "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9334A25F8507EFA5"
     state: present
+  tags:
+    - mysql
 
 - name: Add repos for Percona
   apt_repository:
