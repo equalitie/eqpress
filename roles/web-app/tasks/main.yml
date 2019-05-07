@@ -336,6 +336,50 @@
     - php
     - php-config
 
+- name: remove common opcache.ini link bugs [fpm]
+  file:
+    path: "/etc/php/{{php_version}}/fpm/conf.d/{{item}}"
+    state: absent
+  loop:
+    - 10-opcache.ini
+    - 15-opcache.ini
+    - 20-opcache.ini
+    - 25.opcache.ini
+  notify:
+    - reload php-fpm
+  tags:
+    - php
+    - php-config
+
+- name: remove common opcache.ini link bugs [cli]
+  file:
+    path: "/etc/php/{{php_version}}/cli/conf.d/{{item}}"
+    state: absent
+  loop:
+    - 10-opcache.ini
+    - 15-opcache.ini
+    - 20-opcache.ini
+    - 25.opcache.ini
+  tags:
+    - php
+    - php-config
+
+- name: make sure opcache.ini enabled with priority 05
+  file:
+    src: "/etc/php/{{php_version}}/mods-available/opcache.ini"
+    dest: "/etc/php/{{php_version}}/{{item}}/conf.d/05-opcache.ini"
+    state: link
+    owner: root
+    group: root
+  loop:
+    - cli
+    - fpm
+  notify:
+    - reload php-fpm
+  tags:
+    - php
+    - php-config
+
 - name: copy auto-provision php config
   template:
     src: "{{ files }}/etc/php/{{php_version}}/fpm/pool.d/auto-provision.conf.j2"
