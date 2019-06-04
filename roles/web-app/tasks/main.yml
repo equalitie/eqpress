@@ -29,7 +29,7 @@
     opts: rw,noexec,nosuid,nodev,mode=0750,uid=www-data
     boot: yes
     backup: no
-    passno: 0
+    passno: '0'
     state: mounted
   tags:
     - nginx
