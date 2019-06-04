@@ -109,6 +109,7 @@
       - zlib1g-dev
       - apt-transport-https
       - expect
+      - certbot
     state: present
 
 - name: Set /etc/localtime according to configuration
