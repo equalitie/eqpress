@@ -24,7 +24,11 @@
       dest: /home/wordpress/latest.tar.gz
 
   - name: Extract WordPress archive for {{domain}}
-    command: chdir=/var/www/{{domain}} /bin/tar xfz /home/wordpress/latest.tar.gz creates=/var/www/{{domain}}/wordpress
+    command: /bin/tar xfz /home/wordpress/latest.tar.gz
+    args:
+      chdir: "/var/www/{{domain}}"
+      creates: "/var/www/{{domain}}/wordpress"
+      warn: false
 
   - name: Create the .sessions directory for {{domain}}
     file:
