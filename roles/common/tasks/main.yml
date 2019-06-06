@@ -110,6 +110,9 @@
       - apt-transport-https
       - expect
       - certbot
+      - mc
+      - htop
+      - iftop
     state: present
 
 - name: Set /etc/localtime according to configuration
