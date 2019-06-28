@@ -16,6 +16,7 @@ pm.process_idle_timeout = 10s
 pm.max_requests = {{ phpfpm_max_requests }}
 request_terminate_timeout = 300s
 pm.status_path = /phpfpmstatus
+request_slowlog_timeout = 4s
 slowlog = /var/log/php-fpm-slow.log
 php_admin_value[memory_limit] = 512M
 env[TMP] = /var/tmp
