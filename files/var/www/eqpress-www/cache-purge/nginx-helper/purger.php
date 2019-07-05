@@ -227,6 +227,28 @@ namespace rtCamp\WP\Nginx {
 
 		private function _do_remote_get( $url ) {
 
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+			curl_setopt($ch, CURLOPT_CONNECT_TO, array($dir['baseurl']."::127.0.0.1:"));
+			$data = curl_exec($ch);
+			curl_close($ch);
+
+			$this->log( "- - " . $url . " *** PURGE REQUESTED ***" );
+
+			/*
+			 * This function original code commented out to use
+			 * curl functions direct so that we can not have to
+			 * got back through the proxy for a local call from
+			 * the plugin. This also addresses having a self-signed
+			 * tls cert on the local system that the wordpress
+			 * function no longer supports
+			 *
+			 * TODO: We should update the below logging to use the
+			 * $data from the curl response.
+
 			$response = wp_remote_get( $url );
 
 			if ( is_wp_error( $response ) ) {
@@ -245,7 +267,7 @@ namespace rtCamp\WP\Nginx {
 							$this->log( "- - " . $url . " not found (" . $response[ 'response' ][ 'code' ] . ")", "WARNING" );
 					}
 				}
-			}
+			} */
 		}
 
 		function checkHttpConnection() {
