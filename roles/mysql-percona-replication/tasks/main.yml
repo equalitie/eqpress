@@ -243,6 +243,8 @@
   loop:
     - conf.d/mysql.cnf
     - percona-server.conf.d/mysqld.cnf
+  notify:
+    - restart mysql
   tags:
     - mysql
     - mysql_config
