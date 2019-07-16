@@ -3,13 +3,9 @@ A host with a working Ansible installation is required. Read this:
 
 	http://docs.ansible.com/ansible/intro_installation.html
 
-Minimally you will need to clone the Ansible repository
+For Debian 9+
 
-	git clone git://github.com/ansible/ansible.git --recursive
-	
-You will probably need to install some python package too. On debian this will take care of that step
-
-	(missing?)
+	apt-get install ansible
 
 Clone this repo:
 
@@ -156,12 +152,6 @@ When the servers are ready for production then it's time to deploy the cron jobs
 
 
 #### Common Failures and Remedies
-
-* SSL certificate fails to be created with the error:  
-`openssl Serial number xx has already been issued check the database/serial_file for corruption`  
-    1. Edit the files/etc/ssl/easypress/root_CA.srl file, delete the serial number and save the file
-    1. Re-enter the same serial number and save the file
-    1. Re-run the playbook
 
 * MySQL fails to start
     1. Check if mysql is running on the host

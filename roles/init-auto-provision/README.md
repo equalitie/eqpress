@@ -16,11 +16,11 @@ Run the following playbooks
 
 run these first 2 if you have not already ran for the eqpress installs
 
-	ansible-playbook -i hosts play-init-env.yml -v
-	ansible-playbook -i hosts play-init-servers.yml -v
+	ansible-playbook -i hosts play-init-env.yml
+	ansible-playbook -i hosts play-init-servers.yml
 
 
-	ansible-playbook -i hosts play-init-auto-provision.yml -v
+	ansible-playbook -i hosts play-init-auto-provision.yml -u root
 
 The following settings can be specified:
 
