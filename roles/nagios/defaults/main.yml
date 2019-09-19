@@ -25,8 +25,8 @@ check_zombie_procs:
   crit: 10
   add: '-s Z'
 check_big_files:
-  warn: 50
-  crit: 200
+  warn: 1000
+  crit: 3000
   add: '/var/www /var/log/nginx'
 check_freememory:
   warn: 50
