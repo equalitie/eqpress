@@ -26,6 +26,16 @@
   tags:
     - nagios
 
+- name: symlink check_procs to check_zombies
+  file:
+    src: /usr/lib/nagios/plugins/check_procs
+    dest: /usr/local/bin/check_zombies
+    state: link
+    owner: root
+    group: root
+  tags:
+    - nagios
+
 - name: Install scripts to slave
   template:
     src: "{{item}}.j2"
