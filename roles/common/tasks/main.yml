@@ -113,6 +113,7 @@
       - mc
       - htop
       - iftop
+      - ethtool
     state: present
 
 - name: Set /etc/localtime according to configuration
