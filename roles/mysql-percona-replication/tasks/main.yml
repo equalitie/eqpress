@@ -277,3 +277,24 @@
   when: pkg_install.changed is defined and pkg_install.changed == true
   tags:
     - mysql
+
+# This was in the enable-replication but needed here if we are just doing the upgrade
+# TODO: Change this to use something like ufw
+
+- name: add firewall rule to allow slave to connect to master
+  command: /sbin/iptables -I INPUT -s {{ hostvars[mysql_repl_slave].public_ipv4_address }}/32 -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT
+  when: mysql_repl_role == 'master'
+  tags:
+    - mysql
+    - repl
+    - security
+    - firewall
+
+- name: save new firewall rule
+  shell: /sbin/iptables-save > /etc/iptables.up.rules
+  when: mysql_repl_role == 'master'
+  tags:
+    - mysql
+    - repl
+    - security
+    - firewall

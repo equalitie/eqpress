@@ -80,24 +80,6 @@
     - mysqladmin_user
     - mysql_resync
 
-- name: add firewall rule to allow slave to connect to master
-  command: /sbin/iptables -I INPUT -s {{ hostvars[mysql_repl_slave].public_ipv4_address }}/32 -p tcp -m state --state NEW -m tcp --dport 3306 -j ACCEPT
-  when: mysql_repl_role == 'master'
-  tags:
-    - mysql
-    - repl
-    - security
-    - firewall
-
-- name: save new firewall rule
-  shell: /sbin/iptables-save > /etc/iptables.up.rules
-  when: mysql_repl_role == 'master'
-  tags:
-    - mysql
-    - repl
-    - security
-    - firewall
-
 - name: copy replication check script
   template:
     src: "{{ files }}/usr/local/sbin/check_mysql_replication_status.sh.j2"
