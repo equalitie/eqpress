@@ -57,5 +57,8 @@
     eneabled: yes
   ignore_errors: yes
 
+- name: sysctl reload
+  command: sysctl --system
+
 - name: reboot the server
   action: command /sbin/reboot
