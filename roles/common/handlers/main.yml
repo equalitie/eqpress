@@ -54,7 +54,7 @@
   systemd:
     name: mysql
     state: restarted
-    eneabled: yes
+    enabled: yes
   ignore_errors: yes
 
 - name: sysctl reload
