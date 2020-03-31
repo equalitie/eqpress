@@ -242,7 +242,7 @@
     - mysql_resync
 
 - name: start mysql on the replica
-  service:
+  systemd:
     name: mysql
     state: started
   when: mysql_repl_role == 'slave'
