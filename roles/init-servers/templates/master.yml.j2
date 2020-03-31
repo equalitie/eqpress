@@ -5,7 +5,7 @@ mysql_server_id: "{{ mysql_server_id_master }}"
 mysql_is_read_only: "0"
 mysql_repl_role: "master"
 mysql_repl_slave: "{{ slave_hostname }}"
-{% if use_host_lookup == "y" %}
+{% if use_host_lookup is defined and use_host_lookup %}
 # if using DNS for host
 public_ipv4_address: "{{ dns_ip_master.stdout }}"
 {% endif %}

@@ -56,12 +56,12 @@ replicate-ignore-db            = performance_schema
 {% endif %}
 
 # CACHES AND LIMITS #
-tmp_table_size                 = 32M
-max_heap_table_size            = 32M
-query_cache_type               = 0
-query_cache_size               = 32M
-query_cache_limit              = 256K
-max_connections                = 100
+tmp_table_size                 = 128M
+max_heap_table_size            = 128M
+query_cache_type               = 1
+query_cache_size               = 128M
+query_cache_limit              = 1M
+max_connections                = 200
 thread_cache_size              = 50
 open_files_limit               = 65535
 table_definition_cache         = 16384
@@ -69,11 +69,12 @@ table_open_cache               = 16384
 read_buffer_size               = 1M
 sort_buffer_size               = 1M
 join_buffer_size               = 1M
+thread_pool_size               = 36
 
 # INNODB #
 innodb_flush_method            = O_DIRECT
 innodb_log_files_in_group      = 2
-innodb_flush_log_at_trx_commit = 1
+innodb_flush_log_at_trx_commit = 2
 innodb_file_per_table          = 1
 innodb_log_file_size           = {{ mysql_innodb_log_file_size }}
 innodb_buffer_pool_size        = {{ mysql_innodb_buffer_pool_size }}
@@ -108,3 +109,6 @@ sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_ALL_TABLES
 
 # Disabling symbolic-links is recommended to prevent assorted security risks
 symbolic-links=0
+
+# Gather per user statistics
+userstat = 1
