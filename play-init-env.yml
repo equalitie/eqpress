@@ -113,10 +113,5 @@
       default: "Etc/UTC"
       private: no
 
-    - name: "use_host_lookup"
-      prompt: "Use DNS lookup for host IP assignment (y/n)"
-      default: "n"
-      private: no
-
   roles:
      - init-env
