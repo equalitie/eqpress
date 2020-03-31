@@ -69,6 +69,16 @@
    - apt-mysql
   register: pkg_install
 
+# We need to make sure mysql is started unless next task will fail
+- name: make sure mysql is started
+  systemd:
+    name: mysql
+    state: started
+  tags:
+    - mysql
+    - mysql_config
+    - mysql_resync
+
 - name: Update mysql root password for root account localhost.
   mysql_user:
     name: root
