@@ -54,7 +54,7 @@ eq_pwpusher_salt: "{{ rand_result.results[3].stdout }}"
 pwpush_domain: "{{pwpush_domain}}"
 
 eqpress_docroot: "{{ eqpress_docroot }}"
-{% if use_host_lookup == "y" %}
+{% if use_host_lookup is defined and use_host_lookup %}
 # if using DNS for host
 public_ipv4_address: "{{ dns_ip_ap.stdout }}"
 {% endif %}

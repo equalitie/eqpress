@@ -4,13 +4,13 @@
 - name: Use DNS for host external IPv4 address master
   local_action:
     module: command /usr/bin/dig +noall +short {{ master_hostname }}
-  when: use_host_lookup == "y"
+  when: use_host_lookup is defined and use_host_lookup
   register: dns_ip_master
 
 - name: Use DNS for host external IPv4 address slave 
   local_action:
     module: command /usr/bin/dig +noall +short {{ slave_hostname }}
-  when: use_host_lookup == "y"
+  when: use_host_lookup is defined and use_host_lookup
   register: dns_ip_slave
 
 - name: Create the group_vars file.
