@@ -7,3 +7,5 @@ bashrc_proxy_ftp: ""
 bashrc_proxy_http: ""
 mail_service: 'mandrill'
 email_domain: 'example.co'
+email_relay_port_local: '587'
+email_relay_name_local: ''

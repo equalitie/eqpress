@@ -98,6 +98,11 @@
       default: "local"
       private: no
 
+    - name: "email_relay_name_local"
+      prompt: "If using email service type of local, what is the email server"
+      default: "mail.example.tld"
+      private: no
+
     - name: "email_domain"
       prompt: "Main Email Domain"
       default: "example.co"

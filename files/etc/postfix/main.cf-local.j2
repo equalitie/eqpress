@@ -11,4 +11,4 @@ smtp_tls_security_level = may
 smtp_tls_mandatory_protocols=!SSLv2,!SSLv3
 smtpd_tls_mandatory_protocols=!SSLv2,!SSLv3
 smtp_sasl_password_maps = static:{{ email_user_local }}:{{ email_passwd_local }}
-relayhost = [mail.equalit.ie]:587
+relayhost = [{{ email_relay_name_local }}]:{{ email_relay_port_local }}
