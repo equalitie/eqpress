@@ -12,22 +12,22 @@
       prompt: "Auto-provision node location"
       default: "montreal"
       private: no
-    
+
     - name: "auto_provision_node_hostname"
       prompt: "Auto-provision node hostname"
       default: "node1.example.co"
       private: no
-    
+
     - name: "auto_provision_node_ip_address"
       prompt: "Auto-provision node IP address"
       default: "127.0.0.1"
       private: no
-    
+
     - name: "auto_provision_db_host"
       prompt: "Auto-provision database host"
       default: "localhost"
       private: no
-    
+
     - name: "auto_provision_base_directory"
       prompt: "Auto-provision base directory"
       default: "/var/www/eqpress-www/provision"
@@ -69,28 +69,38 @@
       private: no
 
     - name: "auto_provision_gpg_id"
-      prompt: "keyID of GPG account for encrypting logs (lookup your keyID at https://pgp.mit.edu/)" 
+      prompt: "keyID of GPG account for encrypting logs (lookup your keyID at https://pgp.mit.edu/)"
       default: "2DD3C271"
       private: no
 
     - name: "auto_provision_ldap_server"
-      prompt: "LDAP server hostname to authenticate autoprovisioning requests"
+      prompt: "LDAP server hostname to authenticate autoprovisioning requests (deprecated)"
       default: "localhost"
       private: no
 
     - name: "auto_provision_ldap_port"
-      prompt: "LDAP server port"
+      prompt: "LDAP server port (deprecated)"
       default: "389"
       private: no
 
     - name: "auto_provision_ldap_basedn"
-      prompt: "Base DN where user accounts sit in"
+      prompt: "Base DN where user accounts sit in (deprecated)"
       default: "ou=People,dc=equalit,dc=ie"
       private: no
 
     - name: "auto_provision_ldap_authattr"
-      prompt: "LDAP attribute containing users' login"
+      prompt: "LDAP attribute containing users' login (deprecated)"
       default: "uid"
+      private: no
+
+    - name: "auto_provision_local_auth_user"
+      prompt: "Username for auto provision (Replacing LDAP)"
+      default: "eqpresser"
+      private: no
+
+    - name: "auto_provision_local_auth_pass"
+      prompt: "Bcrypt password (php password_hash()) for auto provision"
+      default: ""
       private: no
 
     - name: "auto_provision_ansible_version"
