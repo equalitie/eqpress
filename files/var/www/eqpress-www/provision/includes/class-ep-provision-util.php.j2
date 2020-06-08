@@ -113,6 +113,7 @@ class EP_Provision_Util {
      *
      */
     private function local_auth ($user, $pass) {
+        global $params;
     	return (
     		($user === $params['local_auth_user']) &&
     		password_verify($pass, $params['local_auth_pass'])
