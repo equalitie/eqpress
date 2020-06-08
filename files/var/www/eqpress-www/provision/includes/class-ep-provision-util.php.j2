@@ -48,7 +48,7 @@ class EP_Provision_Util {
 
         if ( isset( $_POST['first_name'] ) && !empty( $_POST['first_name'] ) ) {
             $params['real_first_name'] =  htmlspecialchars($_POST['first_name'] );
-            $params['first_name'] = $this->sanitize_name( $_POST['first_name'] ); 
+            $params['first_name'] = $this->sanitize_name( $_POST['first_name'] );
         } else {
             $params['status']['errors']++;
             $params['status']['messages'][] = 'First name is missing';
@@ -56,28 +56,28 @@ class EP_Provision_Util {
 
         if ( isset( $_POST['last_name'] ) && !empty( $_POST['last_name'] ) ) {
             $params['real_last_name'] = htmlspecialchars( $_POST['last_name'] );
-            $params['last_name'] = $this->sanitize_name( $_POST['last_name'] ); 
+            $params['last_name'] = $this->sanitize_name( $_POST['last_name'] );
         } else {
             $params['status']['errors']++;
             $params['status']['messages'][] = 'Last name is missing';
         }
 
         if ( isset( $_POST['multisite'] ) && ( $_POST['multisite'] == "subdomain" || $_POST['multisite'] == "subdirectory" ) ) {
-            $params['multisite'] = $_POST['multisite']; 
+            $params['multisite'] = $_POST['multisite'];
         } else {
             $params['multisite'] = false;
         }
 
         if ( isset( $_POST['db_charset'] ) ) {
-            $params['db_charset'] = $_POST['db_charset']; 
+            $params['db_charset'] = $_POST['db_charset'];
         }
 
         if ( isset( $_POST['db_collate'] ) ) {
-            $params['db_collate'] = $_POST['db_collate']; 
+            $params['db_collate'] = $_POST['db_collate'];
         }
 
         if ( isset( $_POST['easydns_user'] ) && !empty( $_POST['easydns_user'] ) ) {
-            $params['easydns_user'] = $_POST['easydns_user']; 
+            $params['easydns_user'] = $_POST['easydns_user'];
         }
 
         if ( isset( $_POST['bcc_email'] ) && !empty( $_POST['bcc_email'] ) && $this->is_valid_email_address( $_POST['bcc_email']) ) {
@@ -98,18 +98,25 @@ class EP_Provision_Util {
 
         $isauth = false;
 
-	if (preg_match ('/^[A-Za-z0-9_\.\-]+$/', $username)) {
-            $isauth = $this->ldap_auth ($username,
-    	                                $password,
-	  	    	  	        $params['ldap_auth_attrib'],
-				        $params['ldap_auth_basedn'],
-				        $params['ldap_auth_server'],
-				        $params['ldap_auth_port']);
-	}
+		if (preg_match ('/^[A-Za-z0-9_\.\-]+$/', $username)) {
+			$isauth = $this->local_auth ($username, $password);
+		}
 
-	if (!$isauth) {
-       	    $this->process_errors( 'Incorrect username or password.', true );
-	}
+		if (!$isauth) {
+	       	    $this->process_errors( 'Incorrect username or password.', true );
+		}
+    }
+
+    /**
+     * Local authencation function
+     * Depreciating LDAP on Jun 1, 2020
+     *
+     */
+    private function local_auth ($user, $pass) {
+    	return (
+    		($user === $params['local_auth_user']) &&
+    		password_verify($pass, $params['local_auth_pass'])
+    	);
     }
 
     /**
@@ -120,11 +127,11 @@ class EP_Provision_Util {
      */
     private function ldap_auth ($user, $pass, $authattribute, $basedn, $server, $port) {
         $ldap_conn = ldap_connect($server, $port);
-	if ($ldap_conn) {
-	    ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
-	    return (ldap_bind($ldap_conn, $authattribute.'='.$user.','.$basedn, $pass));
-	}
-	return false;
+		if ($ldap_conn) {
+		    ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
+		    return (ldap_bind($ldap_conn, $authattribute.'='.$user.','.$basedn, $pass));
+		}
+		return false;
     }
 
     /**
@@ -132,7 +139,7 @@ class EP_Provision_Util {
      *
      * @param string $message is the error message to write to the log and/or screen.
      * @param boolean $exit_now will determine whether or not to terminate the process.
-     * 
+     *
      */
     public function process_errors( $message, $exit_now = false ) {
         global $params;
@@ -241,7 +248,7 @@ class EP_Provision_Util {
 
     /**
      * Specify the name of the database using the domain name.
-     * 
+     *
      * Return everything but the top level domain and trim everything after
      * 60 chars and add a random string to the end. Replace all dots with
      * underscores.
@@ -261,7 +268,7 @@ class EP_Provision_Util {
             if ( $ctr == $num_pieces ) {
                 $subdomain = substr( $subdomain, 0, 58 );
                 $params['db_name'] = $subdomain . $this->random( 3 );
-            }   
+            }
         }
     }
 
