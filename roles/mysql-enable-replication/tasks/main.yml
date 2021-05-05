@@ -19,6 +19,41 @@
     - mysql
     - mysql_resync
 
+- name: set variable to tell slave config to be read/write [mysql bug fix]
+  set_fact:
+    tmp_mysql_rw: yes
+  when: mysql_repl_role == 'slave' and mysql_is_read_only == '1'
+  tags:
+    - mysql
+    - mysql_config
+    - mysql_resync
+
+- name: install percona-server.conf.d/mysqld.cnf read/write on slave if needed [mysql bug fix]
+  template:
+    src: "{{files}}/etc/mysql/{{item}}.j2"
+    dest: "/etc/mysql/{{item}}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: mysql_repl_role == 'slave' and mysql_is_read_only == '1'
+  loop:
+    - percona-server.conf.d/mysqld.cnf
+  notify:
+    - restart mysql
+  tags:
+    - mysql
+    - mysql_config
+    - mysql_resync
+
+- name: unset variable to tell slave config to be read/write [mysql bug fix]
+  set_fact:
+    tmp_mysql_rw: '' 
+  when: mysql_repl_role == 'slave' and mysql_is_read_only == '1'
+  tags:
+    - mysql
+    - mysql_config
+    - mysql_resync
+
 - name: get the date
   shell: date "+%Y%m%d%H%M%S"
   register: the_date_time
@@ -246,7 +281,72 @@
     name: mysql
     state: started
   when: mysql_repl_role == 'slave'
-  ignore_errors: yes
+  #ignore_errors: yes
+  tags:
+    - mysql
+    - repl
+    - slaveon
+    - mysql_resync
+
+- name: stop and start mysql with new config is needed [mysql bug]
+  block:
+
+    - name: just sleep for 20 seconds in case it takes a long time to start
+      shell: sleep 20
+      tags:
+        - mysql
+        - repl
+        - slaveon
+        - mysql_resync
+
+    - name: stop the mysql server on the slave
+      systemd:
+        name: mysql
+        state: stopped
+      when: mysql_repl_role == 'slave'
+      ignore_errors: yes
+      tags:
+        - mysql
+        - mysql_resync
+
+    - name: Sleep awhile and then run a killall -9 on mysqld in case stuck
+      shell: sleep 10 && killall -TERM mysqld ; sleep 5 ; killall -9 mysqld ; sleep 5
+      when: mysql_repl_role == 'slave'
+      ignore_errors: yes
+      tags:
+        - mysql
+        - mysql_resync
+
+    - name: install percona-server.conf.d/mysqld.cnf read/write on slave if needed [mysql bug fix]
+      template:
+        src: "{{files}}/etc/mysql/{{item}}.j2"
+        dest: "/etc/mysql/{{item}}"
+        owner: root
+        group: root
+        mode: '0644'
+      when: mysql_repl_role == 'slave' and mysql_is_read_only == '1'
+      loop:
+        - percona-server.conf.d/mysqld.cnf
+      notify:
+        - restart mysql
+      tags:
+        - mysql
+        - mysql_config
+        - mysql_resync
+
+    - name: start mysql on the replica
+      systemd:
+        name: mysql
+        state: started
+      when: mysql_repl_role == 'slave'
+      #ignore_errors: yes
+      tags:
+        - mysql
+        - repl
+        - slaveon
+        - mysql_resync
+
+  when: mysql_repl_role == 'slave' and mysql_is_read_only == '1'
   tags:
     - mysql
     - repl
