@@ -18,6 +18,8 @@ server {
     }
 
     location ~* xmlrpc\.php {
+        allow 127.0.0.1;
+        deny all;
         include /etc/nginx/eqpress/common_login_limiter.conf;
     }
 
@@ -56,6 +58,13 @@ server {
 {{lua_config_root}}
         try_files $uri $uri/ /index.php?$args;
     }
+    
+    location ~* xmlrpc\.php {
+        allow 127.0.0.1;
+        deny all;
+        include /etc/nginx/eqpress/common_login_limiter.conf;
+    }
+
 
     location ~ \.php$ {
         location ~* wp\-login\.php {
