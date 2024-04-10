@@ -1,0 +1,107 @@
+---
+- name: create provision directories
+  become: yes
+  ansible.builtin.file:
+    path: "{{ eqpress_root_dir }}/{{ item.dir }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { dir: '', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: '.sessions', owner: '{{ web_user }}', group: '{{ web_groupname }}', mode: '0770' }
+    - { dir: 'catchall', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'provision', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'ansible', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'provision/includes', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'provision/pending', owner: 'root', group: '{{ web_groupname }}', mode: '0775' }
+    - { dir: 'provision/processing', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'provision/processed', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'provision/templates', owner: 'root', group: 'root', mode: '0755' }
+  tags:
+    - provision_dir
+    - ansible_inventory
+
+- name: catchall templates
+  become: yes
+  ansible.builtin.template:
+    src: "catchall/{{ item }}.j2"
+    dest: "{{ eqpress_root_dir }}/catchall/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - index.html
+
+- name: create a webserver writable ep_provision.log
+  become: yes
+  ansible.builtin.file:
+    path: "{{ eqpress_root_dir }}/provision/ep_provision.log"
+    mode: 0600
+    owner: "{{ web_user }}"
+    group: "{{ web_groupname }}"
+    state: touch
+
+- name: copy provision scripts
+  become: yes
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ eqpress_root_dir }}/{{ item }}"
+    mode: 0644
+    owner: root
+    group: root
+  loop:
+    - provision/install.css
+    - provision/includes/class-curl-request.php
+    - provision/includes/class-ep-provision-view.php
+
+- name: install main provision code from template
+  become: yes
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ eqpress_root_dir }}/{{ item }}"
+    mode: 0644
+    owner: root
+    group: root
+  loop:
+    - provision/ep-provision.php
+    - provision/includes/class-ep-provision-util.php
+    - provision/templates/nginx-config.mustache
+    - provision/templates/wp-config.php.mustache
+    - provision/templates/welcome-email.txt.mustache
+    - provision/templates/ep-provision.yml.mustache
+
+- name: install auto-provision GPG key
+  become: yes
+  ansible.builtin.shell:
+    cmd: "gpg --keyserver hkps://keys.openpgp.org --recv-keys {{ auto_provision_gpg_id }}"
+  ignore_errors: yes
+
+- name: install ansible
+  become: yes
+  ansible.builtin.apt:
+    name: ansible
+    state: present
+
+- ansible.builtin.include_tasks: install-mustache.yml
+  tags: always
+
+- ansible.builtin.include_tasks: install-rampass.yml
+  tags: always
+
+- name: get some varibles set from json string of nodes
+  ansible.builtin.set_fact:
+    auto_provision_nodes_input: "{{ auto_provision_nodes | from_json }}"
+  tags:
+    - ansible_inventory
+
+- name: install ansible_inventory
+  become: yes
+  ansible.builtin.template:
+    dest: "{{ eqpress_root_dir }}/ansible/hosts"
+    src: etc/ansible/hosts.j2
+    mode: "0640"
+    owner: root
+    group: root
+  tags:
+    - ansible_inventory

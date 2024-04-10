@@ -1,0 +1,48 @@
+---
+- hosts: localhost
+  gather_facts: false
+
+  vars_prompt:
+    - name: "auto_provision_server"
+      prompt: "Auto-provision server name"
+      default: "provision.deflect.ca"
+      private: no
+
+    - name: "dns_ip_provision"
+      prompt: "Provision server IP address"
+      default: "127.0.0.1"
+      private: no
+
+    - name: "auto_provision_node_location"
+      prompt: "Initial group name for servers"
+      default: "CA1"
+      private: no
+    
+    - name: "auto_provision_node_hostname"
+      prompt: "Initial master node host server name"
+      default: "node1.example.com"
+      private: no
+
+    - name: "dns_ip_master"
+      prompt: "Initial master node host server IP address"
+      default: "127.0.0.1"
+      private: no
+    
+    - name: "auto_provision_gpg_id"
+      prompt: "keyID for encrypting logs (lookup your keyID at keys.openpgp.org). Use long key. "
+      default: ""
+      private: no
+
+    - name: "eq_remote_user"
+      prompt: "Remote user name used to login to master note host"
+      default: "user"
+      private: no  
+
+    - name: "cdn_real_ips"
+      prompt: "real ip list comma separated, leave blank if none"
+      default: ""
+      private: no
+
+  roles:
+     - init-eqpress-provision 
+

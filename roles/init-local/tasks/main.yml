@@ -1,0 +1,45 @@
+---
+- name: create config directory
+  ansible.builtin.file:
+    path: "../{{ item }}"
+    state: directory
+    mode: 0750
+  loop:
+    - config
+    - config/inventory
+    - config/ssl
+    - config/group_vars
+    - config/host_vars
+
+- name: copy localhost.init to config/inventory/hosts
+  ansible.builtin.copy:
+    src: ../localhost.init
+    dest: ../config/inventory/hosts
+
+- name: link group_vars and host_vars to top-level
+  ansible.builtin.file:
+    src: "config/{{ item }}"
+    dest: "../{{ item }}"
+    state: link
+  loop:
+    - group_vars
+    - host_vars
+
+- name: link group_vars and host_vars to playbooks/ level
+  ansible.builtin.file:
+    src: "../config/{{ item }}"
+    dest: "{{ item }}"
+    state: link
+  loop:
+    - group_vars
+    - host_vars
+
+- ansible.builtin.set_fact:
+    random_password1: "{{ lookup('password', '/dev/null chars=ascii_lowercase,ascii_uppercase,punctuation,digits length=' + item + '') }}"
+  loop:
+    - '{{ 25|random(20,1) }}'
+
+- name: Create the main variables file (group_vars/all.yml).
+  ansible.builtin.template:
+    src: all.yml.j2
+    dest: "../config/group_vars/all.yml"

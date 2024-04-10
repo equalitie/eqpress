@@ -1,0 +1,62 @@
+---
+- name: install software
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - ufw
+    state: present
+
+# TODO: Change this to a handler
+- name: disable ufw until configured
+  become: yes
+  ansible.builtin.ufw:
+    state: disabled
+
+- name: Configure ufw rules
+  become: yes
+  ansible.builtin.ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop:
+    - { rule: 'allow', port: '{{ ssh_port | default("22") }}', proto: 'tcp' }
+    - { rule: 'allow', port: '80', proto: 'tcp' }
+    - { rule: 'allow', port: '443', proto: 'tcp' }
+
+- name: Enable ufw logging
+  become: yes
+  ansible.builtin.ufw:
+    logging: "on"
+
+- name: enable mysql port 
+  become: yes
+  ansible.builtin.ufw:
+    rule: allow
+    port: "3306"
+    proto: tcp
+    from_ip: "{{ hostvars[ item ][ 'public_ipv4_address' ] }}/32"
+  when: not auto_provision_host | default(false) | bool
+  loop: "{{ play_hosts }}"
+
+- name: Configure ufw defaults
+  become: yes
+  ansible.builtin.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: 'incoming', policy: 'deny' }
+    - { direction: 'outgoing', policy: 'allow' }
+
+- name: copy ufw override sysctl.conf
+  become: yes
+  ansible.builtin.copy:
+    src: sysctl.conf
+    dest: /etc/ufw/sysctl.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: enable ufw
+  become: yes
+  ansible.builtin.ufw:
+    state: enabled

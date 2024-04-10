@@ -1,2 +1,0 @@
-*/5 * * * *  root /usr/local/sbin/check_mysql_replication_status.sh
-3 */4 * * *  root /usr/sbin/nginx -s reload

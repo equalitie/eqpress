@@ -1,0 +1,391 @@
+---
+- name: install packages
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - monit
+      - git-core
+      - rsyslog
+    state: present
+
+# It is okay if server is minimize. Stop telling us
+- name: remove /etc/update-motd.d/60-unminimize
+  become: yes
+  ansible.builtin.file:
+    path: /etc/update-motd.d/60-unminimize
+    state: absent
+
+- name: see if default monitrc exists
+  become: yes
+  ansible.builtin.stat: 
+    path: /etc/monit/monitrc
+  register: monitrc_stat
+
+- name: stop monit process
+  become: yes
+  ansible.builtin.systemd:
+    name: monit
+    state: stopped
+  when: monitrc_stat.stat.exists
+
+- name: move default monitrc if exists 
+  become: yes
+  ansible.builtin.command:
+    cmd: mv /etc/monit/monitrc /etc/monit/monitrc.dist
+    removes: /etc/monit/monitrc
+    creates: /etc/monit/monitrc.dist
+
+- name: add .ssh dir to user skel
+  become: yes
+  ansible.builtin.file:
+    path: /etc/skel/.ssh
+    owner: root
+    group: root
+    mode: 0700
+    state: directory
+
+- name: add authorized_key file to user skel
+  become: yes
+  ansible.builtin.file:
+    path: /etc/skel/.ssh/authorized_keys
+    owner: root
+    group: root
+    mode: 0600
+    state: touch
+
+- name: create admin groups
+  become: yes
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - monitor
+    - wordpress 
+
+- name: create admin users
+  become: yes
+  ansible.builtin.user:
+    group: "{{ item.group }}"
+    shell: /bin/bash
+    name: "{{ item.user }}"
+    createhome: yes
+    home: "/home/{{ item.user }}"
+  loop:
+    - { user: "monitor", group: "monitor" }
+    - { user: "wordpress", group: "wordpress" }
+
+- name: Create sftponly group for chroot'ed logins
+  become: yes
+  ansible.builtin.group:
+    name: sftponly
+    state: present
+  when:
+    - mysql_repl_role is defined
+
+- name: copy sshd_config file containing sftponly subsystem for chroot'ed logins
+  become: yes
+  ansible.builtin.copy:
+    src: etc/ssh/sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    - mysql_repl_role is defined
+
+- name: make sure all keys exist from sshd_config
+  become: yes
+  ansible.builtin.command:
+    cmd: /usr/bin/ssh-keygen -A
+  when:
+    - mysql_repl_role is defined
+
+- name: copy sudoers file
+  become: yes
+  ansible.builtin.copy:
+    src: etc/sudoers
+    dest: /etc/sudoers
+    owner: root
+    group: root
+    mode: 0440
+
+- name: set permissions on sbin directory including setuid bit
+  become: yes
+  ansible.builtin.file:
+    path: /usr/local/sbin
+    owner: root
+    group: root
+    mode: 0755
+  tags:
+    - sbin
+
+- name: copy all sbin press admin scripts
+  become: yes
+  ansible.builtin.copy:
+    src: "usr/local/sbin/{{ item }}"
+    dest: /usr/local/sbin
+    owner: root
+    group: staff
+    mode: 0755
+  loop:
+    - chcustown
+    - chepown
+    - chwebown
+    - check-mem.pl
+    - check_size_of_php_error_logs.sh
+    - class-http-log-parser.php
+    - eq_admin_emails.sh
+    - eq_deactivate_site.sh
+    - eq_get_sftp_user.sh
+    - eq_plugin_blacklist.php
+    - eq_purge_site.sh
+    - eq_purge_cache.sh
+    - eq_security_scan.sh
+    - eq_setperms
+    - eq_setup_replication.sh
+    - eq_unprovision.sh
+    - eq_update_wp.sh
+    - monit_check_mailq.sh
+    - monit_connections.sh
+    - monit_php-fpm_procs.sh
+    - monitor_nginx.pl
+    - resident-ram
+    - top_ram_procs.sh
+    - wpcli_woocommerce_disable_redirect.php
+    - wpcli_wordfence_no_scan.php
+    - wp_check_plugins.php
+    - wp_update_plugins.sh
+    - htpasswd.php
+    - field
+  tags:
+    - sbin
+  when:
+    - mysql_repl_role is defined
+
+- name: copy all sbin press admin scripts needed provision
+  become: yes
+  ansible.builtin.copy:
+    src: "usr/local/sbin/{{ item }}"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: staff
+    mode: 0755
+  loop:
+    - check-mem.pl
+    - class-http-log-parser.php
+    - monit_check_mailq.sh
+    - monit_connections.sh
+    - resident-ram
+    - top_ram_procs.sh
+    - field
+  when: auto_provision_host | default(false) | bool
+  tags:
+    - sbin
+
+- name: sbin press admin scripts templates
+  become: yes
+  ansible.builtin.template:
+    src: "usr/local/sbin/{{ item }}.j2"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: staff
+    mode: 0750
+  loop:
+    - check_for_disk_usage.sh
+    - check_for_large_files.sh
+    - check_for_large_http_log_files.sh
+    - eq_chpass.sh
+    - eq_bruteprotect.sh
+    - eq_deploy_must_use_plugins.sh
+    - eq_install_console.sh
+    - eq_install_cache_purge.sh
+    - monit_eq_console_reset_password.sh
+    - monit_eq_console_lockdown.sh
+    - monit_eq_console_perms.sh
+    - nagios_check_mysql.php
+    - eq_site_snapshot.sh
+    - eq_gen_api_key.php
+  tags:
+    - sbin
+  when:
+    - mysql_repl_role is defined
+
+- name: template mysql slave only scripts
+  become: yes
+  ansible.builtin.template:
+    src: "usr/local/sbin/{{ item }}.j2"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: staff
+    mode: 0750
+  when:
+    -  mysql_repl_role is defined
+    -  mysql_repl_role == 'slave'
+  loop:
+    - check_mysql_replication_status.sh
+  tags:
+    - sbin
+
+- name: copy backup scripts
+  become: yes
+  ansible.builtin.copy:
+    src: "usr/local/sbin/{{ item }}"
+    dest: /usr/local/sbin
+    owner: root
+    group: staff
+    mode: 0750
+  loop:
+    - backup_to_slave.sh
+    - wp_db_backup.sh
+    - backup_with_tarsnap.sh
+  tags:
+    - sbin
+  when:
+    - mysql_repl_role is defined
+
+- name: webstat script templates
+  become: yes
+  ansible.builtin.template:
+    src: "usr/local/sbin/{{ item }}.j2"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: staff
+    mode: 0755
+  loop:
+    - eq_api_webstats.php
+    - webstats.php
+    - webstats_totals.php
+  when:
+    - mysql_repl_role is defined
+  tags:
+    - sbin
+
+- name: copy failover script template to slave
+  become: yes
+  ansible.builtin.template:
+    src: "usr/local/sbin/master_or_slave.sh.j2"
+    dest: /usr/local/sbin/master_or_slave.sh
+    owner: root
+    group: staff
+    mode: 0750
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'slave'
+    - mysql_repl_master is defined
+  tags:
+    - sbin
+
+- name: copy backup from master script to slave
+  become: yes
+  ansible.builtin.template:
+    src: usr/local/sbin/backup_from_master.sh.j2
+    dest: /usr/local/sbin/backup_from_master.sh
+    owner: root
+    group: staff
+    mode: 0750
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'slave'
+    - mysql_repl_master is defined
+  tags:
+    - sbin
+
+- name: custom monit-xx config template on nodes
+  become: yes
+  ansible.builtin.template:
+    src: "etc/monit/{{ item }}.j2"
+    dest: "/etc/monit/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  loop:
+    - monitrc-10
+    - monitrc-60
+  when:
+    - mysql_repl_role is defined
+  notify:
+    - "restart monit"
+
+- name: install provision templates
+  become: yes
+  ansible.builtin.template:
+    src: "usr/local/sbin/{{ item }}.j2"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0750
+  tags:
+    - sbin
+  loop:
+    - monit_eq_provision.sh
+  when: auto_provision_host | default(false) | bool
+
+- name: custom monit-xx config template on provision
+  become: yes
+  ansible.builtin.template:
+    src: "etc/monit/{{ item }}_auto-provision.j2"
+    dest: "/etc/monit/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  loop:
+    - monitrc-10
+    - monitrc-60
+  when: auto_provision_host | default(false) | bool
+  notify:
+    - "restart monit"
+
+- name: copy limits.conf to increase open file limits for nginx and mysql
+  become: yes
+  ansible.builtin.copy:
+    src: etc/security/limits.conf
+    dest: /etc/security/limits.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy crontab to change default launch of daily tasks from 6am to 1am for nginx webstats
+  become: yes
+  ansible.builtin.copy:
+    src: etc/crontab
+    dest: /etc/crontab
+    owner: root
+    group: root
+    mode: 0644
+
+- name: copy custom monit startup script
+  become: yes
+  ansible.builtin.template:
+    src: etc/init.d/monit.j2
+    dest: /etc/init.d/monit
+    owner: root
+    group: root
+    mode: 0750
+    backup: yes
+  notify:
+    - "restart monit"
+
+- name: start monit
+  become: yes
+  ansible.builtin.systemd:
+    name: monit
+    state: started
+    daemon_reload: yes
+    enabled: yes
+
+- name: download and install wp-cli
+  become: yes
+  ansible.builtin.get_url:
+    url: "{{ wp_cli_download }}"
+    dest: /usr/local/sbin/wp
+    owner: root
+    group: root
+    mode: 0755
+    force: yes
+  when:
+    - mysql_repl_role is defined
+    - wp_cli_newest is defined
+    - wp_cli_download is defined
+    - wp_cli_newest
+  tags:
+    - sbin

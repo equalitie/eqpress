@@ -1,0 +1,24 @@
+---
+- name: generate random strings
+  local_action: shell < /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c {{ item.size }}
+  register: rand_result
+  with_items:
+    - { size: '{{15|random(10,1)}}' }
+    - { size: '{{15|random(10,1)}}' }
+    - { size: '{{15|random(10,1)}}' }
+    - { size: '{{15|random(10,1)}}' }
+
+- name: Create the group_vars file.
+  ansible.builtin.template:
+    src: group.yml.j2
+    dest: ../group_vars/{{ ansible_group_name }}.yml
+
+- name: Create the master host_vars file.
+  ansible.builtin.template:
+    src: master.yml.j2
+    dest: ../host_vars/{{ master_hostname }}.yml
+
+- name: Create the slave host_vars file.
+  ansible.builtin.template:
+    src: slave.yml.j2
+    dest: ../host_vars/{{ slave_hostname }}.yml

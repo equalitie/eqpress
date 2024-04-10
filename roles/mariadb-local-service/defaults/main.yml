@@ -1,0 +1,9 @@
+---
+mariadb_config_file: /etc/mysql/mariadb.cnf
+mariadb_datadir: /var/lib/mysql
+mariadb_unix_socket: /run/mysqld/mysqld.sock
+mariadb_logdir: /var/log/mysql
+mariadb_port: "3306"
+mariadb_systemd_override_dir: "/etc/systemd/system/mariadb.service.d"
+mariadb_systemd_override_nofile: "350000"
+mariadb_systemd_override_memlock: "350000"

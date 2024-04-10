@@ -1,0 +1,10 @@
+---
+
+- name: clone the mustache repository
+  become: yes
+  ansible.builtin.git:
+    repo: https://github.com/bobthecow/mustache.php.git
+    dest: "{{ eqpress_root_dir }}/provision/includes/mustache"
+    recursive: yes
+    version: "{{ mustache_version }}"
+    accept_hostkey: yes

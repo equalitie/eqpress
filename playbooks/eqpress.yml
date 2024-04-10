@@ -1,0 +1,24 @@
+---
+- hosts: all
+  any_errors_fatal: yes
+  gather_facts: yes
+
+  vars:
+    - is_local: no
+    - host_count: 2
+
+  roles:
+    - prerequisites 
+    - common
+    - firewall-hardening
+    - ssh-config
+    - eqpress-ssl
+    - eqpress-sysops
+    - eqpress-root
+# TODO - docker
+    - nginx-web-services
+    - php-services
+    - mariadb-local-service
+    - mariadb-local-enable-replication
+    - postfix-email-service
+    - eqpress-cronjobs

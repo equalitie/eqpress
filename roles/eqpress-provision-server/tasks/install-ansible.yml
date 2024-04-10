@@ -1,0 +1,35 @@
+---
+
+- name: install required python packages
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - python-httplib2
+      - python-jinja2
+      - python-yaml
+      - python-six
+    state: present
+
+- name: create the /etc/ansible directory
+  become: yes
+  ansible.builtin.file: state=directory path=/etc/ansible owner=root group=root mode=0755
+
+- name: create the ansible log file
+  become: yes
+  ansible.builtin.shell: touch /var/log/ansible.log && chmod 0640 /var/log/ansible.log && chown root:root /var/log/ansible.log creates=/var/log/ansible.log
+
+- name: copy the ansible template files 
+  become: yes
+  ansible.builtin.template: src=etc/ansible/{{ item }}.j2 dest=/etc/ansible/{{ item }} owner=root group=root mode=0640
+  loop:
+    - hosts 
+    - ansible.cfg
+
+- name: clone the ansible repository
+  become: yes
+  ansible.builtin.git: repo=git://github.com/ansible/ansible.git
+       dest={{ eqpress_root_dir }}/provision/../ansible
+       recursive=yes
+       version={{ auto_provision_ansible_version }}
+       accept_hostkey=yes
+  when: auto_provision_host | default(false) | bool

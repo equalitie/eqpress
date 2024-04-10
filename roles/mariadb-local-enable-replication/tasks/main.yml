@@ -1,0 +1,291 @@
+---
+- name: set correct mysql replication mode variables if ansible is <= {{ ansible_rename_replica_ident }}
+  ansible.builtin.set_fact:
+    getreplica: "getslave"
+    startreplica: "startslave"
+    changeprimary: "changemaster"
+  when:
+    - ansible_version.full is version(ansible_rename_replica_ident, '<=')
+  tags:
+    - mysql
+
+- name: Create the replication user on the master
+  become: yes
+  community.mysql.mysql_user:
+    name: "{{ mysql_repl_creds.username }}"
+    host: "{{ item }}"
+    password: "{{ mysql_repl_creds.password }}"
+    priv: "*.*:REPLICATION SLAVE"
+    state: present
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  loop:
+    - "{{ hostvars[inventory_hostname].mysql_repl_slave }}"
+    - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
+  no_log: no
+  when:
+   - mysql_repl_role is defined
+   - mysql_repl_role == "master"
+  tags:
+    - mysql
+
+- name: Create the mysqladmin user for replication monitoring on master
+  become: yes
+  community.mysql.mysql_user:
+    name: "{{ mysql_admin_user.username }}"
+    host: "{{ item }}"
+    password: "{{ mysql_admin_user.password }}"
+    priv: "*.*:SUPER,PROCESS"
+    state: present
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  loop:
+    - localhost
+    - "{{ inventory_hostname }}"
+    - "{{ hostvars[inventory_hostname].mysql_repl_slave }}"
+    - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
+  when:
+   - mysql_repl_role is defined
+   - mysql_repl_role == 'master'
+  no_log: no
+  tags:
+    - mysql
+
+- name: Copy .my.cnf-mysqladmin file
+  become: yes
+  ansible.builtin.template:
+    src: users/.my.cnf-mysqladmin.j2
+    dest: "{{ item.dir }}/.my.cnf-mysqladmin"
+    mode: 0600
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+  loop:
+    - { dir: '/root', owner: 'root', group: 'root' }
+    - { dir: '{{ ansible_user_dir }}', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
+  when:
+    - mysql_repl_role is defined
+    - (mysql_repl_role == 'master' or mysql_repl_role == 'slave')
+  tags:
+    - mysql
+
+- name: get replica replication status
+  become: yes
+  community.mysql.mysql_replication:
+    mode: "{{ getreplica | default('getreplica') }}"
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'slave'
+  register: replica
+  no_log: yes
+  tags:
+    - mysql
+
+- name: tell all we are going to create replica if needed
+  ansible.builtin.set_fact:
+    sync_replica: yes
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'slave'
+    - (replica.Is_Replica is defined and not replica.Is_Replica) or (replica.Is_Slave is defined and not replica.Is_Slave) 
+  delegate_facts: yes
+  delegate_to: "{{ item }}"
+  loop: "{{ play_hosts }}"
+  tags:
+    - mysql
+
+# We only go in this block when building replica
+- block:
+    - name: stop the mysql server on the slave
+      become: yes
+      ansible.builtin.systemd:
+        name: mariadb
+        state: stopped
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name: stat mysql directory on slave
+      become: yes
+      ansible.builtin.stat:
+        path: "{{ mariadb_datadir }}"
+      register: mysql_dir_stat
+      when:
+        - mysql_repl_role == 'slave'
+
+    # This is for safety. Really not needed. We need to cleanup sometimes
+    - name: move "{{ mariadb_datadir }}" if exists on slave
+      become: yes
+      ansible.builtin.command:
+        cmd: "mv {{ mariadb_datadir }} {{ mariadb_datadir }}-{{ ansible_date_time.iso8601_basic_short }}"
+        creates: "{{ mariadb_datadir }}-{{ ansible_date_time.iso8601_basic_short }}"
+      when:
+        - mysql_repl_role == 'slave'
+        - mysql_dir_stat.stat.exists
+
+    - name: create temp directory for transferring master snapshot
+      become: yes
+      ansible.builtin.file:
+        path: "/var/lib/mariadb_master_snapshot/{{ ansible_date_time.iso8601_basic_short }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+        recurse: yes
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name: remove any old attempts on master
+      become: yes
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      when:
+        - mysql_repl_role == 'master'
+      loop:
+        - /tmp/mariadb_master-snapshot.tar.bz2
+        - /tmp/mariadb_backup
+
+    - name: create backup on master
+      become: yes
+      ansible.builtin.command:
+        cmd: mariabackup --backup --target-dir /tmp/mariadb_backup -u root
+      when:
+        - mysql_repl_role == 'master'
+
+    - name: create current tar.bz2 of snapshot on master
+      become: yes
+      ansible.builtin.archive:
+        path:
+          - /tmp/mariadb_backup/*
+        dest: /tmp/mariadb_master-snapshot.tar.bz2
+        format: bz2
+      when:
+        - mysql_repl_role == 'master'
+
+    - name: fetch the /tmp/mariadb_master-snapshot.tar.bz2 from master
+      ansible.builtin.synchronize:
+        src: /tmp/mariadb_master-snapshot.tar.bz2
+        dest: /tmp/mariadb_master-snapshot.tar.bz2
+        mode: push
+      delegate_to: "{{ item }}"
+      loop: "{{ play_hosts }}"
+      when:
+        - mysql_repl_role == 'slave'
+        - item != inventory_hostname
+
+    - name: cleanup attempts on master
+      become: yes
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      when:
+        - mysql_repl_role == 'master'
+      loop:
+        - /tmp/mariadb_master-snapshot.tar.bz2
+        - /tmp/mariadb_backup
+
+    - name: unarchive snapshot to slave
+      become: yes
+      ansible.builtin.unarchive:
+        src: /tmp/mariadb_master-snapshot.tar.bz2
+        dest: "/var/lib/mariadb_master_snapshot/{{ ansible_date_time.iso8601_basic_short }}"
+        owner: mysql
+        group: mysql
+        remote_src: yes
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name: prepare snapshot before restore on slave
+      become: yes
+      ansible.builtin.command:
+        cmd: mariabackup --prepare --target-dir "/var/lib/mariadb_master_snapshot/{{ ansible_date_time.iso8601_basic_short }}"
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name: restore snapshot on slave
+      become: yes
+      ansible.builtin.command:
+        cmd: mariabackup --copy-back --target-dir "/var/lib/mariadb_master_snapshot/{{ ansible_date_time.iso8601_basic_short }}"
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name:  fix datadir owner recurse
+      become: yes
+      ansible.builtin.file:
+        path: "{{ mariadb_datadir }}"
+        state: directory
+        owner: mysql
+        group: mysql
+        recurse: yes
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name:  fix datadir mode
+      become: yes
+      ansible.builtin.file:
+        path: "{{ mariadb_datadir }}"
+        state: directory
+        owner: mysql
+        group: mysql
+        mode: 0755
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name: get the binlog file name
+      become: yes
+      ansible.builtin.shell:
+        cmd: cat xtrabackup_binlog_info | awk '{print $1}'
+        chdir: "/var/lib/mariadb_master_snapshot/{{ ansible_date_time.iso8601_basic_short }}"
+      register: mysql_binlog_file
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name: get the binlog position
+      become: yes
+      ansible.builtin.shell:
+        cmd: cat xtrabackup_binlog_info | awk '{print $2}'
+        chdir: "/var/lib/mariadb_master_snapshot/{{ ansible_date_time.iso8601_basic_short }}"
+      register: mysql_binlog_position
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name: start mysql on the replica
+      become: yes
+      ansible.builtin.systemd:
+         name: mariadb
+         state: started
+      when:
+        - mysql_repl_role == 'slave'
+
+    - name: Configure replication on the replica
+      community.mysql.mysql_replication:
+        mode: "{{ changeprimary | default('changeprimary') }}"
+        master_host: "{{ mysql_repl_master }}"
+        master_user: "{{ mysql_repl_creds.username }}"
+        master_password: "{{ mysql_repl_creds.password }}"
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+        master_log_file: "{{ mysql_binlog_file.stdout }}"
+        master_log_pos: "{{ mysql_binlog_position.stdout }}"
+        master_ssl: yes
+        master_ssl_ca: /etc/ssl/eqpress/root_CA.pem
+        master_ssl_cert: "/etc/ssl/eqpress/{{ inventory_hostname }}.pem"
+        master_ssl_key: "/etc/ssl/eqpress/{{ inventory_hostname }}.key"
+      when:
+        - mysql_repl_role == 'slave'
+      no_log: yes
+
+  when:
+    - mysql_repl_role is defined
+    - sync_replica is defined
+    - sync_replica
+  tags:
+    - mysql
+
+# Always run start slave on slave
+- name: Start slave
+  become: yes
+  community.mysql.mysql_replication:
+    mode: "{{ startreplica | default('startreplica') }}"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'slave'
+  tags:
+    - mysql

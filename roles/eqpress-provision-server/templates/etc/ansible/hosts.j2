@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+[nodes]
+{% for node in auto_provision_nodes_input %}
+# {{ node }} cluster
+{{ auto_provision_nodes_input[node].hostname }} ansible_ssh_host={{ auto_provision_nodes_input[node].ip }}
+{% endfor %}

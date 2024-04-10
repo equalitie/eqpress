@@ -1,0 +1,83 @@
+---
+- name: copy webstats cron jobs for master
+  become: yes
+  ansible.builtin.template:
+    src: etc/cron.d/eqpress_webstats.j2
+    dest: /etc/cron.d/eqpress_webstats
+    owner: root
+    group: root
+    mode: 0640
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == "master"
+  tags:
+    - cron
+  notify:
+    - "restart cron"
+
+- name: copy backup cron jobs
+  become: yes
+  ansible.builtin.copy:
+    src: "etc/cron.d/eqpress_backups.{{ mysql_repl_role }}"
+    dest: /etc/cron.d/eqpress_backups
+    owner: root
+    group: root
+    mode: 0640
+  tags:
+    - cron
+  notify:
+    - "restart cron"
+
+- name: copy system checks cron jobs
+  become: yes
+  ansible.builtin.copy:
+    src: "etc/cron.d/eqpress_system_checks.{{ mysql_repl_role }}"
+    dest: /etc/cron.d/eqpress_system_checks
+    owner: root
+    group: root
+    mode: 0640
+  tags:
+    - cron
+  notify:
+    - "restart cron"
+
+- name: copy cronjob to purge PHP sessions
+  become: yes
+  ansible.builtin.copy:
+    src: etc/cron.d/php
+    dest: /etc/cron.d/eqpress_php
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - cron
+  notify:
+    - "restart cron"
+
+# TODO: remove ? deprecated
+#- name: copy cron config
+#  become: yes
+#  copy:
+#    src: etc/default/cron
+#    dest: /etc/default/cron
+#    owner: root
+#    group: root
+#    mode: 0644
+#  tags:
+#    - cron
+#  notify:
+#    - "restart cron"
+
+# TODO: remove ? deprecated
+#- name: copy cron.override
+#  become: yes
+#  copy:
+#    src: etc/init/cron.override
+#    dest: /etc/init/cron.override
+#    owner: root
+#    group: root
+#    mode: 0644
+#  tags:
+#    - cron
+#  notify:
+#    - "restart cron"

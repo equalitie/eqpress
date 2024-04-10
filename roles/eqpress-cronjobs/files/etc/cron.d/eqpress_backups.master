@@ -1,0 +1,2 @@
+#13 4    * * *   root    /usr/local/sbin/wp_db_backup.sh
+13 4    * * *   root    /usr/local/sbin/ep_site_snapshot.sh

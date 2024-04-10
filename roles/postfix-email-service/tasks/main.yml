@@ -1,0 +1,64 @@
+---
+- name: Install common packages
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - clamav
+      - mailutils 
+      - libsasl2-modules
+      - postfix
+    state: present
+  tags:
+    - postfix
+
+- name: template postfix mail.cf
+  become: yes
+  ansible.builtin.template:
+    src: "etc/postfix/{{ item }}.j2"
+    dest: "/etc/postfix/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+   - main.cf-eqpress
+   - main.cf-mandrill
+   - main.cf-sendgrid
+  tags:
+    - postfix
+  notify:
+    - "restart postfix"
+
+- name: stat /etc/postfix/main.cf
+  become: yes
+  ansible.builtin.stat:
+    path: /etc/postfix/main.cf
+  register: postfix_main_cf
+  tags:
+    - postfix
+
+- name: move default main.cf if exists and not symlink
+  become: yes
+  ansible.builtin.command:
+    cmd: mv /etc/postfix/main.cf /etc/postfix/main.cf.dist
+    creates: /etc/postfix/main.cf.dist
+  when:
+    - postfix_main_cf.stat.islnk is defined
+    - not postfix_main_cf.stat.islnk
+  tags:
+    - postfix
+  notify:
+    - "restart postfix"
+
+- name: Symlink to postfix mail.cf
+  become: yes
+  ansible.builtin.file:
+    src: "/etc/postfix/main.cf-{{ mail_service }}"
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    state: link
+    force: yes
+  tags:
+    - postfix
+  notify:
+    - "restart postfix"

@@ -1,0 +1,20 @@
+---
+- hosts: provision
+  gather_facts: yes
+
+  vars:
+    - is_local: no
+    - host_count: 1
+
+  roles:
+     - prerequisites
+     - common
+     - ssh-config
+     - eqpress-ssl
+     - firewall-hardening
+     - postfix-email-service
+     - nginx-web-services
+     - php-services
+     - mariadb-local-service
+     - eqpress-sysops
+     - eqpress-provision-server

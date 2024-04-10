@@ -1,0 +1,108 @@
+---
+- hosts: localhost 
+  gather_facts: yes
+
+#  pre_tasks:
+#    - ansible.builtin.fail:
+#        msg: 'install must be on Ubuntu 22.04 or above'
+#      when:
+#        - ansible_distribution != 'Ubuntu'
+#        - ansible_distribution_version is version('22.04','<')
+
+  vars:
+    is_local: true
+
+  vars_prompt:
+    - name: "org_name"
+      prompt: "Enter organization name"
+      default: "EQUALITIE"
+      private: no
+
+    - name: "org_support_email"
+      prompt: "Enter organization support email address"
+      default: "support@deflect.ca"
+      private: no
+
+    - name: "org_support_url"
+      prompt: "Enter organization support website address"
+      default: "https://support.deflect.ca"
+      private: no
+
+    - name: "rampass_domain"
+      prompt: "Enter password server domain"
+      default: "passwords.deflect.ca"
+      private: no
+
+    - name: "root_cert_country"
+      prompt: "Root certificate country"
+      default: "CA"
+      private: no
+
+    - name: "root_cert_state"
+      prompt: "Root certificate state/province"
+      default: "Quebec"
+      private: no
+
+    - name: "root_cert_city"
+      prompt: "Root certificate city"
+      default: "Montreal"
+      private: no
+
+    - name: "root_cert_email"
+      prompt: "Root certificate email address"
+      default: "certs@deflect.ca"
+      private: no
+
+    - name: "mandrill_username"
+      prompt: "Mandrill username if used"
+      default: "change_me_if_used"
+      private: no
+
+    - name: "mandrill_password"
+      prompt: "Mandrill password if used"
+      default: "change_me_if_used"
+      private: yes
+
+    - name: "sendgrid_username"
+      prompt: "Sendgrid username if used"
+      default: "change_me_if_used"
+      private: no
+
+    - name: "sendgrid_password"
+      prompt: "Sendgrid password if used"
+      default: "change_me_if_used"
+      private: yes
+
+    - name: "eqpress_mail_username"
+      prompt: "eqpress email username if used"
+      default: "change_me_if_used"
+      private: no
+
+    - name: "eqpress_mail_password"
+      prompt: "eqpress email password if used"
+      default: "change_me_if_used"
+      private: yes
+
+    - name: "eqpress_mail_server"
+      prompt: "eqpress email relay server if used"
+      default: "mail.equalit.tld"
+      private: no
+
+    - name: "email_service"
+      prompt: "Default email service (mandrill, sendgrid, or eqpress)"
+      default: "eqpress"
+      private: no
+
+    - name: "email_domain"
+      prompt: "Main email domain for mail server"
+      default: "eqpress.net-changeme"
+      private: no
+
+    - name: "monitoring_email"
+      prompt: "Monitoring email address"
+      default: "sysops@equalit.ie"
+      private: no
+
+  roles:
+   - init-local
+   #- common

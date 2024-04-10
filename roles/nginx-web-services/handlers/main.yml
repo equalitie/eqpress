@@ -1,0 +1,5 @@
+---
+- name: remount
+  become: yes
+  ansible.builtin.command:
+    cmd: /bin/mount -a

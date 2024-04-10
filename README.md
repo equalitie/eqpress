@@ -1,200 +1,92 @@
-### Installing
-A host with a working Ansible installation is required. Read this:
+eqpress
+=========
 
-	http://docs.ansible.com/ansible/intro_installation.html
+Ansible to build eqpress servers. eqpress it a production
+wordpress server infrastructure for eQualitie 
 
-For Debian 9+
+Requirements
+------------
 
-	apt-get install ansible
+3 - Servers (2 eqpress, 1 provision)
+    Tested on Ubuntu 22.04 LTS
 
-Clone this repo:
+1 - System (controller 'local') used to install to servers. 
+    This will also be place to push out updates.
+    Tested on Ubuntu 22.04 LTS and Debian 11
 
-	git clone https://github.com/equalitie/eqpress.git
+Dependencies
+------------
 
-#### Environment Initialization
-Initializing the ansible environment is required before any other playbooks can be executed. Change into the equpress directory, create the inventory file and then run the init playbook:
+Ansible v2.10+
 
-	cd eqpress 
-	touch hosts
-	vi hosts (add your target hosts including localhost)
+Ubuntu 22.04 LTS +
 
-Example inventory
-	
-	[local]
-	localhost ansible_connection=local
+Note: Tested and developed for Ubuntu 22.04 LTS
 
-	[production]
-	eqwp1.equalit.ie
-	eqwp2.equalit.ie
+Install
+-------
 
-	[masters]
-	eqwp1.equalit.ie
+First: Setup 4 Systems 
+       2 EQPRESS servers (recommend at least 2CPU, 16G RAM, 20G DISK)
+       1 PROVISION server (recommend at least 2CPU, 4G RAM, 10G DISK)
+       1 CONTROLLER system (recommend at least 1CPU, 2G RAM 10G DISK)
 
-	[slaves]
-	eqwp2.equalit.ie
+Note: Best if all are same Linux Distribution
 
-	[eqwp]
-	eqwp1.equalit.ie
-	eqwp2.equalit.ie
-	
-Play to run
-	
-	ansible-playbook -i hosts play-init-env.yml -v
+Second: Pick a admin user, non-root, and create that user on all the systems.
+Third: Setup sudo with NO PASSWORD for this user on all systems.
+Forth: setup key login from CONTROLLER to all systems
+Fifth: Install ansible on CONTROLLER. 
 
-The following settings can be specified. Accepting the defaults are enough to configure the environment so the other playbooks will work but making them unique to your environment is best.
+At this point you should be able to get started
 
-SSL/TLS certificate attributes are required to generate the self-signed certificates used for MySQL replication.
+  apt-get install git-core
 
-* **Enter organization name**
-* **Root certificate country**
-* **Root certificate state/province**
-* **Root certificate city**
-* **Root certificate orginazational unit**
-* **Root certificate common name**
-* **Root certificate email address**
+  git clone this repo on your CONTROLLER
+  in user account you created above.
 
-Mandrill and Sendgrid are email delivery services offering free accounts for moderate levels of email traffic. These are not required but recommended for reliable email delivery.
+  apt-get install ansible
 
-* **Mandrill username** - Sign up for an account [here](https://mandrill.com/signup/). Free plan allows 12,000 sent emails per month.
-* **Mandrill password**
-* **Sendgrid username** - Sign up for a free account [here](https://sendgrid.com/user/signup). Free plan allows 400 sent emails per day.
-* **Sendgrid password**
-* **Default email service**
-* **Monitoring email address** - Where all alerts are sent to.
-* **Timezone**
-* **Use DNS lookup for host IP assignment** - y or n
+  cd eqpress
 
-"y" if you want to use dns lookup for IP and "n" to use ansible gathered facts for IP 
+  run:
+    ansible-playbook playbooks/init-local.yml -i localhost.init
+    ansible-playbook playbooks/init-eqpress.yml
+    vi config/inventory/hosts and add your [group] you named in the init-eqpress
 
-Note: If your VM or server has a private interal IP address and a network server supplies your public IP address (floating IP), choose "y" or your IP addresses will be the private addresses and in most cases will not work.
+      example: If you chose testservers1 as your group then
+               you would write the servers in like this.
+               Replace <user> and <ip addr> with correct values.
 
-#### Server Configuration Initialization
-To build a redundant pair of servers there are some ansible variables that need to be set for the playbooks to work. Run the initialization playbook to create the group and host variables:
+       [testservers1]
+       server1.name.com ansible_ssh_user=<user> ansible_ssh_host=<ip addr>
+       server2.name.com ansible_ssh_user=<user> ansible_ssh_host=<ip addr>
 
-	ansible-playbook -i hosts play-init-servers.yml -v
+    ansible-playbook playbooks/eqpress.yml -l testservers1
 
-The following settings must be specified:
+You should now have 2 rampress servers running
 
-* **Nginx worker processes** - Should equal c - 2 where c is number of CPU cores. If c is < 4 then worker procs should equal 2
-.
-* **PHP-FPM max children** - default is typically fine
-* **PHP-FPM start servers** - default is typically fine
-* **PHP-FPM min spare** - default is typically fine
-* **PHP-FPM max spare** - default is typically fine
-* **PHP-FPM max requests** - default prevents processes from eating too much RAM. Increase to 64 if server is very busy.
-* **PHP-FPM opcache memory size** - increase default if more than 20 sites are hosted on the same server
-* **MySQL root user password** - [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new) 
-* **MySQL InnoDB buffer pool size** - default good for servers with RAM <= 1GB. Set to 1536M for servers with 4GB RAM. Don't forget the K, M or G after the number
-* **MySQL InnoDB log file size** - default is fine for servers < 4GB RAM
-* **MySQL replication user password - [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
-* **MySQL Admin user password** - mysqladmin user has process rights for monitoring replication status. [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
-* **MySQL webstats user password** - webstats user writes to webstats DB to store HTTP access log data. [click here for long random strings](https://www.random.org/passwords/?num=5&len=23&format=html&rnd=new)
-* **MySQL Server ID for master** - must be unique, don't accept the default
-* **MySQL Server ID for slave** - must be unique, don't accept the default
-* **Master server hostname** - using a fully qualified domain name is best.
-* **Slave server hostname** - using a fully qualified domain name is best.
-* **Ansible group name** - the group that these hosts will be uniquely identified by within the hosts file and variables stored in a file in the group_vars directory
+Next: The provision server
+   run:
+     ansible-playbook playbooks/init-provision.yml
+     Add the provision server to group [provision] in hosts like;
 
+       [provision]
+       myprovision.name.com
 
+     ansible-playbook playbooks/provision.yml
 
-### Building a Replicated Pair of Servers
+   On auto-provision server, use .ssh/id_rsa.pub in roots home and add to remote 'user' on eqpress master
+   then on auto-povision chdir 'cd /home/wordpress' and install wordpress source 'latest.tar.gz'.
+   ie; wget https://wordpress.org/latest.tar.gz
 
-#### Minimum Requirements
-##### Managed Nodes
-* The servers that will be used for creating the replicated pair must be running Debian 7 (Wheezy).
-* The debian packages python and python-simplejson must be installed for ansible to work.
 
-Play to run
+License
+-------
 
-	ansible-playbook -i hosts play-fullstack.yml -u root -l eqwp
 
-When the servers are ready for production then it's time to deploy the cron jobs
+Author Information
+------------------
 
-	ansible-playbook -i hosts play-go-live.yml -u root -l eqwp
-
-#### Manual Host and Group Configuration
-You can build the host and group files manually instead of running the play-init-servers.yml playbook. Create an alias in the ansible hosts file with the names of the new server pairs below:
-
-	[eqpress-test]
-	eqpress-test1.equalit.ie  
-	eqpress-test2.equalit.ie
-
-Create a group YAML file in the group_vars directory (copy an existing one). Name the group file the same as the alias entered in the ansible hosts file:
-
-	group_vars/eqpress-test.yml
-
-Edit this new group file and minimally change the following variables:
-
-	easypress_server_id
-	mysql_root_db_pass
-	mysql_repl_creds: password
-	mysql_admin_user: password
-	mysql_webstats: password
-	
-Create a host YAML file in the host_vars directory (copy an existing primary and replica). Name the host files the same as what was entered in the ansible hosts file:
-
-	host_vars/eqpress-test1.equalit.ie.yml
-	host_vars/eqpress-test2.equalit.ie.yml
-
-Edit these new host files and minmally change the following variables:
-
-	mysql_server_id
-	mysql_repl_slave
-	mysql_repl_master
-
-#### Ansible Plays
-
-*   ansible-playbook -i hosts play-fullstack.yml -u root -l eqpress-test
-
-When the servers are ready for production then it's time to deploy the cron jobs
-
-*   ansible-playbook -i hosts play-go-live.yml -u root -l eqpress-test
-
-
-#### Common Failures and Remedies
-
-* MySQL fails to start
-    1. Check if mysql is running on the host
-    1. Re-run the play using the mysql or slaveon tag  
-`ansible-playbook -i hosts play-fullstack.yml -u root -l eqpress-test --tags slaveon`  
-`ansible-playbook -i hosts play-fullstack.yml -u root -l eqpress-test --tags mysql`  
-
-### Role based updates
-
-Update nginx and php-fpm config
-
-*   ansible-playbook -i hosts play-fullstack.yml -u root -l eph --tags="nginx,php"
-
-### Console
-
-Deploy changes to the easyPress Console must-use plugin and proxy code
-
-*   ansible-playbook -i hosts play-fullstack.yml -u root -v -l production --tags console
-
-Deploy easyPress console must-use plugin to all sites
-
-*   ansible -i hosts masters -m command -a "/usr/local/sbin/ep_install_console.sh all" -u root
-
-#### Testing New Console Code
-
-ansible-playbook -i hosts play-fullstack.yml -u root -l jester.easypress.ca --tags console && ansible -i hosts jester.easypress.ca -m command -a "/usr/local/sbin/ep_install_console.sh wtj.boreal321.com" -u root
-
-
-### Add or Update System Users
-
-*   ansible-playbook -i hosts play-fullstack.yml -u root -l production --tags users
-*  ansible-playbook -i hosts play-add-user.yml -u root -l eqpress-test1.boreal321.com
-
-### Update nginx configs
-
-All configs and reload nginx
-
-*   ansible-playbook -i hosts play-fullstack.yml -u root -l masters --tags nginx_config
-
-### WordPress and plugin updates
-
-Update a specific plugin on all master servers
-
-*   ansible -i hosts masters -m command -a "/usr/local/sbin/wp_update_plugins.sh wordpress-seo" -u root -v
-
-###[Auto-Provision Documentation](https://github.com/equalitie/eqpress/tree/master/roles/init-auto-provision#wordpress-auto-provision-system)
+Thank you to Victor and his work on easypress that this was created largely after
+with his permission.
