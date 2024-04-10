@@ -9,6 +9,8 @@ LOGFILE=/var/log/backup_from_master.log
 
 master={{ mysql_repl_master }}
 
+mkdir -p /var/backups/$master
+
 export PATH=/bin:/usr/bin
 if ping -c 1 ${master} > /dev/null 2>&1; then
     RSYNCSTART=$(date +%s%3N)
@@ -18,6 +20,7 @@ if ping -c 1 ${master} > /dev/null 2>&1; then
 	    ${master}:/var/www /var
     rsync -av --delete --exclude 'eqpress-www' ${master}:/etc/nginx /etc
     rsync -av ${master}:/etc/ssl /etc
+    rsync -av ${master}:/var/backups/*.bak /var/backups/${master}/
     RSYNCEND=$(date +%s%3N)
     DURATION_MS=$(($RSYNCEND - $RSYNCSTART))
     echo $(date +%s) backup-end OK ${DURATION_MS}ms >>${LOGFILE}

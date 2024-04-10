@@ -46,7 +46,13 @@ binlog_format                  = MIXED
 
 {% if (auto_provision_host is not defined) or (auto_provision_host is defined and auto_provision_host == False) %}
 # REPLICATION #
+{% if tmp_mysql_rw is defined and tmp_mysql_rw == True %}
+# In temp read write mode on slave
+read_only                      = 0
+{% else %}
+# Live mode
 read_only                      = {{ mysql_is_read_only }}
+{% endif %}
 log_slave_updates              = 1
 relay_log                      = /var/lib/mysql/relay_bin
 slave_net_timeout              = 60
