@@ -1,0 +1,28 @@
+---
+- name: create directories
+  ansible.builtin.file:
+    path: "{{ item.dir }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "0700"
+    state: directory
+  loop:
+    - { dir: '{{ ansible_user_dir }}/docker', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
+    - { dir: '{{ ansible_user_dir }}/docker/eqpress_nginx', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
+  tags:
+    - nginx_docker
+
+- name: add "{{ docker_group }}" to user "{{ ansible_user_id }}"
+  become: yes
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    create_home: no
+    append: yes
+    groups: "{{ docker_group }}"
+  tags:
+    - nginx_docker
+
+- debug:
+    var: ansible_user_id
+  tags:
+    - nginx_docker

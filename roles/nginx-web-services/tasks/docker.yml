@@ -1,0 +1,53 @@
+---
+- name: remove any unofficial docker packages
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-compose
+      - docker-compose-v2
+      - docker-doc
+      - podman-docker
+      # - containerd # check this when we install docker to see what it installs
+    state: absent
+  tags:
+    - docker
+
+- name: get docker.asc 
+  ansible.builtin.get_url:
+    url: '{{ docker_gpg_key_url }}'
+    dest: /tmp/docker.asc.key
+  register: get_docker_key
+  tags:
+    - docker
+
+- name: install docker.asc
+  become: yes
+  ansible.builtin.shell:
+    cmd: cat /tmp/docker.asc.key | gpg --dearmor | tee /usr/share/keyrings/docker.gpg
+  when: get_docker_key is defined and get_docker_key.changed
+  tags:
+    - docker
+
+- name: install docker repo
+  become: yes
+  ansible.builtin.apt_repository:
+    repo: 'deb [arch=amd64 signed-by=/usr/share/keyrings/docker.gpg] {{ docker_repo }} {{ ansible_distribution_release }} stable'
+    filename: docker
+    state: present
+    update_cache: yes
+  tags:
+    - docker
+
+- name: install docker packages
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+  tags:
+    - docker
