@@ -45,7 +45,8 @@ server {
 # SSL server
 #
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2: on;
     server_name {{domain}};
     server_name www.{{domain}};
 {{multisite_config}}
