@@ -1,2 +1,5 @@
 ---
 web_server_docker: true
+docker_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
+docker_repo: "https://download.docker.com/linux/ubuntu"
+docker_group: "docker"
