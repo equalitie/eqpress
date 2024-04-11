@@ -110,7 +110,8 @@
     - eqpress-common/common_headers.conf
     - eqpress-common/common_eqpress_ssl.conf
     - eqpress-common/common_cdn_realip.conf
-  tags: cdn
+  tags:
+    - nginx_config
 
 - name: copy nginx common files
   become: yes
@@ -121,6 +122,8 @@
     group: root
     mode: 0644
   loop:
+    - mime.types
+    - fastcgi_params
     - eqpress-common/common_cache.conf
     - eqpress-common/common_exceptions.conf
     - eqpress-common/common_location.conf
@@ -133,6 +136,8 @@
     - eqpress-common/lua_block_post_noreferrer.lua
     - eqpress-common/lua_block_post_noreferrer_on.lua
     - eqpress-common/lua_block_wplogin_noreferrer.lua
+  tags:
+    - nginx_config
 
 - name: template nginx eqpress config
   become: yes
@@ -144,6 +149,8 @@
     mode: 0644
     backup: yes
   when: not auto_provision_host | default(false) | bool
+  tags:
+    - nginx_config
 
 - name: template nginx eqpress config provision
   become: yes
@@ -155,6 +162,8 @@
     mode: 0644
     backup: yes
   when: auto_provision_host | default(false) | bool
+  tags:
+    - nginx_config
 
 - name: link eqpress nginx config provision
   become: yes
@@ -163,6 +172,8 @@
     dest: /etc/nginx/sites-enabled/eqpress-provision
     state: link
   when: auto_provision_host | default(false) | bool
+  tags:
+    - nginx_config
 
 - name: link eqpress nginx config
   become: yes
@@ -171,6 +182,8 @@
     dest: /etc/nginx/sites-enabled/eqpress
     state: link
   when: not auto_provision_host | default(false) | bool
+  tags:
+    - nginx_config
 
 - name: copy custom logrotate config for nginx access logs
   become: yes

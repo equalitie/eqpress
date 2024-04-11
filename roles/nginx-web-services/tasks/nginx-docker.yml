@@ -22,6 +22,14 @@
   tags:
     - nginx_docker
 
+- name: create docker-compose.yaml got nginx
+  ansible.builtin.template:
+    dest: "{{ ansible_user_dir }}/docker/eqpress_nginx/docker-compose.yaml"
+    src: nginx-compose.yaml.j2
+    mode: '0640'
+  tags:
+    - nginx_docker
+
 - debug:
     var: ansible_user_id
   tags:
