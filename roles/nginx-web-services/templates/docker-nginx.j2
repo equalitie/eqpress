@@ -1,0 +1,50 @@
+#!/bin/sh
+# {{ ansible_managed }}
+
+option="${1}"
+
+help() {
+  cat << EOF
+
+  Use this script with eqpress docker nginx.
+  If nginx is stopped, ie; ${0} -s stop or quit, docker will then take over.
+  In most instances, restart the container. 
+
+  Usage: `basename ${0}` Option
+
+  Option:
+    -s reload   # Reload configuration, start the new worker process with a new configuration, and gracefully shut down old worker processes.
+    -s reopen   # Reopen log files.
+    -s quit     # Shut down gracefully.
+    -s stop     # Shut down quickly.
+EOF
+exit 1
+}
+
+send_sig() {
+  echo "docker exec -t container_name nginx -s $1"
+}
+
+parse_sig() {
+  case "${1}" in
+    reload) send_sig "${1}" 
+    ;;
+    reopen) send_sig "${1}" 
+    ;;
+    quit) send_sig "${1}" 
+    ;;
+    stop) send_sig "${1}" 
+    ;;
+    *) help
+    ;;
+esac
+}
+
+
+case ${option} in
+  -s) parse_sig "${2}"
+      ;;
+  *) help
+     ;;
+esac
+
