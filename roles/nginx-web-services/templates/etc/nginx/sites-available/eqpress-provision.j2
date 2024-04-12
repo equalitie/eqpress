@@ -1,6 +1,6 @@
 server {
 	listen 443 ssl;
-        http2: on;
+        http2 on;
 	server_name {{ auto_provision_web_server_name|default(inventory_hostname) }};
 	access_log /var/log/nginx/{{ inventory_hostname }}.access.log ep_default;
 	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
