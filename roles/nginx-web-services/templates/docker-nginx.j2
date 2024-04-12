@@ -1,14 +1,30 @@
 #!/bin/sh
 # {{ ansible_managed }}
+container_name="{{ nginx_container_name }}"
 
+{% raw %}
 option="${1}"
 
 help() {
+  add_error=""
+  if [ ! -z "${1}" ]
+  then
+    case "${1}" in
+      no_access) add_error="Was not able to access the $container_name docker container. It may not be running or you do not have access."
+      ;;
+      *) echo "unknown error ${1}"
+      ;;
+    esac
+
+  echo
+  echo "  $add_error"
+  fi
+
   cat << EOF
 
   Use this script with eqpress docker nginx.
   If nginx is stopped, ie; ${0} -s stop or quit, docker will then take over.
-  In most instances, restart the container. 
+  In most instances, restart the container.
 
   Usage: `basename ${0}` Option
 
@@ -17,34 +33,70 @@ help() {
     -s reopen   # Reopen log files.
     -s quit     # Shut down gracefully.
     -s stop     # Shut down quickly.
+    -V          # Print the nginx version, compiler version, and configure script parameters.
+    -v          # Print the nginx version.
+    -T          # Same as -t, but additionally dump configuration files to standard output.
+    -t          # Do not run, just test the configuration file.  nginx checks the configuration file syntax and then tries to open files referenced in the configuration
+                  file.
 EOF
 exit 1
 }
 
 send_sig() {
-  echo "docker exec -t container_name nginx -s $1"
+  docker exec -t ${container_name} nginx -s $1 || exit 1
 }
 
 parse_sig() {
   case "${1}" in
-    reload) send_sig "${1}" 
+    reload) send_sig "${1}"
     ;;
-    reopen) send_sig "${1}" 
+    reopen) send_sig "${1}"
     ;;
-    quit) send_sig "${1}" 
+    quit) send_sig "${1}"
     ;;
-    stop) send_sig "${1}" 
+    stop) send_sig "${1}"
     ;;
     *) help
     ;;
-esac
+  esac
+}
+
+get_version() {
+  if [ "x$1" = "xV" ]
+  then
+    docker exec -t ${container_name} nginx -V || exit 1
+  else
+    docker exec -t ${container_name} nginx -v || exit 1
+  fi
+}
+
+check_config() {
+  if [ "x$1" = "xT" ]
+  then
+    docker exec -t ${container_name} nginx -T || exit 1
+  else
+    docker exec -t ${container_name} nginx -t || exit 1
+  fi
 }
 
 
+
+# Start
+
+[ "$(docker inspect -f '{{.State.Running}}' $container_name 2>/dev/null)" ] || help "no_access"
+
 case ${option} in
   -s) parse_sig "${2}"
-      ;;
+  ;;
+  -V) get_version V
+  ;;
+  -v) get_version
+  ;;
+  -T) check_config T
+  ;;
+  -t) check_config
+  ;;
   *) help
-     ;;
+  ;;
 esac
-
+{% endraw %}
