@@ -6,6 +6,7 @@
 services:
   eqpress-nginx:
     image: nginx:{{ nginx_docker_version }}
+    container_name: {{ nginx_container_name }}
     volumes:
       - type: bind
         source: /etc/nginx
