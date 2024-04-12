@@ -30,7 +30,27 @@
   tags:
     - nginx_docker
 
-- debug:
-    var: ansible_user_id
+- name: install dockerized nginx command
+  become: yes
+  ansible.builtin.template:
+    dest: /usr/local/sbin/docker-nginx
+    src: docker-nginx.j2
+    owner: root
+    group: root
+    mode: "0755"
   tags:
+    - nginx_docker_script
     - nginx_docker
+
+- name: symlink docker-nginx -> /usr/sbin/nginx
+  become: yes
+  ansible.builtin.file:
+    src: /usr/local/sbin/docker-nginx
+    dest: /usr/sbin/nginx
+    owner: root
+    group: root
+    state: link
+  tags:
+    - nginx_docker_script
+    - nginx_docker
+
