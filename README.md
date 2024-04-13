@@ -8,7 +8,7 @@ Requirements
 ------------
 
 3 - Servers (2 eqpress, 1 provision)
-    Tested on Ubuntu 22.04 LTS
+    Tested on Ubuntu 24.04 LTS
 
 1 - System (controller 'local') used to install to servers. 
     This will also be place to push out updates.
@@ -21,7 +21,7 @@ Ansible v2.10+
 
 Ubuntu 22.04 LTS +
 
-Note: Tested and developed for Ubuntu 22.04 LTS
+Note: Tested and developed for Ubuntu 24.04 LTS
 
 Install
 -------
@@ -40,12 +40,18 @@ Fifth: Install ansible on CONTROLLER.
 
 At this point you should be able to get started
 
-  apt-get install git-core
+  sudo apt install git-core
 
   git clone this repo on your CONTROLLER
   in user account you created above.
 
-  apt-get install ansible
+  sudo apt install ansible
+
+  # If using docker [default], make sure you have community.docker version 3.8.1 or above.
+  # Check by running "ansible-galaxy collection list | grep community.docker"
+  # You can install by "ansible-galaxy collection install community.docker"
+  # NOTE: community.docker version 3.8.1 could give warning about ansible version compatibility,
+  #       but should still work. Tested with ansible 2.10.8.
 
   cd eqpress
 
@@ -61,6 +67,9 @@ At this point you should be able to get started
        [testservers1]
        server1.name.com ansible_ssh_user=<user> ansible_ssh_host=<ip addr>
        server2.name.com ansible_ssh_user=<user> ansible_ssh_host=<ip addr>
+
+    # If the host names are not added to DNS, add to your local /etc/hosts file or some
+    # tasks will fail
 
     ansible-playbook playbooks/eqpress.yml -l testservers1
 
