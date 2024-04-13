@@ -13,8 +13,8 @@
      - eqpress-ssl
      - firewall-hardening
      - postfix-email-service
-     - nginx-web-services
      - php-services
      - mariadb-local-service
      - eqpress-sysops
      - eqpress-provision-server
+     - nginx-web-services
