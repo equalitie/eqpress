@@ -22,11 +22,27 @@
   tags:
     - nginx_docker
 
-- name: create docker-compose.yaml got nginx
+- name: create compose.yaml for nginx
   ansible.builtin.template:
-    dest: "{{ ansible_user_dir }}/docker/eqpress_nginx/docker-compose.yaml"
+    dest: "{{ ansible_user_dir }}/docker/eqpress_nginx/compose.yaml"
     src: nginx-compose.yaml.j2
     mode: '0640'
+  tags:
+    - nginx_docker
+
+# NOTE: docker_compose_v2 is using the docker compose plugin
+# ie; docker compose up
+- name: install and bring up nginx container with docker compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ ansible_user_dir }}/docker/eqpress_nginx"
+    state: present
+  register: docker_compose_results
+  tags:
+    - nginx_docker
+
+- name: output docker_compose_results
+  ansible.builtin.debug:
+    var: docker_compose_results
   tags:
     - nginx_docker
 
@@ -53,4 +69,3 @@
   tags:
     - nginx_docker_script
     - nginx_docker
-
