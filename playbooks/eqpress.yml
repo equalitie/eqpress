@@ -15,9 +15,8 @@
     - eqpress-ssl
     - eqpress-sysops
     - eqpress-root
-# TODO - docker
-    - nginx-web-services
     - php-services
+    - nginx-web-services
     - mariadb-local-service
     - mariadb-local-enable-replication
     - postfix-email-service
