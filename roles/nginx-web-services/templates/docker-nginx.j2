@@ -29,15 +29,16 @@ help() {
   Usage: `basename ${0}` Option
 
   Option:
-    -s reload   # Reload configuration, start the new worker process with a new configuration, and gracefully shut down old worker processes.
+    -s reload   # Reload configuration, start the new worker process with a new
+                  configuration, and gracefully shut down old worker processes.
     -s reopen   # Reopen log files.
     -s quit     # Shut down gracefully.
     -s stop     # Shut down quickly.
     -V          # Print the nginx version, compiler version, and configure script parameters.
     -v          # Print the nginx version.
     -T          # Same as -t, but additionally dump configuration files to standard output.
-    -t          # Do not run, just test the configuration file.  nginx checks the configuration file syntax and then tries to open files referenced in the configuration
-                  file.
+    -t          # Do not run, just test the configuration file.  nginx checks the configuration
+                  file syntax and then tries to open files referenced in the configuration file.
 EOF
 exit 1
 }
