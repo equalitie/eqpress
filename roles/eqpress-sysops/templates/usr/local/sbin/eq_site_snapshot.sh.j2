@@ -1,10 +1,14 @@
 #!/bin/bash
 export PATH=/usr/bin:/bin:/usr/local/sbin:/usr/local/bin
 
+echo "FIXME ${0}"
+echo "Make this not to run on all sites by default. For now just exit"
+exit 1
+
 # Some globals
 GIT_COMMIT_NAME="{{ org_name }}"
 GIT_COMMIT_EMAIL="{{ monitoring_email }}"
-SITES="/var/www"
+SITES="{{ web_user_home }}"
 DATEFORMAT="+%F-%H%M%S%Z"
 
 function check_is_wordpress
