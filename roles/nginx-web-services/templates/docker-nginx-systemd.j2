@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+#
+
+[Unit]
+Description=
+After=network-online.target docker.service firewalld.service containerd.service time-set.target
+
+[Service]
+Type=oneshot
+ExecStartPre=
+ExecStart=
+ExecReload=
+ExecStop=
+RemainAfterExit=yes
+
+
