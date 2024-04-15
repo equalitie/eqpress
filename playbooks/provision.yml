@@ -16,5 +16,5 @@
      - php-services
      - mariadb-local-service
      - eqpress-sysops
-     - eqpress-provision-server
      - nginx-web-services
+     - eqpress-provision-server
