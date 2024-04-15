@@ -69,3 +69,40 @@
   tags:
     - nginx_docker_script
     - nginx_docker
+
+- name: install nginx systemd service file when for dockerized nginx
+  become: yes
+  ansible.builtin.template:
+    dest: /etc/systemd/system/nginx.service
+    src: docker-nginx-systemd.j2
+    owner: root
+    group: root
+    mode: "0755"
+  register: nginx_docker_systemd_template
+  tags:
+    - nginx_docker_systemd
+    - nginx_docker
+
+- debug:
+    var: nginx_docker_systemd_template.changed
+  tags:
+    - nginx_docker_systemd
+
+- name: systemd daemon reload
+  become: yes
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: nginx_docker_systemd_template.changed|bool
+  tags:
+    - nginx_docker_systemd
+    - nginx_docker
+
+- name: enable nginx systemd service
+  become: yes
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started
+  tags:
+    - nginx_docker_systemd
+    - nginx_docker
