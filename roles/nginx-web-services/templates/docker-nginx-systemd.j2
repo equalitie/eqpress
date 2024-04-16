@@ -2,15 +2,16 @@
 #
 
 [Unit]
-Description=
+Description=eqpress dockerized nginx. This is mainly a placeholder and has minimal functionality. Recommend to use docker directly to stop and restart
 After=network-online.target docker.service firewalld.service containerd.service time-set.target
 
 [Service]
 Type=oneshot
-ExecStartPre=
-ExecStart=
-ExecReload=
-ExecStop=
+User={{ ansible_user }}
+WorkingDirectory={{ ansible_user_dir }}/docker/eqpress_nginx
+ExecStartPre=/usr/sbin/nginx -v
+ExecStart=/bin/true
+ExecReload=/usr/sbin/nginx -s reload
+ExecStop=/bin/true
+ExecStopPost=/bin/sh -c 'echo use docker to stop'
 RemainAfterExit=yes
-
-
