@@ -10,6 +10,7 @@
     - config/ssl
     - config/group_vars
     - config/host_vars
+    - config/ssh
 
 - name: copy localhost.init to config/inventory/hosts
   ansible.builtin.copy:
