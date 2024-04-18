@@ -20,8 +20,29 @@
     proto: "{{ item.proto }}"
   loop:
     - { rule: 'allow', port: '{{ ssh_port | default("22") }}', proto: 'tcp' }
+
+- name: use edgespermit script
+  become: yes
+  ansible.builtin.template:
+    src: edgespermit.j2
+    dest: /usr/local/sbin/edgespermit
+    owner: root
+    group: root
+    mode: '0750'
+  when: method_allowedges
+  tags:
+    - edgespermit
+
+- name: allow web port to all if not using edgepermit script
+  become: yes
+  ansible.builtin.ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop:
     - { rule: 'allow', port: '80', proto: 'tcp' }
     - { rule: 'allow', port: '443', proto: 'tcp' }
+  when: not method_allowedges
 
 - name: Enable ufw logging
   become: yes

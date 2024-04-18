@@ -103,6 +103,16 @@
       default: "sysops@equalit.ie"
       private: no
 
+    - name: "edgespermit_min_edge"
+      prompt: "Min number of edges for edgespermit script"
+      default: "20"
+      private: no
+
+    - name: "edgespermit_key"
+      prompt: "edgepermit API key. Leave blank id not used"
+      default: ""
+      private: no
+
   roles:
    - init-local
    #- common
