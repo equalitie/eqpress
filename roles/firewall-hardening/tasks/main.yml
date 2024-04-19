@@ -6,7 +6,6 @@
       - ufw
     state: present
 
-# TODO: Change this to a handler
 - name: disable ufw until configured
   become: yes
   ansible.builtin.ufw:
