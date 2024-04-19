@@ -9,7 +9,7 @@
   ansible.builtin.systemd:
     name: edgespermit.timer
     enabled: true
-    state: started
+    state: restarted
 
 - name: restart cron
   become: yes

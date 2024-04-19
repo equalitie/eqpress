@@ -1,7 +1,7 @@
 [Unit]
 Description=Timer for Updating web Ports firewall with permitted Deflect Edges
-Requires=edgespermit.service
-After=ufw.service edgespermit.service
+Requires=ufw.service
+After=ufw.service
 
 [Timer]
 OnCalendar=*:0/30

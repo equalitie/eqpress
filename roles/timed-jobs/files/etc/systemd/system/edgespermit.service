@@ -1,7 +1,7 @@
 [Unit]
 Description=Update web Ports firewall with permitted Deflect Edges
-Requires=ufw.service networking.target
-After=ufw.service networking.target
+Requires=ufw.service network-online.target
+After=ufw.service network-online.target
 
 [Service]
 Type=oneshot
