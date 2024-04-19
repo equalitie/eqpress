@@ -20,4 +20,4 @@
     - mariadb-local-service
     - mariadb-local-enable-replication
     - postfix-email-service
-    - eqpress-cronjobs
+    - timed-jobs
