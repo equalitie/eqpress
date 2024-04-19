@@ -1,0 +1,11 @@
+[Unit]
+Description=Update web Ports firewall with permitted Deflect Edges
+Requires=ufw.service networking.target
+After=ufw.service networking.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/edgespermit
+
+[Install]
+WantedBy=multi-user.target
