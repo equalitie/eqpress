@@ -54,6 +54,24 @@
   notify:
     - "restart cron"
 
+- name: install edgespermit service and timer
+  become: yes
+  ansible.builtin.copy:
+    src: "etc/systemd/system/edgespermit.{{ item }}"
+    dest: "/etc/systemd/system/edgespermit.{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: method_allowedges
+  loop:
+    - timer
+    - service
+  notify:
+    - systemd_daemon_reload
+    - systemd_enable_edgespermit_timer
+  tags:
+    - edgespermit
+
 # TODO: remove ? deprecated
 #- name: copy cron config
 #  become: yes
