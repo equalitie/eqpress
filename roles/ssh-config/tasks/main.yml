@@ -1,29 +1,35 @@
 ---
+# TODO: set and test ssh_key_type
 - name: Generating RSA key for users 
   become: yes
   ansible.builtin.user:
     name: "{{ item }}"
     generate_ssh_key: yes
+    ssh_key_type: 'rsa'
   loop:
     - root 
     - "{{ ansible_user_id }}"
+  tags:
+    - ssh
 
 - name: Downloading generated SSH public keys
   become: yes
   ansible.builtin.fetch:
     src: "{{ item }}/.ssh/id_rsa.pub"
-    dest: "/tmp/id_rsa_{{ inventory_hostname }}.pub"
+    dest: "../config/ssh/id_rsa_{{ inventory_hostname }}.pub"
     flat: yes
   loop:
     - "/root"
     - "{{ ansible_user_dir }}"
+  tags:
+    - ssh
 
 - name: Copying slave's ssh key to master
   become: yes
   ansible.builtin.authorized_key:
     user: "{{ item }}"
     state: present
-    key: "{{ lookup('file', '/tmp/id_rsa_' + mysql_repl_slave + '.pub') }}"
+    key: "{{ lookup('file', '../config/ssh/id_rsa_' + mysql_repl_slave + '.pub') }}"
   when:
     - mysql_repl_role is defined
     - mysql_repl_role == 'master'
@@ -31,13 +37,15 @@
   loop:
     - root
     - "{{ ansible_user_id }}"
+  tags:
+    - ssh
 
 - name: Copying master's ssh key to slave
   become: yes
   ansible.builtin.authorized_key:
     user: "{{ item }}"
     state: present
-    key: "{{ lookup('file', '/tmp/id_rsa_' + mysql_repl_master + '.pub') }}"
+    key: "{{ lookup('file', '../config/ssh/id_rsa_' + mysql_repl_master + '.pub') }}"
   when:
     - mysql_repl_role is defined
     - mysql_repl_role == 'slave'
@@ -45,6 +53,8 @@
   loop:
     - root
     - "{{ ansible_user_id }}"
+  tags:
+    - ssh
 
 - name: known_hosts file on slave
   become: yes
@@ -62,6 +72,7 @@
     - "/root"
     - "{{ ansible_user_dir }}"
   tags:
+    - ssh
     - known_hosts
 
 - name: known_hosts file on master
@@ -80,6 +91,7 @@
     - "/root"
     - "{{ ansible_user_dir }}"
   tags:
+    - ssh
     - known_hosts
 
 - name: Fix .ssh/ owner
@@ -92,4 +104,5 @@
     - { home: '/root', owner: 'root' }
     - { home: "{{ ansible_user_dir }}", owner: "{{ ansible_user_id }}" }
   tags:
+    - ssh
     - known_hosts
