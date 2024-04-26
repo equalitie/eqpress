@@ -1,11 +1,38 @@
 ---
+- name: Check for --limit and generate group list
+  hosts: localhost
+  gather_facts: false
+  vars:
+    available_groups: []
+
+  tasks:
+    - name: Generate list of available groups
+      set_fact:
+        available_groups: "{{ available_groups + [item] }}"
+      loop: "{{ groups.keys() }}"
+      when:
+        - groups[item] | length > 0
+        - item != 'all'
+        - item != 'ungrouped'
+        - item != 'provision'
+      tags: always
+
+    - name: Guessed Available Cluster Names
+      debug:
+        msg: "Guessed Available Clusters: {{ available_groups | join(', ') }}"
+      tags: always
+
+    - name: fail
+      fail:
+        msg: "This playbook is meant to be ran with '-l cluster_name' . List above"
+      tags: always
+
 - hosts: all
   any_errors_fatal: yes
   gather_facts: yes
 
   vars:
     - is_local: no
-    - host_count: 2
 
   roles:
     - prerequisites 

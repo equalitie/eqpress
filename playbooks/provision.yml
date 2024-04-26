@@ -4,7 +4,6 @@
 
   vars:
     - is_local: no
-    - host_count: 1
 
   roles:
      - prerequisites

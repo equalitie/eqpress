@@ -14,11 +14,3 @@
   when: "item is not defined" 
   loop:
     - is_local
-    - host_count
-
-- name: make sure we are only running for right number of hosts 
-  local_action:
-    module: fail
-    msg: "The number of nodes must be exactly {{ host_count }}!"
-  when: "play_hosts|length != host_count"
-  run_once: yes
