@@ -44,5 +44,5 @@
       private: no
 
   roles:
-     - init-eqpress-provision 
+     - init-provision
 
