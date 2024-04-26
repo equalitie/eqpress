@@ -39,9 +39,9 @@
     - common
     - firewall-hardening
     - ssh-config
-    - eqpress-ssl
-    - eqpress-sysops
-    - eqpress-root
+    - ssl-config
+    - sysops
+    - root
     - php-services
     - nginx-web-services
     - mariadb-local-service
