@@ -1,13 +1,13 @@
 eqpress
 =========
 
-Ansible to build eqpress servers. eqpress it a production
-wordpress server infrastructure for eQualitie 
+Ansible to build press servers.
+wordpress server infrastructure
 
 Requirements
 ------------
 
-3 - Servers (2 eqpress, 1 provision)
+3 - Servers (2 press, 1 provision)
     Tested on Ubuntu 24.04 LTS
 
 1 - System (controller 'local') used to install to servers. 
@@ -27,14 +27,14 @@ Install
 -------
 
 First: Setup 4 Systems 
-       2 EQPRESS servers (recommend at least 2CPU, 16G RAM, 20G DISK)
+       2 PRESS servers (recommend at least 2CPU, 16G RAM, 20G DISK)
        1 PROVISION server (recommend at least 2CPU, 4G RAM, 10G DISK)
        1 CONTROLLER system (recommend at least 1CPU, 2G RAM 10G DISK)
 
 Note: Best if all are same Linux Distribution
 
 Second: Pick a admin user, non-root, and create that user on all the systems.
-Third: Setup sudo with NO PASSWORD for this user on all systems.
+Third: Setup /etc/sudoers "user ALL=(ALL:ALL) NOPASSWD:ALL" for this user on all systems.
 Forth: setup key login from CONTROLLER to all systems
 Fifth: Install ansible on CONTROLLER. 
 
@@ -53,12 +53,12 @@ At this point you should be able to get started
   # NOTE: community.docker version 3.8.1 could give warning about ansible version compatibility,
   #       but should still work. Tested with ansible 2.10.8.
 
-  cd eqpress
+  Change to your repository directory
 
   run:
     ansible-playbook playbooks/init-local.yml -i localhost.init
-    ansible-playbook playbooks/init-eqpress.yml
-    vi config/inventory/hosts and add your [group] you named in the init-eqpress
+    ansible-playbook playbooks/init-press.yml
+    vi config/inventory/hosts and add your [group] you named in the init-press
 
       example: If you chose testservers1 as your group then
                you would write the servers in like this.
@@ -71,9 +71,9 @@ At this point you should be able to get started
     # If the host names are not added to DNS, add to your local /etc/hosts file or some
     # tasks will fail
 
-    ansible-playbook playbooks/eqpress.yml -l testservers1
+    ansible-playbook playbooks/press.yml -l testservers1
 
-You should now have 2 rampress servers running
+You should now have 2 press servers running
 
 Next: The provision server
    run:
@@ -85,8 +85,7 @@ Next: The provision server
 
      ansible-playbook playbooks/provision.yml
 
-   On auto-provision server, use .ssh/id_rsa.pub in roots home and add to remote 'user' on eqpress master
-   then on auto-povision chdir 'cd /home/wordpress' and install wordpress source 'latest.tar.gz'.
+   On provision server, chdir 'cd /home/wordpress' and install wordpress source 'latest.tar.gz'.
    ie; wget https://wordpress.org/latest.tar.gz
 
 
