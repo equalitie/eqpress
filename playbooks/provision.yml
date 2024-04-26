@@ -9,11 +9,11 @@
      - prerequisites
      - common
      - ssh-config
-     - eqpress-ssl
+     - ssl-config
      - firewall-hardening
      - postfix-email-service
      - php-services
      - mariadb-local-service
-     - eqpress-sysops
+     - sysops
      - nginx-web-services
-     - eqpress-provision-server
+     - provision-server
