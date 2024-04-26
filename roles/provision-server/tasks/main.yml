@@ -105,3 +105,15 @@
     group: root
   tags:
     - ansible_inventory
+
+- name: install Wordpress latest.tar.gz
+  become: yes
+  ansible.builtin.get_url:
+    url: https://wordpress.org/latest.tar.gz
+    dest: /home/wordpress/latest.tar.gz
+    owner: wordpress
+    group: wordpress
+    mode: '0644'
+    backup: yes
+  tags:
+    - wordpress_source
