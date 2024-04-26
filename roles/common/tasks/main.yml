@@ -136,6 +136,9 @@
   ansible.builtin.set_fact:
     auto_provision_nodes_items: "{{ auto_provision_nodes | from_json | dict2items }}"
   when: auto_provision_host | default(false) | bool
+  tags:
+    - ssh
+    - known_hosts
 
 - name: Ensure the hostname entry of node(s) are available on provision server.
   become: yes
