@@ -717,7 +717,7 @@ EOT;
     $console = <<<EOE
   - name: Install Console as must-use plugins for $domain
     become: true
-    command: /usr/local/sbin/ep_install_console.sh $domain creates=/var/www/$domain/wordpress/wp-content/mu-plugins/eqpress.php
+    command: /usr/local/sbin/eq_install_console.sh $domain creates=/var/www/$domain/wordpress/wp-content/mu-plugins/eqpress.php
     ignore_errors: yes
 
 EOE;

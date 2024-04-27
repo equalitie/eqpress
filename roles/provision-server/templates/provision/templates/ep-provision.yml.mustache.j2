@@ -57,7 +57,7 @@
   
   - name: Install cache-purge as must-use plugins for {{ domain }}
     become: yes
-    command: /usr/local/sbin/ep_install_cache_purge.sh {{ domain }} creates=/var/www/{{ domain }}/wordpress/wp-content/mu-plugins/nginx-helper.php
+    command: /usr/local/sbin/eq_install_cache_purge.sh {{ domain }} creates=/var/www/{{ domain }}/wordpress/wp-content/mu-plugins/nginx-helper.php
     ignore_errors: yes
 
 {{ console }}
