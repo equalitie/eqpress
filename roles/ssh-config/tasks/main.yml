@@ -117,8 +117,9 @@
     - name: get var for ssh_hosts
       ansible.builtin.set_fact:
         ssh_hosts: "{{ auto_provision_nodes_items | map(attribute='value.hostname') | list }}"
+        ssh_host_ip: "{{ auto_provision_nodes_items | map(attribute='value.ip') | list }}"
 
-    - name: known_hosts file for provision
+    - name: known_hosts file for provision hosts
       become: yes
       ansible.builtin.known_hosts:
         path: "{{ item.0.path }}/{{ ssh_known_hosts_file }}"
@@ -127,6 +128,22 @@
         key: "{{ lookup('pipe', 'ssh-keyscan ' + item.1 + '') }}"
         hash_host: false
       loop: "{{ ssh_paths | product(ssh_hosts) }}"
+      loop_control:
+        loop_var: item
+      vars:
+        ssh_paths:
+          - { path: "/root" }
+          - { path: "{{ ansible_user_dir }}" }
+
+    - name: known_hosts file for provision ip
+      become: yes
+      ansible.builtin.known_hosts:
+        path: "{{ item.0.path }}/{{ ssh_known_hosts_file }}"
+        name: "{{ item.1 }}"
+        state: present
+        key: "{{ lookup('pipe', 'ssh-keyscan ' + item.1 + '') }}"
+        hash_host: false
+      loop: "{{ ssh_paths | product(ssh_host_ip) }}"
       loop_control:
         loop_var: item
       vars:
