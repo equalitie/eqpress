@@ -180,6 +180,7 @@
     - field
   when: auto_provision_host | default(false) | bool
   tags:
+    - provision
     - sbin
 
 - name: sbin press admin scripts templates

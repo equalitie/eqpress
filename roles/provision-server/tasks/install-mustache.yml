@@ -8,3 +8,5 @@
     recursive: yes
     version: "{{ mustache_version }}"
     accept_hostkey: yes
+  tags:
+    - provision

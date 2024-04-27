@@ -753,7 +753,7 @@ EOE;
       'switch_to_dev' => $switch_to_dev,
       'console' => $console,
     ]);
-    $file = EP_TMP_DIR . '/ep-provision.yml';
+    $file = EP_TMP_DIR . '/provision.yml';
     if (!file_put_contents($file, $out)) {
       $this->process_errors("Could not create $file", true);
     }

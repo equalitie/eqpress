@@ -15,7 +15,7 @@
   - name: Create the document root for {{ domain }}
     become: yes
     ansible.builtin.file:
-      path: "/var/www/{{ domain }}
+      path: "/var/www/{{ domain }}"
       state: directory
       mode: 0755
 
@@ -37,7 +37,7 @@
     ansible.builtin.command:
       chdir: "/var/www/{{ domain }}"
       cmd: /bin/tar xfz /home/wordpress/latest.tar.gz
-      creates: "/var/www/{{ domain }}/wordpress
+      creates: "/var/www/{{ domain }}/wordpress"
 
   - name: Create the .sessions directory for {{ domain }}
     become: yes

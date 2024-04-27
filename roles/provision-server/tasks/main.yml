@@ -19,6 +19,7 @@
     - { dir: 'provision/processed', owner: 'root', group: 'root', mode: '0755' }
     - { dir: 'provision/templates', owner: 'root', group: 'root', mode: '0755' }
   tags:
+    - provision
     - provision_dir
     - ansible_inventory
 
@@ -32,15 +33,19 @@
     mode: 0644
   loop:
     - index.html
+  tags:
+    - provision
 
-- name: create a webserver writable ep_provision.log
+- name: create a webserver writable "{{ auto_provision_log_file }}"
   become: yes
   ansible.builtin.file:
-    path: "{{ eqpress_root_dir }}/provision/ep_provision.log"
+    path: "{{ eqpress_root_dir }}/provision/{{ auto_provision_log_file }}"
     mode: 0600
     owner: "{{ web_user }}"
     group: "{{ web_groupname }}"
     state: touch
+  tags:
+    - provision
 
 - name: copy provision scripts
   become: yes
@@ -54,6 +59,8 @@
     - provision/install.css
     - provision/includes/class-curl-request.php
     - provision/includes/class-ep-provision-view.php
+  tags:
+    - provision
 
 - name: install main provision code from template
   become: yes
@@ -70,18 +77,25 @@
     - provision/templates/wp-config.php.mustache
     - provision/templates/welcome-email.txt.mustache
     - provision/templates/ep-provision.yml.mustache
+  tags:
+    - provision
+    - provision_template
 
 - name: install auto-provision GPG key
   become: yes
   ansible.builtin.shell:
     cmd: "gpg --keyserver hkps://keys.openpgp.org --recv-keys {{ auto_provision_gpg_id }}"
   ignore_errors: yes
+  tags:
+    - provision
 
 - name: install ansible
   become: yes
   ansible.builtin.apt:
     name: ansible
     state: present
+  tags:
+    - provision
 
 - ansible.builtin.include_tasks: install-mustache.yml
   tags: always
@@ -93,6 +107,7 @@
   ansible.builtin.set_fact:
     auto_provision_nodes_input: "{{ auto_provision_nodes | from_json }}"
   tags:
+    - provision
     - ansible_inventory
 
 - name: install ansible_inventory
@@ -104,6 +119,7 @@
     owner: root
     group: root
   tags:
+    - provision
     - ansible_inventory
 
 - name: install Wordpress latest.tar.gz
@@ -116,4 +132,5 @@
     mode: '0644'
     backup: yes
   tags:
+    - provision
     - wordpress_source

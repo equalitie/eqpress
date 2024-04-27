@@ -5,6 +5,7 @@
     dest: /tmp/nodesource.gpg.key
   register: get_nodesource
   tags:
+    - provision
     - rampass
     - nodejs
 
@@ -14,6 +15,7 @@
     cmd: cat /tmp/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg
   when: get_nodesource is defined and get_nodesource.changed
   tags:
+    - provision
     - rampass
     - nodejs
 
@@ -24,6 +26,7 @@
     state: present
     update_cache: yes
   tags:
+    - provision
     - rampass
     - nodejs
 
@@ -34,6 +37,7 @@
       - nodejs
       - composer
   tags:
+    - provision
     - rampass
     - nodejs
     - composer
@@ -48,6 +52,7 @@
     force: yes
     accept_hostkey: yes
   tags:
+    - provision
     - rampass
 
 - name: create rampass user
@@ -60,6 +65,7 @@
     shell: /usr/sbin/nologin
     home: "{{ eqpress_base_dir }}/rampass"
   tags:
+    - provision
     - rampass
 
 # TODO: For now use pwpusher vars for mysql user/database
@@ -73,6 +79,7 @@
     state: present
     login_unix_socket: "{{ mariadb_unix_socket }}"
   tags:
+    - provision
     - rampass
 
 - name: create rampass mysql users
@@ -86,6 +93,7 @@
     login_unix_socket: "{{ mariadb_unix_socket }}"
   no_log: no
   tags:
+    - provision
     - rampass
 
 - name: rampass directory to owner rampass
@@ -97,6 +105,7 @@
     group: "{{ web_groupname }}"
     recurse: yes
   tags:
+    - provision
     - rampass
 
 - name: check if "{{ eqpress_base_dir }}/rampass/.git" exists
@@ -105,12 +114,14 @@
     path: "{{ eqpress_base_dir }}/rampass/.git"
   register: rampass_git_dir
   tags:
+    - provision
     - rampass
 
 - name: debug
   debug:
     msg: "{{ rampass_git_dir }}"
   tags:
+    - provision
     - rampass
 
 - name: clone rampass from /tmp
@@ -123,6 +134,7 @@
     version: '{{ rampass_version }}'
     force: yes
   tags:
+    - provision
     - rampass
 
 # Note: We do not want to overwrite because we have salt key in here
@@ -136,6 +148,7 @@
     mode: "0640"
     force: no
   tags:
+    - provision
     - rampass
 
 - name: run composer update
@@ -146,6 +159,7 @@
     working_dir: "{{ eqpress_base_dir }}/rampass"
     executable: "/usr/bin/php{{ php_version }}"
   tags:
+    - provision
     - rampass
     - composer
 
@@ -164,6 +178,7 @@
     - "php artisan storage:link"
     - "php artisan migrate --force"
   tags:
+    - provision
     - rampass
 
 - name: secure rampass directory
@@ -178,6 +193,7 @@
     - { name: "rampass", owner: "rampass", group: "{{ web_groupname }}", recurse: no }
     - { name: "rampass/storage", owner: "{{ web_user }}", group: "{{web_groupname }}", recurse: yes }
   tags:
+    - provision
     - rampass
 
 - name: fix .env owner
@@ -189,6 +205,7 @@
     group: "{{ web_groupname }}"
     state: touch
   tags:
+    - provision
     - rampass
 
 - name: nginx sites-available for rampass
@@ -203,6 +220,7 @@
   notify:
     - reload_nginx
   tags:
+    - provision
     - rampass
 
 - name: nginx sites-enabled for rampass
@@ -216,4 +234,5 @@
   notify:
     - reload_nginx
   tags:
+    - provision
     - rampass

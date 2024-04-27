@@ -2,7 +2,7 @@
 eqpress_base_dir: "/opt/eqpress"
 auto_provision_db_host: "localhost"
 auto_provision_tmp_directory: "/tmp"
-auto_provision_log_file: "eq_provision.log"
+auto_provision_log_file: "provision.log"
 auto_provision_db_charset: "utf8mb4"
 auto_provision_db_collate: "utf8mb4_general_ci"
 auto_provision_dev_rand: "/dev/urandom"

@@ -24,7 +24,7 @@ if [ -n "$sites" ]; then
 
     for site in ${sites}; do
         cd ${processing}/${site}
-        ansible-playbook eq-provision.yml -i ${ansible}/hosts
+        ansible-playbook provision.yml -i ${ansible}/hosts
         #
         # delete duplicate directories
         if [ -d ${processed}/${site} ]; then
