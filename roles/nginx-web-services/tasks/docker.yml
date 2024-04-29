@@ -51,3 +51,21 @@
     state: present
   tags:
     - docker
+
+- name: install dockerd daemon config
+  become: yes
+  ansible.builtin.template:
+    src: docker_daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - docker
+  notify:
+    - restart_docker
+
+- name: flush handlers
+  ansible.builtin.meta: flush_handlers
+  tags:
+    - docker
