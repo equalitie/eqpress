@@ -5,7 +5,8 @@
 
 services:
   eqpress-nginx:
-    image: nginx:{{ nginx_docker_version }}
+    #image: nginx:{{ nginx_docker_version }}
+    build: .
     container_name: {{ nginx_container_name }}
     volumes:
       - type: bind

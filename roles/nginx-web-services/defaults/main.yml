@@ -3,5 +3,6 @@ web_server_docker: true
 docker_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
 docker_repo: "https://download.docker.com/linux/ubuntu"
 docker_group: "docker"
-nginx_docker_version: "1.25.4"
+nginx_docker_version: "1.25.5"
+nginx_docker_purge_module_version: "2.5.3"
 nginx_container_name: "eqpress_nginx"

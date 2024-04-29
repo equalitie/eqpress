@@ -30,6 +30,14 @@
   tags:
     - nginx_docker
 
+- name: create Dockerfile for nginx
+  ansible.builtin.template:
+    dest: "{{ ansible_user_dir }}/docker/eqpress_nginx/Dockerfile"
+    src: Dockerfile.j2
+    mode: '0640'
+  tags:
+    - nginx_docker
+
 # NOTE: docker_compose_v2 is using the docker compose plugin
 # ie; docker compose up
 - name: install and bring up nginx container with docker compose

@@ -3,3 +3,9 @@
   become: yes
   ansible.builtin.command:
     cmd: /bin/mount -a
+
+- name: restart_docker
+  become: yes
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
