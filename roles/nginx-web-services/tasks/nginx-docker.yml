@@ -1,4 +1,29 @@
 ---
+- name: setup docker nginx modules
+  become: yes
+  ansible.builtin.template:
+    src: nginx_modules.conf.j2
+    dest: /etc/nginx/modules-enabled/modules.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    reload_nginx
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: add "{{ docker_group }}" to user "{{ ansible_user_id }}"
+  become: yes
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    create_home: no
+    append: yes
+    groups: "{{ docker_group }}"
+  tags:
+    - nginx
+    - nginx_docker
+
 - name: create directories
   ansible.builtin.file:
     path: "{{ item.dir }}"
@@ -10,16 +35,7 @@
     - { dir: '{{ ansible_user_dir }}/docker', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
     - { dir: '{{ ansible_user_dir }}/docker/eqpress_nginx', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
   tags:
-    - nginx_docker
-
-- name: add "{{ docker_group }}" to user "{{ ansible_user_id }}"
-  become: yes
-  ansible.builtin.user:
-    name: "{{ ansible_user_id }}"
-    create_home: no
-    append: yes
-    groups: "{{ docker_group }}"
-  tags:
+    - nginx
     - nginx_docker
 
 - name: create compose.yaml for nginx
@@ -28,6 +44,7 @@
     src: nginx-compose.yaml.j2
     mode: '0640'
   tags:
+    - nginx
     - nginx_docker
 
 - name: create Dockerfile for nginx
@@ -36,6 +53,7 @@
     src: Dockerfile.j2
     mode: '0640'
   tags:
+    - nginx
     - nginx_docker
 
 # NOTE: docker_compose_v2 is using the docker compose plugin
@@ -46,12 +64,7 @@
     state: present
   register: docker_compose_results
   tags:
-    - nginx_docker
-
-- name: output docker_compose_results
-  ansible.builtin.debug:
-    var: docker_compose_results
-  tags:
+    - nginx
     - nginx_docker
 
 - name: install dockerized nginx command
@@ -63,6 +76,7 @@
     group: root
     mode: "0755"
   tags:
+    - nginx
     - nginx_docker_script
     - nginx_docker
 
@@ -75,6 +89,7 @@
     group: root
     state: link
   tags:
+    - nginx
     - nginx_docker_script
     - nginx_docker
 
@@ -88,13 +103,9 @@
     mode: "0755"
   register: nginx_docker_systemd_template
   tags:
+    - nginx
     - nginx_docker_systemd
     - nginx_docker
-
-- debug:
-    var: nginx_docker_systemd_template.changed
-  tags:
-    - nginx_docker_systemd
 
 - name: systemd daemon reload
   become: yes
@@ -102,6 +113,7 @@
     daemon_reload: yes
   when: nginx_docker_systemd_template.changed|bool
   tags:
+    - nginx
     - nginx_docker_systemd
     - nginx_docker
 
@@ -112,5 +124,6 @@
     enabled: true
     state: started
   tags:
+    - nginx
     - nginx_docker_systemd
     - nginx_docker
