@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+{% for module in nginx_modules %}
+load_module {{ nginx_module_dir }}/{{ module }};
+{% endfor %}
