@@ -101,7 +101,8 @@ http {
 		root {{ eqpress_root_dir }}/catchall;
  	}
 	server {
-		listen 443 default_server;
+		listen 443 ssl default_server;
+		http2 on;
 		server_name _;
 		access_log /var/log/nginx/catch-all.access.log ep_default;
 		error_log /var/log/nginx/catch-all.error.log;
