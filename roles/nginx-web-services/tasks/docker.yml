@@ -11,6 +11,7 @@
       # - containerd # check this when we install docker to see what it installs
     state: absent
   tags:
+    - nginx
     - docker
 
 - name: get docker.asc 
@@ -19,6 +20,7 @@
     dest: /tmp/docker.asc.key
   register: get_docker_key
   tags:
+    - nginx
     - docker
 
 - name: install docker.asc
@@ -27,6 +29,7 @@
     cmd: cat /tmp/docker.asc.key | gpg --dearmor | tee /usr/share/keyrings/docker.gpg
   when: get_docker_key is defined and get_docker_key.changed
   tags:
+    - nginx
     - docker
 
 - name: install docker repo
@@ -37,6 +40,7 @@
     state: present
     update_cache: yes
   tags:
+    - nginx
     - docker
 
 - name: install docker packages
@@ -50,6 +54,7 @@
       - docker-compose-plugin
     state: present
   tags:
+    - nginx
     - docker
 
 - name: install dockerd daemon config
@@ -61,6 +66,7 @@
     group: root
     mode: '0644'
   tags:
+    - nginx
     - docker
   notify:
     - restart_docker
@@ -68,4 +74,5 @@
 - name: flush handlers
   ansible.builtin.meta: flush_handlers
   tags:
+    - nginx
     - docker
