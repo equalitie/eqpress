@@ -79,7 +79,9 @@ http {
 
 	# This is site default socket.
 	# The varialble $sock is used globally and overwritten if needed for custom.
-	set $sock php{{ php_version }}-fpm-unix-sock;
+	map $host $sock {
+		default php{{ php_version }}-fpm-unix-sock;
+	}
 	upstream php{{ php_version }}-fpm-unix-sock {
 	        server unix:/var/run/php/php{{ php_version }}-fpm.sock;
 	}
