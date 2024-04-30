@@ -4,7 +4,6 @@ worker_priority -5;
 worker_rlimit_nofile 32768;
 pid /run/nginx.pid;
 include /etc/nginx/modules-enabled/*.conf;
-error_log /var/log/nginx/nginx-error.log info;
 
 events {
 	worker_connections 16384;
@@ -77,6 +76,10 @@ http {
 	upstream php{{ php_version }}-fpm-admin-sock {
 		server unix:/var/run/php/php{{ php_version }}-fpm-admin.sock;
 	}
+
+	# This is site default socket.
+	# The varialble $sock is used globally and overwritten if needed for custom.
+	set $sock php{{ php_version }}-fpm-unix-sock;
 	upstream php{{ php_version }}-fpm-unix-sock {
 	        server unix:/var/run/php/php{{ php_version }}-fpm.sock;
 	}
