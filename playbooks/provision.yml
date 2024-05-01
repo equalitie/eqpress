@@ -10,11 +10,11 @@
      - common
      - ssh-config
      - ssl-config
-     - firewall-hardening
-     - postfix-email-service
      - php-services
-     - mariadb-local-service
+     - firewall-hardening
      - sysops
      - docker
-     - provision-server
+     - postfix-email-service
+     - mariadb-local-service
      - nginx-web-services
+     - provision-server
