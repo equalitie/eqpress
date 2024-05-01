@@ -55,11 +55,11 @@
       notify:
         - restart_docker
 
-    - name: flush handlers
-      ansible.builtin.meta: flush_handlers
-
   when:
     - web_server_docker|bool == true
   tags:
     - nginx
     - docker
+
+- name: flush handlers
+  ansible.builtin.meta: flush_handlers
