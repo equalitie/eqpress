@@ -245,11 +245,6 @@
   tags:
     - nginx
 
-# TODO: setup modules-enabled
-# TODO: include docker when web_server_docker: true
-# TODO: Add handlers
-#
-
 - name: niginx docker when web_server_docker
   ansible.builtin.include_tasks: nginx-docker.yml
   when: web_server_docker|bool == true
