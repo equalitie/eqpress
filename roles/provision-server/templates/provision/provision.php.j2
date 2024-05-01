@@ -44,8 +44,8 @@ $params = array(
     'db_collate'        => '{{ auto_provision_db_collate }}',
     'wpadmin_pass'      => '',
     'sftp_pass'         => '',
-    'web_user'          => '{{ auto_provision_web_server_user }}',
-    'web_group'         => '{{ auto_provision_web_server_group }}',
+    'web_user'          => '{{ web_user }}',
+    'web_group'         => '{{ web_groupname }}',
     'pwp'               => array( 'db' => '', 'sftp' => '', 'wp' => '' ),
     'nodes'             => json_decode( '{{ auto_provision_nodes }}', true )
 ); // close $params
