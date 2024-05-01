@@ -390,3 +390,31 @@
     - wp_cli_newest
   tags:
     - sbin
+
+- name: create eqpress base directory
+  become: yes
+  ansible.builtin.file:
+    path: "{{ eqpress_base_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: create group for web
+  become: yes
+  ansible.builtin.group:
+    name: "{{ web_groupname }}"
+    gid: "{{ web_gid }}"
+    system: yes
+
+- name: create user for web
+  become: yes
+  ansible.builtin.user:
+    name: "{{ web_user }}"
+    uid: "{{ web_uid }}"
+    group: "{{ web_groupname }}"
+    shell: "{{ web_user_shell }}"
+    home: "{{ web_user_home }}"
+    comment: "{{ web_user_comment }}"
+    create_home: no
+    system: yes
