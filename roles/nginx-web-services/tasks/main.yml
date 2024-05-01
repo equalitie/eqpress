@@ -1,9 +1,4 @@
 ---
-- name: setup docker when web_server_docker
-  ansible.builtin.include_tasks: docker.yml
-  tags: always
-  when: web_server_docker|bool == true
-
 - name: remove /var/www/html
   become: yes
   ansible.builtin.file:

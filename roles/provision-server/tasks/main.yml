@@ -71,7 +71,7 @@
     owner: root
     group: root
   loop:
-    - provision/ep-provision.php
+    - provision/provision.php
     - provision/includes/class-ep-provision-util.php
     - provision/templates/nginx-config.mustache
     - provision/templates/wp-config.php.mustache

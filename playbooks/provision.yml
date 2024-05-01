@@ -15,5 +15,6 @@
      - php-services
      - mariadb-local-service
      - sysops
-     - nginx-web-services
+     - docker
      - provision-server
+     - nginx-web-services

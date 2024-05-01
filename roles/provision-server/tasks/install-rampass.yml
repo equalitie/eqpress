@@ -96,18 +96,6 @@
     - provision
     - rampass
 
-- name: rampass directory to owner rampass
-  become: yes
-  ansible.builtin.file:
-    state: directory
-    path: "{{ eqpress_base_dir }}/rampass"
-    owner: "rampass"
-    group: "{{ web_groupname }}"
-    recurse: yes
-  tags:
-    - provision
-    - rampass
-
 - name: check if "{{ eqpress_base_dir }}/rampass/.git" exists
   become: yes
   ansible.builtin.stat:
@@ -117,22 +105,27 @@
     - provision
     - rampass
 
-- name: debug
-  debug:
-    msg: "{{ rampass_git_dir }}"
-  tags:
-    - provision
-    - rampass
-
 - name: clone rampass from /tmp
   become: yes
-  become_user: rampass
+  #become_user: rampass
   ansible.builtin.git:
     repo: '/tmp/rampass.git'
     dest: '{{ eqpress_base_dir }}/rampass'
     bare: no
     version: '{{ rampass_version }}'
     force: yes
+  tags:
+    - provision
+    - rampass
+
+- name: rampass directory to owner rampass
+  become: yes
+  ansible.builtin.file:
+    state: directory
+    path: "{{ eqpress_base_dir }}/rampass"
+    owner: "rampass"
+    group: "{{ web_groupname }}"
+    recurse: yes
   tags:
     - provision
     - rampass
