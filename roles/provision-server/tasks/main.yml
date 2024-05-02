@@ -72,11 +72,11 @@
     group: root
   loop:
     - provision/provision.php
-    - provision/includes/class-ep-provision-util.php
+    - provision/includes/class-provision-util.php
     - provision/templates/nginx-config.mustache
     - provision/templates/wp-config.php.mustache
     - provision/templates/welcome-email.txt.mustache
-    - provision/templates/ep-provision.yml.mustache
+    - provision/templates/provision.yml.mustache
   tags:
     - provision
     - provision_template

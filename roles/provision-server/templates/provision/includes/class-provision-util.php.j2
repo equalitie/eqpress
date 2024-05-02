@@ -1,8 +1,8 @@
 <?php
 /**
- * class-ep-provision-util.php
+ * class-provision-util.php
  *
- * eqpress provisioning utility class
+ * provisioning utility class
  *
  */
 
@@ -556,7 +556,7 @@ class EP_Provision_Util
   }
 
   /**
-   * Move the tmp directory into the pending state, ready to be processed by monit_ep_provision.sh.
+   * Move the tmp directory into the pending state, ready to be processed by monit_provision.sh.
    *
    */
   public function move_config_dir()
@@ -717,14 +717,14 @@ EOT;
     $console = <<<EOE
   - name: Install Console as must-use plugins for $domain
     become: true
-    command: /usr/local/sbin/eq_install_console.sh $domain creates=/var/www/$domain/wordpress/wp-content/mu-plugins/eqpress.php
+    command: /usr/local/sbin/install_console.sh $domain creates=/var/www/$domain/wordpress/wp-content/mu-plugins/eqpress.php
     ignore_errors: yes
 
 EOE;
 
     // Get the name of the server that ansible will use to install the site.
     $server = $params['nodes'][$params['location']]['hostname'];
-    $tpl = $mustache->loadTemplate('ep-provision.yml');
+    $tpl = $mustache->loadTemplate('provision.yml');
     $out = $tpl->render([
       'prov_dir' => EP_PROV_DIR,
       'server' => $server,

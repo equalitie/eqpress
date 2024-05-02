@@ -1,4 +1,6 @@
 #!/bin/bash
+# {{ ansible_managed }}
+
 export PATH=/usr/bin:/bin:/usr/local/sbin:/usr/local/bin
 
 echo "FIXME ${0}"
@@ -142,7 +144,7 @@ function do_snapshot
 
 # FIXME: We should loop over all site but also
 # have ability to input one site. ie;
-# eq_site_snapshot.sh -s site.org
+# site_snapshot.sh -s site.org
 
 if [[ $EUID -ne 0 ]]; then
   echo "You must be a root user" 2>&1

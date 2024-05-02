@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# eq_install_cache_purge.sh
+# install_console.sh
 #
-# Installation script for nginx cache purge.
-# Specify the domain to install in as first argument.
+# Installation script for press console.
+# Specify the domain to install as first argument.
 #
 export PATH=/usr/local/sbin:/bin:/usr/bin
 
@@ -14,7 +14,7 @@ mu_install() {
 		echo mu-plugins directory DOES NOT exist for ${SITE} therefore creating it.
 		mkdir ${MU_DIR}
 	fi
-	cp -a {{ eqpress_root_dir }}/cache-purge/* ${MU_DIR}/
+	cp -r {{ eqpress_root_dir }}/console/plugin/* ${MU_DIR}/
 	chwebown /var/www/${SITE}/wordpress/wp-content/mu-plugins
 }
 
@@ -48,7 +48,7 @@ else
 	echo "No site specified. Should be a domain name like example.com and exist under /var/www"
 fi
 
-echo -n "About to install cache-purge for every site. You sure? [y/n] "
+echo -n "About to install console for every site. You sure? [y/n] "
 read ask
 if [ $ask = 'y' ]; then
 	get_site

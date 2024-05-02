@@ -10,19 +10,19 @@ set idfile /var/run/monit-60.id
 set mailserver localhost
 set alert {{ monitoring_email }} with mail-format { subject: monit-60 $SERVICE $EVENT }
 #
-# eqpress console monitoring
+# console monitoring
 #
 
-# reset permissions when eqpress console sends command
-check program eqpress-console-perms with path /usr/local/sbin/monit_eq_console_perms.sh
+# reset permissions when console sends command
+check program press-console-perms with path /usr/local/sbin/monit_console_perms.sh
 	if status != 0 then alert
 #
-# reset permissions when eqpress console sends command
-check program eqpress-console-lockdown with path /usr/local/sbin/monit_eq_console_lockdown.sh
+# reset permissions when console sends command
+check program press-console-lockdown with path /usr/local/sbin/monit_console_lockdown.sh
 	if status != 0 then alert
 #
-# reset SFTP password via eqpress console
-check program eqpress-reset-password with path /usr/local/sbin/monit_eq_console_reset_password.sh
+# reset SFTP password via console
+check program press-reset-password with path /usr/local/sbin/monit_console_reset_password.sh
 	if status != 0 then alert
 
 #

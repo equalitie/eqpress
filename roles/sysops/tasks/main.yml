@@ -195,17 +195,17 @@
     - check_for_disk_usage.sh
     - check_for_large_files.sh
     - check_for_large_http_log_files.sh
-    - eq_chpass.sh
-    - eq_bruteprotect.sh
-    - eq_deploy_must_use_plugins.sh
-    - eq_install_console.sh
-    - eq_install_cache_purge.sh
-    - monit_eq_console_reset_password.sh
-    - monit_eq_console_lockdown.sh
-    - monit_eq_console_perms.sh
+    - chpass.sh
+    - bruteprotect.sh
+    - deploy_must_use_plugins.sh
+    - install_console.sh
+    - install_cache_purge.sh
+    - monit_console_reset_password.sh
+    - monit_console_lockdown.sh
+    - monit_console_perms.sh
     - nagios_check_mysql.php
-    - eq_site_snapshot.sh
-    - eq_gen_api_key.php
+    - site_snapshot.sh
+    - gen_api_key.php
   tags:
     - sbin
   when:
@@ -253,7 +253,7 @@
     group: staff
     mode: 0755
   loop:
-    - eq_api_webstats.php
+    - api_webstats.php
     - webstats.php
     - webstats_totals.php
   when:
@@ -318,7 +318,7 @@
   tags:
     - sbin
   loop:
-    - monit_eq_provision.sh
+    - monit_provision.sh
   when: auto_provision_host | default(false) | bool
 
 - name: custom monit-xx config template on provision

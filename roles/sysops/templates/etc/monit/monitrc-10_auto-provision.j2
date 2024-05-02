@@ -12,10 +12,10 @@ set alert {{ monitoring_email }} with mail-format { subject: monit-10 $SERVICE $
 #
 # WordPress provision testing system
 #
-#check program provision-testing with path /usr/local/sbin/monit_eq_provision_testing.sh
+#check program provision-testing with path /usr/local/sbin/monit_provision_testing.sh
 #        if status != 0 then alert
 #
 # WordPress provision system
 #
-check program provision with path /usr/local/sbin/monit_eq_provision.sh
+check program provision with path /usr/local/sbin/monit_provision.sh
         if status != 0 then alert
