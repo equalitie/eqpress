@@ -18,11 +18,13 @@
 - name: copy backup cron jobs
   become: yes
   ansible.builtin.copy:
-    src: "etc/cron.d/eqpress_backups.{{ mysql_repl_role }}"
-    dest: /etc/cron.d/eqpress_backups
+    src: "etc/cron.d/backups.{{ mysql_repl_role }}"
+    dest: /etc/cron.d/backups
     owner: root
     group: root
     mode: 0640
+  when:
+    - mysql_repl_role is defined
   tags:
     - cron
   notify:
@@ -36,6 +38,8 @@
     owner: root
     group: root
     mode: 0640
+  when:
+    - mysql_repl_role is defined
   tags:
     - cron
   notify:
@@ -49,6 +53,8 @@
     owner: root
     group: root
     mode: 0644
+  when:
+    - mysql_repl_role is defined
   tags:
     - cron
   notify:

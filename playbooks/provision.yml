@@ -18,3 +18,4 @@
      - mariadb-local-service
      - nginx-web-services
      - provision-server
+     - timed-jobs
