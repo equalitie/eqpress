@@ -68,7 +68,7 @@
     ansible.builtin.copy:
       src: "{{ prov_dir }}processing/{{ domain }}/wp-config.php"
       dest: "/var/www/{{ domain }}/wordpress/wp-config.php"
-      force=yes
+      force: yes
   
   - name: Install cache-purge as must-use plugins for {{ domain }}
     become: yes
