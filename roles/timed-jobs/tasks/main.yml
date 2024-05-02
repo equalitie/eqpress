@@ -11,6 +11,7 @@
     - mysql_repl_role is defined
     - mysql_repl_role == "master"
   tags:
+    - timers
     - cron
   notify:
     - "restart cron"
@@ -26,6 +27,7 @@
   when:
     - mysql_repl_role is defined
   tags:
+    - timers
     - cron
   notify:
     - "restart cron"
@@ -41,6 +43,7 @@
   when:
     - mysql_repl_role is defined
   tags:
+    - timers
     - cron
   notify:
     - "restart cron"
@@ -56,6 +59,7 @@
   when:
     - mysql_repl_role is defined
   tags:
+    - timers
     - cron
   notify:
     - "restart cron"
@@ -76,32 +80,5 @@
     - systemd_daemon_reload
     - systemd_enable_edgespermit_timer
   tags:
+    - timers
     - edgespermit
-
-# TODO: remove ? deprecated
-#- name: copy cron config
-#  become: yes
-#  copy:
-#    src: etc/default/cron
-#    dest: /etc/default/cron
-#    owner: root
-#    group: root
-#    mode: 0644
-#  tags:
-#    - cron
-#  notify:
-#    - "restart cron"
-
-# TODO: remove ? deprecated
-#- name: copy cron.override
-#  become: yes
-#  copy:
-#    src: etc/init/cron.override
-#    dest: /etc/init/cron.override
-#    owner: root
-#    group: root
-#    mode: 0644
-#  tags:
-#    - cron
-#  notify:
-#    - "restart cron"
