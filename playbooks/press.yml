@@ -24,7 +24,7 @@
 
     - name: fail
       fail:
-        msg: "This playbook is meant to be ran with '-l cluster_name' . List above"
+        msg: "This playbook is meant to be ran with '-l cluster_name' . See list above"
       tags: always
 
 - hosts: all
