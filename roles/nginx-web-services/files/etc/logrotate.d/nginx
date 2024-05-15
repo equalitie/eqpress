@@ -6,7 +6,6 @@
         dateext
         delaycompress
         ifempty
-        notifempty
         create 0640 www-data adm
         sharedscripts
         prerotate
