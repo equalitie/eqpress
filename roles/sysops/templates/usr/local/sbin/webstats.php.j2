@@ -18,12 +18,15 @@ if ( $dbh->connect_error ) {
 	error_log( "Connect failed: " . $dbh->connect_errno . ": " . $dbh->connect_error );
 	exit(1);
 }
-$shellout = exec( "/bin/ls -1 /var/log/nginx/*.access.log-$today 2>/dev/null", $out, $status );
+$shellout = exec( "/bin/ls -1 /var/log/nginx/*.access.log-$today 2>&1", $out, $status );
 if ( $status != 0 ) {
-	$message .= var_export( $out, true );
-	if(count($message)) {
-		echo $message;
-		error_log( $message );
+	echo "There was a issue collecting webstats today." . PHP_EOL;
+	echo "See below:" . PHP_EOL;
+	if(count($out)) {
+		foreach ($out as $message) {
+			echo $message . PHP_EOL;
+			error_log($message);
+		}
 	}
 	exit(1);
 }
