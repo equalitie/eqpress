@@ -3,15 +3,21 @@
 
 export PATH=/usr/bin:/bin:/usr/local/sbin:/usr/local/bin
 
-echo "FIXME ${0}"
-echo "Make this not to run on all sites by default. For now just exit"
-exit 1
-
 # Some globals
 GIT_COMMIT_NAME="{{ org_name }}"
 GIT_COMMIT_EMAIL="{{ monitoring_email }}"
 SITES="{{ web_user_home }}"
 DATEFORMAT="+%F-%H%M%S%Z"
+
+function check_do_git
+{
+  local my_dir=$1
+  if [ -f $my_dir/.dosnapshot ]; then
+    return 0;
+  else
+    return 1;
+  fi
+}
 
 function check_is_wordpress
 {
@@ -128,7 +134,13 @@ function do_snapshot
         else
           echo "$DBNAME data export failed"
         fi
-        git_snapshot $site
+	# Only do git snapshot when .dosnapshot file found
+	if check_do_git $site; then
+          git_snapshot $site
+	fi
+	# Save one day back of database dump
+	cd $site
+	mv $DBNAME.sql.gz $DBNAME.sql.1.gz 2>/dev/null
         cd $site/wordpress
         gzip $DBNAME.sql
         mv $DBNAME.sql.gz ../
