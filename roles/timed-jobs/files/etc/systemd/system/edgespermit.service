@@ -5,7 +5,7 @@ After=ufw.service network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/sbin/edgespermit
+ExecStart=/usr/local/sbin/edgespermit -n
 
 [Install]
 WantedBy=multi-user.target
