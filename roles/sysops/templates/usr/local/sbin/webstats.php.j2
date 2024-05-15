@@ -16,14 +16,16 @@ $dbh = new mysqli( 'localhost', '{{ mysql_webstats.username }}', '{{ mysql_webst
 if ( $dbh->connect_error ) {
 	printf( "Connect failed: %s: %s\n", $dbh->connect_errno, $dbh->connect_error );
 	error_log( "Connect failed: " . $dbh->connect_errno . ": " . $dbh->connect_error );
-	exit();
+	exit(1);
 }
-$shellout = exec( "/bin/ls -1 /var/log/nginx/*.access.log-$today 2>&1", $out, $status );
+$shellout = exec( "/bin/ls -1 /var/log/nginx/*.access.log-$today 2>/dev/null", $out, $status );
 if ( $status != 0 ) {
 	$message .= var_export( $out, true );
-	echo $message;
-	error_log( $message );
-	exit();
+	if(count($message)) {
+		echo $message;
+		error_log( $message );
+	}
+	exit(1);
 }
 foreach ( $out as $access_log ) {
 	$domain = preg_replace( array( '~/var/log/nginx/~sDx', "~\.access\.log\-$today~sDx" ), array( '', '' ), $access_log );
