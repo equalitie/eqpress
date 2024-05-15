@@ -30,6 +30,7 @@
     mode: '0750'
   when: method_allowedges
   tags:
+    - nginx
     - edgespermit
 
 - name: allow web port to all if not using edgepermit script
