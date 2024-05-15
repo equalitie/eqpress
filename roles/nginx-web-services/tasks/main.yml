@@ -42,6 +42,7 @@
     - nginx/sites-enabled
     - nginx/sites-available
     - nginx/modules-enabled
+    - nginx/conf.d
   tags:
     - nginx
 
