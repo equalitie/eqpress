@@ -11,6 +11,7 @@ $tag = 'DeflectEdge';
 $api_key = '{{ edgespermit_key }}';
 $min_new_ip_count = {{ edgespermit_min_edges }};
 $allowPorts = '80,443'; // Comma separated with no spaces
+$api_url="https://dashboard.deflect.ca/api/edges?key=$api_key";
 
 $options = getopt("rhdwn");
 
@@ -37,7 +38,7 @@ $current = getCurrent($tag,$allowPorts);
 if (defined('REMOVE') && REMOVE === 1) {
 	$min_new_ip_count=-1;
 } else {
-	$new = getNew($api_key);
+	$new = getNew($api_url);
 }
 
 // Make sure our new IPaddr list is greater than our $min_new_ip_count
@@ -86,15 +87,15 @@ if (defined('NGINX_REAL_IP') && NGINX_REAL_IP === 1) {
 
 function help() {
 	echo <<<END
-		This script by default will update "allow" firewall rules of IPaddresses
-		returned from the Deflect API "edges" endpoint using ufw.
+		This tool, by default, will update "allow" firewall rules of IPaddresses
+		returned from the API "edges" endpoint using ufw.
 
 		Note: sudo ufw status can show you all the rules applied with ufw.
 
-		-d	Returns some debugging information and does not update the firewall
-		-w	Script will try to also look for possible issues with the firewall based on the allowed ports.
-		-r	Removes the rules defined from this script
-		-n	Also write conf file for nginx set_real_ip_from
+		-d	Returns some debugging information and does not update.
+		-w	Look for possible issues with the firewall based on the allowed ports.
+		-r	Removes the rules add by this tool.
+		-n	Also write conf file for nginx set_real_ip_from.
 		-h	This screen and exits
 
 	END;
@@ -151,19 +152,18 @@ function check_valid() {
 	}
 }
 
-function getNew($api_key) {
+function getNew($api_url) {
 	$options = array(
 		'http'=>array(
 			'method'=>"GET",
-			'user_agent'=>"eqpress_iplist/1.0",
+			'user_agent'=>"edgepermit/1.0",
 			'timeout'=>60,
 			'ignore_errors'=>true,
 			'header'=>"Accept: application/json\r\n"
 			)
 		);
 	$context = stream_context_create($options);
-	$url = "https://dashboard.deflect.ca/api/edges?key=$api_key";
-	$str = file_get_contents($url, false, $context);
+	$str = file_get_contents($api_url, false, $context);
 	$arr = json_decode($str);
 	return $arr->list;
 }
@@ -331,7 +331,9 @@ function deployNginxRealIP($List) {
 		$tempFileContent = file_get_contents($tempFilePath);
 
 		if ($tempFileContent !== $comparedFileContent) {
-			if (file_put_contents($nginx_real_ip_conf, $tempFileContent) !== false) {
+			if (defined('DEBUG') && DEBUG === 1) {
+				echo "Info: $nginx_real_ip_conf would be updated" . PHP_EOL;
+			} elseif (file_put_contents($nginx_real_ip_conf, $tempFileContent) !== false) {
 				$ret = 2;
 				$message = "Info: $nginx_real_ip_conf updated";
 				syslog(LOG_INFO, $message);
