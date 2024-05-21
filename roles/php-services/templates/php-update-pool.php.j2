@@ -64,12 +64,14 @@ exit(0);
 function help() {
   global $validTmpl;
   $message = <<<"END"
+    This tool will update the sites php pool.
     Using this tool without options will be interactive.
 
     Avaialble options:
       --reload          Reload php fpm when finished.
       --site=<site>     <site> is a valid Worpress site on the server.
-      --type=<type>     <type> is a valid number for the pool type. Will default to 2 if site option is defined and not type.
+      --type=<type>     <type> is a valid number for the pool type.
+                        Will default to 2 if site option is defined and not type.
 
     END;
   foreach($validTmpl as $key => $value) {
