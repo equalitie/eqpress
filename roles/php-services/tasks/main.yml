@@ -113,6 +113,19 @@
   notify:
     - "restart php-fpm"
 
+- name: install php-update-pool.php to /usr/local/sbin
+  become: yes
+  ansible.builtin.template:
+    src: php-update-pool.php.j2
+    dest: /usr/local/sbin/php-update-pool.php
+    owner: root
+    group: root
+    mode: '0755'
+  when: not auto_provision_host | default(false) | bool
+  tags:
+    - sbin
+    - php
+
 - name: copy php config provision
   become: yes
   ansible.builtin.template:
