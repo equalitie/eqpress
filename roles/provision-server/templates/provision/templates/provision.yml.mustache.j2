@@ -77,6 +77,11 @@
       creates: "/var/www/{{ domain }}/wordpress/wp-content/mu-plugins/nginx-helper.php"
     ignore_errors: yes
 
+  - name: install php pool conf
+    become: yes
+    ansible.builtin.command:
+      cmd: /usr/local/sbin/php-update-pool.php --site="{{ domain }}" --reload
+
 {{ console }}
 
   - name: Install WordPress using WP-CLI # must be after console so WP doesn't send its email
