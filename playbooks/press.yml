@@ -49,3 +49,26 @@
     - mariadb-local-enable-replication
     - postfix-email-service
     - timed-jobs
+
+  tasks:
+    - name: create TOOLS_FAQ
+      become: yes
+      ansible.builtin.shell: |
+         echo $SEP > $FAQ ; echo "These are commonly used tools" >> $FAQ ; echo $SEP >> $FAQ
+         echo "Commands:" >> $FAQ
+         echo "* edgespermit" >> $FAQ
+         echo "* php-update-pool.php" >> $FAQ
+         echo "* wp" >> $FAQ
+         echo $SEP >> $FAQ
+         echo "* edgespermit" >> $FAQ ; echo >> $FAQ
+         /usr/local/sbin/edgespermit -h >> $FAQ ; echo $SEP >> $FAQ
+         echo "* php-update-pool.php" >> $FAQ ; echo >> $FAQ
+         /usr/local/sbin/php-update-pool.php -h >> $FAQ ; echo $SEP >> $FAQ
+         echo " * wp" >> $FAQ ; echo >> $FAQ
+         WP_HELP="$(/usr/local/sbin/wp --allow-root help)"
+         echo "$WP_HELP" >> $FAQ ; echo $SEP >> $FAQ
+      environment:
+        - FAQ: "{{ ansible_user_dir }}/TOOLS_FAQ"
+        - SEP: "=============================================================================================="
+      tags:
+        - faq
