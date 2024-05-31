@@ -4,6 +4,8 @@
     src: etc/skel/.bashrc.j2
     dest: ~/.bashrc
     mode: 0600
+  tags:
+    - common
 
 - name: .bashrc for root user
   become: yes
@@ -11,6 +13,8 @@
     src: etc/skel/.bashrc.j2
     dest: /root/.bashrc
     mode: 0600
+  tags:
+    - common
 
 - name: hostname file
   become: yes
@@ -21,17 +25,17 @@
     group: root
     mode: 0644
   when: not is_local
+  tags:
+    - common
 
-- name: apt cache
+- name: apt cache and dist
   become: yes
   ansible.builtin.apt:
     update_cache: yes
     cache_valid_time: 3600
-
-- name: apt dist-upgrade
-  become: yes
-  ansible.builtin.apt:
     upgrade: dist
+  tags:
+    - common
 
 - name: common packages not local
   become: yes
@@ -45,6 +49,8 @@
       - acl
     state: present
   when: not is_local
+  tags:
+    - common
 
 - name: common packages
   become: yes
@@ -70,34 +76,40 @@
       - locales
       - software-properties-common
     state: present
+  tags:
+    - common
 
 - name: Setup locale
   become: yes
   ansible.builtin.template:
     src: etc/default/locale.j2
     dest: /etc/default/locale
+  tags:
+    - common
 
 - name: set locale.gen file
   become: yes
   ansible.builtin.locale_gen:
     name: "{{ locale_lang }}"
     state: present
-
-# TODO: do we renenable these notify? Update method ? "update tzdata"
+  tags:
+    - common
 
 - name: set /etc/localtime
   become: yes
-  ansible.builtin.copy:
-    remote_src: yes
+  ansible.builtin.file:
     src: "/usr/share/zoneinfo/{{ timezone }}"
     dest: "/etc/localtime"
+    state: link
     owner: root
     group: root
     mode: 0644
   tags:
     - tzone
-#  notify:
-#    - "update tzdata"
+    - timezone
+    - common
+  notify:
+    - "update tzdata"
 
 - name: set timezone
   become: yes
@@ -105,8 +117,10 @@
     name: "{{ timezone }}"
   tags:
     - tzone
-#  notify:
-#    - "update tzdata"
+    - timezone
+    - common
+  notify:
+    - "update tzdata"
 
 - name: Ensure the hostname entry for master is available for the client.
   become: yes
@@ -119,6 +133,8 @@
     - mysql_repl_role is defined
     - mysql_repl_role == 'slave'
     - mysql_repl_master is defined
+  tags:
+    - common
 
 - name: Ensure the hostname entry for the slave is entered into hosts file
   become: yes
@@ -131,6 +147,8 @@
     - mysql_repl_role is defined
     - mysql_repl_role == 'master'
     - mysql_repl_slave is defined
+  tags:
+    - common
 
 - name: get some varibles set from json string of nodes
   ansible.builtin.set_fact:
@@ -139,6 +157,7 @@
   tags:
     - ssh
     - known_hosts
+    - common
 
 - name: Ensure the hostname entry of node(s) are available on provision server.
   become: yes
@@ -149,3 +168,5 @@
     state: present
   when: auto_provision_host | default(false) | bool
   loop: "{{ auto_provision_nodes_items }}"
+  tags:
+    - common
