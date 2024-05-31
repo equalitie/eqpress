@@ -1,5 +1,9 @@
 ---
-# handlers file for common
- - name: update tzdata
-   become: true 
-   command: /usr/sbin/dpkg-reconfigure --frontend noninteractive tzdata
+- name: update tzdata
+  become: yes
+  ansible.builtin.command:
+    argv:
+      - /usr/sbin/dpkg-reconfigure
+      - --frontend
+      - noninteractive
+      - tzdata
