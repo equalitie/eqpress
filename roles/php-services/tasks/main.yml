@@ -77,7 +77,7 @@
   become: yes
   ansible.builtin.file:
     src: "/etc/php/{{ php_version }}/mods-available/opcache.ini"
-    dest: "/etc/php/{{ php_version }}/{{ item }}/conf.d/10-opcache.ini"
+    dest: "/etc/php/{{ php_version }}/{{ item }}/conf.d/05-opcache.ini"
     state: link
   loop:
     - fpm
@@ -93,7 +93,7 @@
     path: "/etc/php/{{ php_version }}/cli/conf.d/{{ item }}-opcache.ini"
     state: absent
   loop:
-    - "05"
+    - "10"
     - "15"
     - "20"
   tags:
@@ -105,7 +105,7 @@
     path: "/etc/php/{{ php_version }}/fpm/conf.d/{{ item }}-opcache.ini"
     state: absent
   loop:
-    - "05"
+    - "10"
     - "15"
     - "20"
   tags:
