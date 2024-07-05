@@ -12,14 +12,14 @@ Requirements
 
 1 - System (controller 'local') used to install to servers. 
     This will also be place to push out updates.
-    Tested on Ubuntu 22.04 LTS and Debian 11
+    Tested on Ubuntu 24.04 LTS and Debian 12
 
 Dependencies
 ------------
 
-Ansible v2.10+
+Ansible v2.15+
 
-Ubuntu 22.04 LTS +
+Ubuntu 24.04 LTS +
 
 Note: Tested and developed for Ubuntu 24.04 LTS
 
@@ -50,8 +50,6 @@ At this point you should be able to get started
   # If using docker [default], make sure you have community.docker version 3.8.1 or above.
   # Check by running "ansible-galaxy collection list | grep community.docker"
   # You can install by "ansible-galaxy collection install community.docker"
-  # NOTE: community.docker version 3.8.1 could give warning about ansible version compatibility,
-  #       but should still work. Tested with ansible 2.10.8.
 
   Change to your repository directory
 
