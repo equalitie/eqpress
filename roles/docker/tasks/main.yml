@@ -15,12 +15,14 @@
         state: absent
 
     - name: install docker repo
+      become: yes
       ansible.builtin.deb822_repository:
         name: docker
         types: deb
         uris: "{{ docker_repo }}"
         suites: "{{ ansible_distribution_release }}"
         architectures: amd64
+        components: stable
         signed_by: "{{ docker_gpg_key_url }}"
 
 
