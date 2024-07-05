@@ -1,19 +1,29 @@
 ---
-- name: get nodesource.gpg.key
-  ansible.builtin.get_url:
-    url: '{{ nodejs_gpg_key_url }}'
-    dest: /tmp/nodesource.gpg.key
-  register: get_nodesource
-  tags:
-    - provision
-    - rampass
-    - nodejs
+#- name: get nodesource.gpg.key
+#  ansible.builtin.get_url:
+#    url: '{{ nodejs_gpg_key_url }}'
+#    dest: /tmp/nodesource.gpg.key
+#  register: get_nodesource
+#  tags:
+#    - provision
+#    - rampass
+#    - nodejs
 
-- name: install nodejs nodesource.gpg
+#- name: install nodejs nodesource.gpg
+#  become: yes
+#  ansible.builtin.shell:
+#    cmd: cat /tmp/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg
+#  when: get_nodesource is defined and get_nodesource.changed
+#  tags:
+#    - provision
+#    - rampass
+#    - nodejs
+- name: install nodejs repo
   become: yes
-  ansible.builtin.shell:
-    cmd: cat /tmp/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg
-  when: get_nodesource is defined and get_nodesource.changed
+  ansible.builtin.apt_repository:
+    repo: '{{ nodejs_repo }} nodistro main'
+    state: absent
+    update_cache: yes
   tags:
     - provision
     - rampass
@@ -21,10 +31,13 @@
 
 - name: install nodejs repo
   become: yes
-  ansible.builtin.apt_repository:
-    repo: '{{ nodejs_repo }} nodistro main'
-    state: present
-    update_cache: yes
+  ansible.builtin.deb822_repository:
+    name: nodejs
+    types: deb
+    uris: "{{ nodejs_repo }}"
+    suites: nodistro
+    components: main
+    signed_by: "{{ nodejs_gpg_key_url }}"
   tags:
     - provision
     - rampass
