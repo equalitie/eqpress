@@ -49,6 +49,7 @@
     - name: install docker packages
       become: yes
       ansible.builtin.apt:
+        update_cache: yes
         name:
           - docker-ce
           - docker-ce-cli
