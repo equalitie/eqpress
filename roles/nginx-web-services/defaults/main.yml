@@ -1,7 +1,7 @@
 ---
 web_server_docker: true
 docker_group: "docker"
-nginx_docker_version: "1.25.5"
+nginx_docker_version: "1.27.0"
 nginx_docker_purge_module_version: "2.5.3"
 nginx_container_name: "eqpress_nginx"
 nginx_module_dir: "/usr/lib/nginx/modules"
