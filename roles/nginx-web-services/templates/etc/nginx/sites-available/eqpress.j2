@@ -2,7 +2,7 @@ server {
 	listen 80;
 	server_name {{ inventory_hostname }};
 	root {{ eqpress_root_dir }};
-	access_log /var/log/nginx/{{ inventory_hostname }}.access.log ep_default;
+	access_log /var/log/nginx/{{ inventory_hostname }}.access.log press_default;
 	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
 
         location /nginx_status {
@@ -52,7 +52,7 @@ server {
 	listen 443 ssl;
         http2 on;
 	server_name {{ inventory_hostname }};
-	access_log /var/log/nginx/{{ inventory_hostname }}.access.log ep_default;
+	access_log /var/log/nginx/{{ inventory_hostname }}.access.log press_default;
 	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
 	root {{ eqpress_root_dir }};
 

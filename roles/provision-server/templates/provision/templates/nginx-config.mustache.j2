@@ -10,7 +10,7 @@ server {
     ## end set pool-fpm.sock
 {{multisite_config}}
     root /var/www/{{domain}}/wordpress;
-    access_log /var/log/nginx/{{domain}}.access.log ep_default;
+    access_log /var/log/nginx/{{domain}}.access.log press_default;
     error_log /var/log/nginx/{{domain}}.error.log;
 
     include /etc/nginx/eqpress-common/common_cdn_realip.conf;
@@ -53,7 +53,7 @@ server {
     ## end set pool-fpm.sock
 {{multisite_config}}
     root /var/www/{{domain}}/wordpress;
-    access_log /var/log/nginx/{{domain}}.access.log ep_default;
+    access_log /var/log/nginx/{{domain}}.access.log press_default;
     error_log /var/log/nginx/{{domain}}.error.log;
 
     include /etc/nginx/eqpress-common/common_cdn_realip.conf;
