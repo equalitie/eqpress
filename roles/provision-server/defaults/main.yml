@@ -5,7 +5,8 @@ auto_provision_ldap_authattr: ''
 auto_provision_ldap_basedn: ''
 auto_provision_ldap_port: ''
 
-nodejs_repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x"
+#nodejs_repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x"
+nodejs_repo: "https://deb.nodesource.com/node_22.x"
 #nodejs_gpg_key_url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
 nodejs_gpg_key_url: "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key"
 
