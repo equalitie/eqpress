@@ -18,16 +18,16 @@
 #    - provision
 #    - rampass
 #    - nodejs
-- name: install nodejs repo
-  become: yes
-  ansible.builtin.apt_repository:
-    repo: '{{ nodejs_repo }} nodistro main'
-    state: absent
-    update_cache: yes
-  tags:
-    - provision
-    - rampass
-    - nodejs
+#- name: install nodejs repo
+#  become: yes
+#  ansible.builtin.apt_repository:
+#    repo: '{{ nodejs_repo }} nodistro main'
+#    state: absent
+#    update_cache: yes
+#  tags:
+#    - provision
+#    - rampass
+#    - nodejs
 
 - name: install nodejs repo
   become: yes
@@ -49,6 +49,8 @@
     name:
       - nodejs
       - composer
+    state: present
+    update_cache: yes
   tags:
     - provision
     - rampass
