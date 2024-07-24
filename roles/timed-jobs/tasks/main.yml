@@ -95,3 +95,5 @@
     - { name: "provision.service", generic_script_description: "Provision Script", generic_script: "/usr/local/bin/monit_provision.sh" }
     - { name: "provision.timer", generic_script_description: "Provision Script", generic_script_seconds: "10" }
   when: auto_provision_host | default(false) | bool
+  tags:
+    - generic_timers
