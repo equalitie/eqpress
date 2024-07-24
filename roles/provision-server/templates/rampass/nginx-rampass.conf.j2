@@ -8,7 +8,7 @@ server {
     # Note: For now we just work behind a proxy so use self-signed
     include /etc/nginx/eqpress-common/common_eqpress_ssl.conf;
     server_name {{ rampass_domain }};
-    root {{ eqpress_base_dir }}/rampass/public;
+    root {{ eqpress_base_dir }}/rampass/rampass/public;
  
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
