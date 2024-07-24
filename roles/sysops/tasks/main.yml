@@ -7,7 +7,7 @@
       - rsyslog
     state: present
 
-- name: remove monit tht was installed in pre beta
+- name: remove monit that was installed in pre beta
   become: yes
   ansible.builtin.apt:
     name:

@@ -246,7 +246,7 @@
   tags:
     - nginx
 
-- name: niginx docker when web_server_docker
+- name: nginx docker when web_server_docker
   ansible.builtin.include_tasks: nginx-docker.yml
   when: web_server_docker|bool == true
   tags: always
