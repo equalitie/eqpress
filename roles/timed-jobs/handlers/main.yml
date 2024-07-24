@@ -4,7 +4,7 @@
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: systemd_enable_edgespermit_timer
+- name: enable_timer_edgespermit
   become: yes
   ansible.builtin.systemd:
     name: edgespermit.timer
@@ -15,4 +15,11 @@
   become: yes
   ansible.builtin.systemd:
     name: cron
+    state: restarted
+
+- name: enable_timer_provision
+  become: yes
+  ansible.builtin.systemd:
+    name: provision.timer
+    enabled: yes
     state: restarted
