@@ -9,12 +9,12 @@
 
 - name: remove monit tht was installed in pre beta
   become: yes
-    ansible.builtin.apt:
-      name:
-        - monit
-      state: absent
-      purge: yes
-      autoremove: yes
+  ansible.builtin.apt:
+    name:
+      - monit
+    state: absent
+    purge: yes
+    autoremove: yes
   tags:
     - remove_monit
 
