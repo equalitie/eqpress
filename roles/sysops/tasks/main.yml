@@ -3,10 +3,20 @@
   become: yes
   ansible.builtin.apt:
     name:
-      - monit
       - git-core
       - rsyslog
     state: present
+
+- name: remove monit tht was installed in pre beta
+  become: yes
+    ansible.builtin.apt:
+      name:
+        - monit
+      state: absent
+      purge: yes
+      autoremove: yes
+  tags:
+    - remove_monit
 
 # It is okay if server is minimize. Stop telling us
 - name: remove /etc/update-motd.d/60-unminimize
@@ -14,26 +24,6 @@
   ansible.builtin.file:
     path: /etc/update-motd.d/60-unminimize
     state: absent
-
-- name: see if default monitrc exists
-  become: yes
-  ansible.builtin.stat: 
-    path: /etc/monit/monitrc
-  register: monitrc_stat
-
-- name: stop monit process
-  become: yes
-  ansible.builtin.systemd:
-    name: monit
-    state: stopped
-  when: monitrc_stat.stat.exists
-
-- name: move default monitrc if exists 
-  become: yes
-  ansible.builtin.command:
-    cmd: mv /etc/monit/monitrc /etc/monit/monitrc.dist
-    removes: /etc/monit/monitrc
-    creates: /etc/monit/monitrc.dist
 
 - name: add .ssh dir to user skel
   become: yes
@@ -291,6 +281,7 @@
   tags:
     - sbin
 
+# TODO: For now leave this for ref
 - name: custom monit-xx config template on nodes
   become: yes
   ansible.builtin.template:
@@ -353,26 +344,6 @@
     owner: root
     group: root
     mode: 0644
-
-- name: copy custom monit startup script
-  become: yes
-  ansible.builtin.template:
-    src: etc/init.d/monit.j2
-    dest: /etc/init.d/monit
-    owner: root
-    group: root
-    mode: 0750
-    backup: yes
-  notify:
-    - "restart monit"
-
-- name: start monit
-  become: yes
-  ansible.builtin.systemd:
-    name: monit
-    state: started
-    daemon_reload: yes
-    enabled: yes
 
 - name: download and install wp-cli
   become: yes
