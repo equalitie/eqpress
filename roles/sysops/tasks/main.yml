@@ -295,8 +295,6 @@
     - monitrc-60
   when:
     - mysql_repl_role is defined
-  notify:
-    - "restart monit"
 
 - name: install provision templates
   become: yes
@@ -324,8 +322,6 @@
     - monitrc-10
     - monitrc-60
   when: auto_provision_host | default(false) | bool
-  notify:
-    - "restart monit"
 
 - name: copy limits.conf to increase open file limits for nginx and mysql
   become: yes
