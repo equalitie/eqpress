@@ -1,34 +1,4 @@
 ---
-#- name: get nodesource.gpg.key
-#  ansible.builtin.get_url:
-#    url: '{{ nodejs_gpg_key_url }}'
-#    dest: /tmp/nodesource.gpg.key
-#  register: get_nodesource
-#  tags:
-#    - provision
-#    - rampass
-#    - nodejs
-
-#- name: install nodejs nodesource.gpg
-#  become: yes
-#  ansible.builtin.shell:
-#    cmd: cat /tmp/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg
-#  when: get_nodesource is defined and get_nodesource.changed
-#  tags:
-#    - provision
-#    - rampass
-#    - nodejs
-#- name: install nodejs repo
-#  become: yes
-#  ansible.builtin.apt_repository:
-#    repo: '{{ nodejs_repo }} nodistro main'
-#    state: absent
-#    update_cache: yes
-#  tags:
-#    - provision
-#    - rampass
-#    - nodejs
-
 - name: install nodejs repo
   become: yes
   ansible.builtin.deb822_repository:
@@ -57,24 +27,11 @@
     - nodejs
     - composer
 
-- name: clone rampass to /tmp
-  become: no
-  ansible.builtin.git:
-    repo: '{{ rampass_repo }}'
-    dest: '/tmp/rampass.git'
-    bare: yes
-    version: '{{ rampass_version }}'
-    force: yes
-    accept_hostkey: yes
-  tags:
-    - provision
-    - rampass
-
 - name: create rampass user
   become: yes
   ansible.builtin.user:
     name: rampass
-    create_home: no
+    create_home: yes
     group: "{{ web_groupname }}"
     password: '!'
     shell: /usr/sbin/nologin
@@ -87,6 +44,7 @@
 # ep_pwpusher_db:
 # ep_pwpusher_user:
 # ep_pwpusher_pw:
+
 - name: create rampass mysql database
   become: yes
   community.mysql.mysql_db:
@@ -111,36 +69,28 @@
     - provision
     - rampass
 
-- name: check if "{{ eqpress_base_dir }}/rampass/.git" exists
-  become: yes
-  ansible.builtin.stat:
-    path: "{{ eqpress_base_dir }}/rampass/.git"
-  register: rampass_git_dir
-  tags:
-    - provision
-    - rampass
-
 - name: rampass directory to owner rampass
   become: yes
   ansible.builtin.file:
     state: directory
     path: "{{ eqpress_base_dir }}/rampass"
-    owner: "rampass"
+    owner: rampass
     group: "{{ web_groupname }}"
     recurse: yes
   tags:
     - provision
     - rampass
 
-- name: clone rampass from /tmp
+- name: clone rampass
   become: yes
   become_user: rampass
   ansible.builtin.git:
-    repo: '/tmp/rampass.git'
-    dest: '{{ eqpress_base_dir }}/rampass'
+    repo: "{{ rampass_repo }}"
+    dest: "{{ eqpress_base_dir }}/rampass/rampass"
     bare: no
-    version: '{{ rampass_version }}'
+    version: "{{ rampass_version }}"
     force: yes
+    accept_hostkey: yes
   tags:
     - provision
     - rampass
@@ -150,8 +100,8 @@
   become: yes
   ansible.builtin.template:
     src: rampass/env.j2
-    dest: "{{ eqpress_base_dir }}/rampass/.env"
-    owner: "rampass"
+    dest: "{{ eqpress_base_dir }}/rampass/rampass/.env"
+    owner: rampass
     group: "{{ web_groupname }}"
     mode: "0640"
     force: no
@@ -164,7 +114,7 @@
   become_user: rampass
   community.general.composer:
     command: "update"
-    working_dir: "{{ eqpress_base_dir }}/rampass"
+    working_dir: "{{ eqpress_base_dir }}/rampass/rampass"
     executable: "/usr/bin/php{{ php_version }}"
   tags:
     - provision
@@ -177,7 +127,7 @@
   ansible.builtin.command:
     cmd: "{{ item }}"
   args:
-    chdir: "{{ eqpress_base_dir }}/rampass"
+    chdir: "{{ eqpress_base_dir }}/rampass/rampass"
   loop:
     - "npm install"
     - "npm run build"
@@ -193,13 +143,13 @@
   become: yes
   ansible.builtin.file:
     state: directory
-    path: "{{ eqpress_base_dir }}/{{ item.name }}"
+    path: "{{ eqpress_base_dir }}/rampass/{{ item.name }}"
     owner: "{{ item.owner }}"
     group: "{{ item.group }}"
     recurse: "{{ item.recurse }}"
   loop:
     - { name: "rampass", owner: "rampass", group: "{{ web_groupname }}", recurse: no }
-    - { name: "rampass/storage", owner: "{{ web_user }}", group: "{{web_groupname }}", recurse: yes }
+    - { name: "rampass/storage", owner: "{{ web_user }}", group: "{{ web_groupname }}", recurse: yes }
   tags:
     - provision
     - rampass
@@ -207,7 +157,7 @@
 - name: fix .env owner
   become: yes
   ansible.builtin.file:
-    path: "{{ eqpress_base_dir }}/rampass/.env"
+    path: "{{ eqpress_base_dir }}/rampass/rampass/.env"
     mode: "0640"
     owner: rampass
     group: "{{ web_groupname }}"
