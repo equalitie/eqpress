@@ -86,14 +86,14 @@
 - name: install generic timers for provision server
   become: yes
   ansible.builtin.template:
-    src: "generic_script.{{ item.name }}.j2"
-    dest: "/etc/systemd/{{ item.name }}"
+    src: "generic_script.{{ item.type }}.j2"
+    dest: "/etc/systemd/{{ item.name }}.{{ item.type }}"
     owner: root
     group: root
     mode: "0644"
   loop:
-    - { name: "provision.service", generic_script_description: "Provision Script", generic_script: "/usr/local/bin/monit_provision.sh" }
-    - { name: "provision.timer", generic_script_description: "Provision Script", generic_script_seconds: "10" }
+    - { name: "provision", type: "service", generic_script_description: "Provision Script", generic_script: "/usr/local/bin/monit_provision.sh" }
+    - { name: "provision", type: "timer", generic_script_description: "Provision Script", generic_script_seconds: "10" }
   when: auto_provision_host | default(false) | bool
   tags:
     - generic_timers
