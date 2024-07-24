@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+[Unit]
+Description={{ item.generic_script_description }}  every {{ item.generic_script_seconds }} seconds
+
+[Timer]
+OnBootSec={{ item.generic_script_seconds }}
+OnUnitActiveSec={{ item.generic_script_seconds }}
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,6 @@
+# {{ ansible_managaed }}
+[Unit]
+Description={{ item.generic_script_description }}
+
+[Service]
+ExecStart={{ item.generic_script }}
