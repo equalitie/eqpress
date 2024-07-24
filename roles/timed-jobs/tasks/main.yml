@@ -78,7 +78,7 @@
     - service
   notify:
     - systemd_daemon_reload
-    - systemd_enable_edgespermit_timer
+    - enable_timer_edgespermit
   tags:
     - timers
     - edgespermit
@@ -87,7 +87,7 @@
   become: yes
   ansible.builtin.template:
     src: "generic_script.{{ item.type }}.j2"
-    dest: "/etc/systemd/{{ item.name }}.{{ item.type }}"
+    dest: "/etc/systemd/system/{{ item.name }}.{{ item.type }}"
     owner: root
     group: root
     mode: "0644"
@@ -97,3 +97,7 @@
   when: auto_provision_host | default(false) | bool
   tags:
     - generic_timers
+  notify:
+    - systemd_daemon_reload
+    - "{{ item.name == 'provision' and item.type == 'timer' | ternary('enable_timer_provision', '') }}"
+
