@@ -87,6 +87,7 @@
     cmd: "gpg --keyserver hkps://keys.openpgp.org --recv-keys {{ auto_provision_gpg_id }}"
   ignore_errors: yes
   tags:
+    - provision_gpg
     - provision
 
 - name: install ansible

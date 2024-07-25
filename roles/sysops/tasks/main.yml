@@ -305,6 +305,7 @@
     group: root
     mode: 0750
   tags:
+    - provision_gpg
     - sbin
   loop:
     - monit_provision.sh
