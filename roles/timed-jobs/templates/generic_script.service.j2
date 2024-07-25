@@ -3,4 +3,8 @@
 Description={{ item.generic_script_description }}
 
 [Service]
+Type=simple
 ExecStart={{ item.generic_script }}
+StandardOutput=null
+StandardError=journal
+LogLevelMax=notice
