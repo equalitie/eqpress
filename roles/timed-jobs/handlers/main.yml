@@ -38,6 +38,13 @@
     enabled: yes
     state: restarted
 
+- name: enable_timer_mon_press-console-perms
+  become: yes
+  ansible.builtin.systemd:
+    name: mon_press-console-perms.timer
+    enabled: yes
+    state: restarted
+
 - name: noop
   ansible.builtin.debug:
     msg: "noop"

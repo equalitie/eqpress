@@ -120,3 +120,21 @@
     - systemd_daemon_reload
     - "{{ (item.type == 'timer') | ternary('enable_timer_' + item.name, 'noop') }}"
 
+- name: install generic timers for nodes
+  become: yes
+  ansible.builtin.template:
+    src: "generic_script.{{ item.type }}.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.{{ item.type }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { name: "mon_press-console-perms", type: "service", generic_script_description: "Console Perms Script", generic_script: "/usr/local/sbin/monit_console_perms.sh" }
+    - { name: "mon_press-console-perms", type: "timer", generic_script_description: "Console Perms Script", generic_script_seconds: "60" }
+  when:
+    - mysql_repl_role is defined
+  tags:
+    - generic_timers
+  notify:
+    - systemd_daemon_reload
+    - "{{ (item.type == 'timer') | ternary('enable_timer_' + item.name, 'noop') }}"
