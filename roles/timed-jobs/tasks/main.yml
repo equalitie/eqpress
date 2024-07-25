@@ -99,5 +99,5 @@
     - generic_timers
   notify:
     - systemd_daemon_reload
-    - "{{ item.type == 'timer' | ternary('enable_timer_' + item.name + '_timer', 'noop') }}"
+    - "{{ (item.type == 'timer') | ternary('enable_timer_' + item.name, 'noop') }}"
 
