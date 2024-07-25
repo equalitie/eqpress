@@ -131,6 +131,10 @@
   loop:
     - { name: "mon_press-console-perms", type: "service", generic_script_description: "Console Perms Script", generic_script: "/usr/local/sbin/monit_console_perms.sh" }
     - { name: "mon_press-console-perms", type: "timer", generic_script_description: "Console Perms Script", generic_script_seconds: "60" }
+    - { name: "mon_press-console-lockdown", type: "service", generic_script_description: "Console Lockdown Script", generic_script: "/usr/local/sbin/monit_console_lockdown.sh" }
+    - { name: "mon_press-console-lockdown", type: "timer", generic_script_description: "Console Lockdown Script", generic_script_seconds: "60" }
+    - { name: "mon_press-reset-password", type: "service", generic_script_description: "Console Reset Password Script", generic_script: "/usr/local/sbin/monit_console_reset_password.sh" }
+    - { name: "mon_press-reset-password", type: "timer", generic_script_description: "Console Reset Password Script", generic_script_seconds: "60" }
   when:
     - mysql_repl_role is defined
   tags:

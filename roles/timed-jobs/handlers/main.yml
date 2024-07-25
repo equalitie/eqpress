@@ -45,6 +45,20 @@
     enabled: yes
     state: restarted
 
+- name: enable_timer_mon_press-console-lockdown
+  become: yes
+  ansible.builtin.systemd:
+    name: mon_press-console-lockdown.timer
+    enabled: yes
+    state: restarted
+
+- name: enable_timer_mon_press-reset-password
+  become: yes
+  ansible.builtin.systemd:
+    name: mon_press-reset-password.timer
+    enabled: yes
+    state: restarted
+
 - name: noop
   ansible.builtin.debug:
     msg: "noop"
