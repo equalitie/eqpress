@@ -3,7 +3,7 @@
   gather_facts: yes
 
   vars:
-    - is_local: no
+    is_local: no
 
   roles:
      - prerequisites
