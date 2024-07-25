@@ -83,6 +83,25 @@
     - timers
     - edgespermit
 
+- name: install generic timers for all servers
+  become: yes
+  ansible.builtin.template:
+    src: "generic_script.{{ item.type }}.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.{{ item.type }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { name: "mon_connections", type: "service", generic_script_description: "Monitor Connections Script", generic_script: "/usr/local/sbin/monit_connections.sh" }
+    - { name: "mon_connections", type: "timer", generic_script_description: "Monitor Connections Script", generic_script_seconds: "60" }
+    - { name: "mon_check-mailq", type: "service", generic_script_description: "Monitor Mail Queue", generic_script: "/usr/local/sbin/monit_check_mailq.sh" }
+    - { name: "mon_check-mailq", type: "timer", generic_script_description: "Monitor Mail Queue", generic_script_seconds: "60" }
+  tags:
+    - generic_timers
+  notify:
+    - systemd_daemon_reload
+    - "{{ (item.type == 'timer') | ternary('enable_timer_' + item.name, 'noop') }}"
+
 - name: install generic timers for provision server
   become: yes
   ansible.builtin.template:
@@ -94,10 +113,6 @@
   loop:
     - { name: "mon_provision", type: "service", generic_script_description: "Provision Script", generic_script: "/usr/local/sbin/monit_provision.sh" }
     - { name: "mon_provision", type: "timer", generic_script_description: "Provision Script", generic_script_seconds: "10" }
-    - { name: "mon_connections", type: "service", generic_script_description: "Monitor Connections Script", generic_script: "/usr/local/sbin/monit_connections.sh" }
-    - { name: "mon_connections", type: "timer", generic_script_description: "Monitor Connections Script", generic_script_seconds: "60" }
-    - { name: "mon_check-mailq", type: "service", generic_script_description: "Monitor Mail Queue", generic_script: "/usr/local/sbin/monit_check_mailq.sh" }
-    - { name: "mon_check-mailq", type: "timer", generic_script_description: "Monitor Mail Queue", generic_script_seconds: "60" }
   when: auto_provision_host | default(false) | bool
   tags:
     - generic_timers
