@@ -31,6 +31,13 @@
     enabled: yes
     state: restarted
 
+- name: enable_timer_mon_check-mailq
+  become: yes
+  ansible.builtin.systemd:
+    name: mon_check-mailq.timer
+    enabled: yes
+    state: restarted
+
 - name: noop
   ansible.builtin.debug:
     msg: "noop"
