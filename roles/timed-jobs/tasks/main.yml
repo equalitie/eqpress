@@ -92,7 +92,7 @@
     group: root
     mode: "0644"
   loop:
-    - { name: "provision", type: "service", generic_script_description: "Provision Script", generic_script: "/usr/local/bin/monit_provision.sh" }
+    - { name: "provision", type: "service", generic_script_description: "Provision Script", generic_script: "/usr/local/sbin/monit_provision.sh" }
     - { name: "provision", type: "timer", generic_script_description: "Provision Script", generic_script_seconds: "10" }
   when: auto_provision_host | default(false) | bool
   tags:
