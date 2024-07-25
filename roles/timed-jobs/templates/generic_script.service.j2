@@ -7,4 +7,4 @@ Type=simple
 ExecStart={{ item.generic_script }}
 StandardOutput=null
 StandardError=journal
-LogLevelMax=notice
+LogLevelMax={{ item.generic_script_loglevel | default("notice") }}
