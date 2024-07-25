@@ -17,10 +17,17 @@
     enabled: yes
     state: restarted
 
-- name: enable_timer_provision
+- name: enable_timer_mon_provision
   become: yes
   ansible.builtin.systemd:
-    name: provision.timer
+    name: mon_provision.timer
+    enabled: yes
+    state: restarted
+
+- name: enable_timer_mon_connections
+  become: yes
+  ansible.builtin.systemd:
+    name: mon_connections.timer
     enabled: yes
     state: restarted
 
