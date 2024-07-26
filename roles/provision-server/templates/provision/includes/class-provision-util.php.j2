@@ -131,7 +131,7 @@ class EP_Provision_Util
   /*
    * API key authencation function
    */
-  private function apt_key_check($api_key, $api_key_hash) {
+  private function api_key_check($api_key, $api_key_hash) {
     if (strlen($api_key) > 255 || strlen($api_key) < 10) {
       return false;
     }
