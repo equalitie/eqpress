@@ -111,8 +111,7 @@ class EP_Provision_Util
     $isauth = false;
 
     if (preg_match('/^[A-Za-z0-9_\.\-]+$/', $source)) {
-      // testing for now FIXME -- We need to do a api key check here
-      $isauth = true;
+      isauth = $this->api_key_check($source, $params['api_key_hash']);
     } elseif (preg_match('/^[A-Za-z0-9_\.\-]+$/', $username)) {
       $isauth = $this->ldap_auth(
         $username,
@@ -127,6 +126,17 @@ class EP_Provision_Util
     if (!$isauth) {
       $this->process_errors('Incorrect username or password.', true);
     }
+  }
+
+  /*
+   * API key authencation function
+   */
+  private function apt_key_check($api_key, $api_key_hash) {
+    if (strlen($api_key) > 255 || strlen($api_key) < 10) {
+      return false;
+    }
+
+    return password_verify($api_key, $api_key_hash);
   }
 
   /**
