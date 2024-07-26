@@ -45,7 +45,7 @@ At this point you should be able to get started
   git clone this repo on your CONTROLLER
   in user account you created above.
 
-  sudo apt install ansible
+  sudo apt install ansible python3-passlib
 
   # If using docker [default], make sure you have community.docker version 3.8.1 or above.
   # Check by running "ansible-galaxy collection list | grep community.docker"
