@@ -32,9 +32,9 @@ class EP_Provision_View {
 		global $params;
 	?>
 	<form id="setup" method="post" action="?step=2">
+		<input name="username" type="hidden" id="username" value="a">
+		<input name="password" type="hidden" id="password" value="a">
 		<table class="form-table">
-			<input name="username" type="hidden" id="username">
-			<input name="password" type="hidden" id="password">
 		<!---	<tr>
 				<th align="right" scope="row"><label>Username</label></th>
 				<td><input name="username" type="text" id="username" size="64"></td>
