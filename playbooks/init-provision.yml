@@ -38,6 +38,11 @@
       default: "user"
       private: no  
 
+    - name: "provision_api_key"
+      prompt: "Provision Login Key"
+      default: ""
+      private: no
+
     - name: "cdn_real_ips"
       prompt: "real ip list comma separated, leave blank if none"
       default: ""

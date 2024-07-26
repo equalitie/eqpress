@@ -41,6 +41,8 @@ web_user_shell: "/usr/sbin/nologin"
 web_user_home: "/var/www"
 web_user_comment: "www-data"
 web_server_docker: true
+# {{ provision_api_key }}
+provision_api_key_hash: "{{ provision_api_key | ansible.builtin.password_hash('bcrypt', rounds=12) }}"
 
 # php-fpm
 php_version: "8.3"
