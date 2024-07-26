@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: no
+
+  vars_prompt:
+    - name: "key"
+      prompt: "Enter Key: "
+      default: ""
+      private: no
+
+  tasks:
+    - ansible.builtin.debug:
+        msg: "KEY: {{ key | ansible.builtin.password_hash('bcrypt', rounds=12) }}"
+
