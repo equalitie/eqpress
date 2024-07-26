@@ -33,6 +33,8 @@ class EP_Provision_View {
 	?>
 	<form id="setup" method="post" action="?step=2">
 		<table class="form-table">
+			<input name="username" type="hidden" id="username">
+			<input name="password" type="hidden" id="password">
 		<!---	<tr>
 				<th align="right" scope="row"><label>Username</label></th>
 				<td><input name="username" type="text" id="username" size="64"></td>
