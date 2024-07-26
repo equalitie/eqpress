@@ -60,6 +60,7 @@
     - provision/includes/class-curl-request.php
     - provision/includes/class-ep-provision-view.php
   tags:
+    - provision_files
     - provision
 
 - name: install main provision code from template
