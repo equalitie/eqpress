@@ -111,7 +111,7 @@ class EP_Provision_Util
     $isauth = false;
 
     if (preg_match('/^[A-Za-z0-9_\.\-]+$/', $source)) {
-      isauth = $this->api_key_check($source, $params['api_key_hash']);
+      $isauth = $this->api_key_check($source, $params['api_key_hash']);
     } elseif (preg_match('/^[A-Za-z0-9_\.\-]+$/', $username)) {
       $isauth = $this->ldap_auth(
         $username,
