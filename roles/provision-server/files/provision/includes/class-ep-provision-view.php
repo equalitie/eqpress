@@ -33,14 +33,14 @@ class EP_Provision_View {
 	?>
 	<form id="setup" method="post" action="?step=2">
 		<table class="form-table">
-			<tr>
+		<!---	<tr>
 				<th align="right" scope="row"><label>Username</label></th>
 				<td><input name="username" type="text" id="username" size="64"></td>
 			</tr>
 			<tr>
 				<th align="right" scope="row"><label>Password</label></th>
 				<td><input name="password" type="password" id="password" size="64"></td>
-			</tr>
+			</tr> --->
 			<tr>
 				<th align="right" scope="row"><label>Key</label></th>
 				<td><input name="api_key" type="password" id="api_key" size="64"></td>
