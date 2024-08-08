@@ -113,7 +113,9 @@ class EP_Provision_Util
     if (preg_match('/^[A-Za-z0-9_\.\-]+$/', $source)) {
       $isauth = $this->api_key_check($source, $params['api_key_hash']);
     } elseif (preg_match('/^[A-Za-z0-9_\.\-]+$/', $username)) {
-      $isauth = $this->ldap_auth(
+      // TODO: If needed, rework this ldap auth. For now not needed.
+      $isauth = false;
+    /*  $isauth = $this->ldap_auth(
         $username,
         $password,
         $params['ldap_auth_attrib'],
@@ -121,6 +123,7 @@ class EP_Provision_Util
         $params['ldap_auth_server'],
         $params['ldap_auth_port']
       );
+    */
     }
 
     if (!$isauth) {
