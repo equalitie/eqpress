@@ -382,7 +382,7 @@ function check_valid() {
 function reloadPHP($version) {
   if (defined("RELOAD")) {
     echo "Reloading php{$version}-fpm.service" . PHP_EOL;
-    shell_exec("systemctl reload php{$version}-fpm.service");
+    shell_exec("php{$version}-fpm -t && systemctl reload php{$version}-fpm.service");
     return true;
   }
 
@@ -394,7 +394,7 @@ function reloadPHP($version) {
       return false;
     } elseif (strcasecmp($input, 'y') == 0) {
       echo "Reloading php{$version}-fpm.service" . PHP_EOL;
-      shell_exec("systemctl reload php{$version}-fpm.service");
+      shell_exec("php{$version}-fpm -t && systemctl reload php{$version}-fpm.service");
       return true;
     } else {
       echo "You must type (y/n)" . PHP_EOL;
