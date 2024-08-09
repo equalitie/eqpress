@@ -569,7 +569,7 @@ function surf( $post_params ) {
 	try {
 		$mych = new CurlRequest;
 		$params = array(		'url' => '{{ rampass_url }}/api',
-						'header' => '',
+						'header' => 'Content-Type: application/json',
 						'method' => 'POST',
 						'referer' => '',
 						'cookie' => '',

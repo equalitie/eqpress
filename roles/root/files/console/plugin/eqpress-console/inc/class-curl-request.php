@@ -20,7 +20,7 @@ class CurlRequest {
     {
         $this->ch = curl_init();
         $user_agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; ru; rv:1.8.0.9) Gecko/20061206 Firefox/1.5.0.9';
-        $header = array( "Accept: text/xml,application/xml,application/xhtml+xml, text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5", "Accept-Language: ru-ru,ru;q=0.7,en-us;q=0.5,en;q=0.3", "Accept-Charset: windows-1251,utf-8;q=0.7,*;q=0.7", "Keep-Alive: 300");
+        $header = array( "Accept: text/xml,application/xml,application/xhtml+xml, text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5, application/json", "Accept-Language: ru-ru,ru;q=0.7,en-us;q=0.5,en;q=0.3", "Accept-Charset: windows-1251,utf-8;q=0.7,*;q=0.7", "Keep-Alive: 300");
         if (isset($params['host']) && $params['host']) $header[]="Host: ".$params['host'];
         if (isset($params['header']) && $params['header']) $header[]=$params['header'];
 		if (isset($params['verbose']) && $params['verbose']) $verbose = 1; else $verbose = 0;
