@@ -1,4 +1,5 @@
 #!/bin/sh
+# {{ ansible_managed }}
 #
 # install_cache_purge.sh
 #
@@ -21,11 +22,11 @@ mu_install() {
 get_site() {
 	for f in `ls -1 {{ web_user_home }}`; do
 		site=`basename $f`
-		if [ -d {{ web_user_home }}/${site} ]; then
+		if [ -d {{ web_user_home }}/${site}/wordpress ]; then
 			mu_install ${site}
 			echo $site - Success!
 		else
-			echo $site - Not a directory. Installation failed.
+			echo $site/wordpress - Not a directory. Installation failed.
 		fi
 	done
 }
