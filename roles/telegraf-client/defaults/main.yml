@@ -1,0 +1,4 @@
+---
+telegraf_influxdata_uris: "https://repos.influxdata.com/ubuntu"
+telegraf_influxdata_repo_gpg: "https://repos.influxdata.com/influxdata-archive_compat.key"
+

@@ -1,0 +1,39 @@
+---
+- name: Only install telegraf is enabled
+  block:
+    - name: install repo for influxdata
+      ansible.builtin.deb822_repository:
+        name: influxdata
+        types: deb
+        uris: "{{ telegraf_influxdata_uris }}"
+        suites: stable
+        components:
+          - main
+        signed_by: "{{ telegraf_influxdata_repo_gpg }}"
+
+    - name: install telegraf
+      ansible.builtin.apt:
+        name: 
+          - telegraf
+        state: present
+        update_cache: yes
+
+    - name: create telegraf config directories
+      ansible.builtin.file:
+        path: "/etc/telegraf/{{ item.path }}"
+        mode: "{{ item.mode | default('0755') }}"
+        owner: "{{ item.owner | default('root') }}" 
+        group: "{{ item.group | default('root') }}" 
+        state: directory
+      loop:
+        - { path: "" }
+        - { path: "telegraf.d" }
+        - { path: ".cache", owner: "telegraf", group: "telegraf" }
+        - { path: "cron.d" }
+        - { path: "command_output" }
+
+
+  when: enable_telegraf | default(false)
+  become: yes
+  tags:
+    - telegraf
