@@ -48,6 +48,7 @@
     - mariadb-local-service
     - mariadb-local-enable-replication
     - postfix-email-service
+    - telegraf
     - timed-jobs
 
   tasks:
