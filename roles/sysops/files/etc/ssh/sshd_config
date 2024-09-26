@@ -24,6 +24,11 @@ PubkeyAuthentication yes
 IgnoreRhosts yes
 HostbasedAuthentication no
 
+# Needed for FDE automount on controller
+HostKeyAlgorithms +ssh-rsa
+PubkeyAcceptedKeyTypes +ssh-rsa
+## END
+
 PasswordAuthentication yes
 PermitEmptyPasswords no
 
