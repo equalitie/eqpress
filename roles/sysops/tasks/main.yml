@@ -82,6 +82,10 @@
     mode: 0644
   when:
     - mysql_repl_role is defined
+  notify:
+    - sshd_reload
+  tags:
+    - sshd_config
 
 - name: make sure all keys exist from sshd_config
   become: yes
@@ -282,19 +286,20 @@
     - sbin
 
 # TODO: For now leave this for ref
-- name: custom monit-xx config template on nodes
-  become: yes
-  ansible.builtin.template:
-    src: "etc/monit/{{ item }}.j2"
-    dest: "/etc/monit/{{ item }}"
-    owner: root
-    group: root
-    mode: 0600
-  loop:
-    - monitrc-10
-    - monitrc-60
-  when:
-    - mysql_repl_role is defined
+# TODO: remove when sure we no longer need. This is legacy system
+#- name: custom monit-xx config template on nodes
+#  become: yes
+#  ansible.builtin.template:
+#    src: "etc/monit/{{ item }}.j2"
+#    dest: "/etc/monit/{{ item }}"
+#    owner: root
+#    group: root
+#    mode: 0600
+#  loop:
+#    - monitrc-10
+#    - monitrc-60
+#  when:
+#    - mysql_repl_role is defined
 
 - name: install provision templates
   become: yes
@@ -311,18 +316,20 @@
     - monit_provision.sh
   when: auto_provision_host | default(false) | bool
 
-- name: custom monit-xx config template on provision
-  become: yes
-  ansible.builtin.template:
-    src: "etc/monit/{{ item }}_auto-provision.j2"
-    dest: "/etc/monit/{{ item }}"
-    owner: root
-    group: root
-    mode: 0600
-  loop:
-    - monitrc-10
-    - monitrc-60
-  when: auto_provision_host | default(false) | bool
+# TODO: For now leave this for ref
+# TODO: remove when sure we no longer need. This is legacy system
+#- name: custom monit-xx config template on provision
+#  become: yes
+#  ansible.builtin.template:
+#    src: "etc/monit/{{ item }}_auto-provision.j2"
+#    dest: "/etc/monit/{{ item }}"
+#    owner: root
+#    group: root
+#    mode: 0600
+#  loop:
+#    - monitrc-10
+#    - monitrc-60
+#  when: auto_provision_host | default(false) | bool
 
 - name: copy limits.conf to increase open file limits for nginx and mysql
   become: yes
