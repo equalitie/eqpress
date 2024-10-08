@@ -29,8 +29,19 @@
         - { path: "" }
         - { path: "telegraf.d" }
         - { path: ".cache", owner: "telegraf", group: "telegraf" }
-        - { path: "cron.d" }
-        - { path: "command_output" }
+        - { path: "data" }
+
+    - name: install custom scripts used for telegraf
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/usr/local/sbin/{{ item }}"
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - telegraf-sumproc.sh
+        - telegraf-press_du.sh
+
 
 
   when: enable_telegraf | default(false)
