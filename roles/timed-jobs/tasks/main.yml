@@ -16,7 +16,23 @@
   notify:
     - "restart cron"
 
-- name: copy backup cron jobs
+- name: add cron.d/press_backups to master
+  become: yes
+  ansible.builtin.cron:
+    name: "press_backups"
+    minute: "13"
+    hour: "11,23"
+    user: root
+    job: "/bin/bash -c '/usr/local/sbin/site_snapshot.sh'"
+    cron_file: "press_backups"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == "master"
+  tags:
+    - timers
+    - cron
+
+- name: copy backup cron jobs slave only
   become: yes
   ansible.builtin.copy:
     src: "etc/cron.d/backups.{{ mysql_repl_role }}"
@@ -26,6 +42,7 @@
     mode: 0640
   when:
     - mysql_repl_role is defined
+    - mysql_repl_role == "slave"
   tags:
     - timers
     - cron
