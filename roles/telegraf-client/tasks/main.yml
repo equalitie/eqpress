@@ -27,6 +27,7 @@
         state: directory
       loop:
         - { path: "" }
+        - { path: "buildconf.d" }
         - { path: "telegraf.d" }
         - { path: ".cache", owner: "telegraf", group: "telegraf" }
         - { path: "data" }
@@ -42,7 +43,21 @@
         - telegraf-sumproc.sh
         - telegraf-press_du.sh
 
+    - name: add cron to run telegraf-sumproc.sh
+      ansible.builtin.cron:
+        name: "telegraf-sumproc"
+        minute: "*/1"
+        user: root
+        job: "/bin/bash -c 'cat /dev/null > /etc/telegraf/data/sumproc.json ; for p in mariadb php-fpm nginx ; do /usr/local/sbin/telegraf-sumproc.sh -p $p >> /etc/telegraf/data/sumproc.json ; done'"
+        cron_file: "telegraf-sumproc"
 
+    - name: add cron to run telegraf-press_du.sh
+      ansible.builtin.cron:
+        name: "telegraf-press_du"
+        minute: "*/5"
+        user: root
+        job: "/bin/bash -c '/usr/local/sbin/telegraf-press_du.sh > /etc/telegraf/data/press_du.json'"
+        cron_file: "telegraf-press_du"
 
   when: enable_telegraf | default(false)
   become: yes
