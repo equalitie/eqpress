@@ -48,7 +48,7 @@
         name: "telegraf-sumproc"
         minute: "*/1"
         user: root
-        job: "/bin/bash -c 'cat /dev/null > /etc/telegraf/data/sumproc.json ; for p in mariadb php-fpm nginx ; do /usr/local/sbin/telegraf-sumproc.sh -p $p >> /etc/telegraf/data/sumproc.json ; done'"
+        job: "/bin/bash -c 'cat /dev/null > /etc/telegraf/data/sumproc.influx ; for p in mariadb php-fpm nginx ; do /usr/local/sbin/telegraf-sumproc.sh -p $p >> /etc/telegraf/data/sumproc.influx ; done'"
         cron_file: "telegraf-sumproc"
 
     - name: add cron to run telegraf-press_du.sh
@@ -58,6 +58,14 @@
         user: root
         job: "/bin/bash -c '/usr/local/sbin/telegraf-press_du.sh > /etc/telegraf/data/press_du.json'"
         cron_file: "telegraf-press_du"
+
+    - name: install telegraf-main.conf in buildconf.d
+      ansible.builtin.template:
+        src: buildconf.d/telegraf-main.conf.j2
+        dest: /etc/telegraf/buildconf.d/telegraf-main.conf
+        owner: root
+        group: root
+        mode: '0644'
 
   when: enable_telegraf | default(false)
   become: yes
