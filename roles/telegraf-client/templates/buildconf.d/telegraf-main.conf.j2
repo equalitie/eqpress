@@ -1,0 +1,101 @@
+# {{ ansible_managed }}
+#
+{% set cluster_name = group_names[0] if group_names else 'unknown' %}
+{% set role_name = (mysql_repl_role if mysql_repl_role else ('provision' if cluster_name == 'provision' else 'unknown')) %}
+[global_tags]
+  cluster="{{ cluster_name }}"
+  role="{{ role_name }}"
+[agent]
+  interval = "10s"
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_interval = "10s"
+  flush_jitter = "0s"
+  precision = "0s"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+
+#### OUTPUTS
+[[outputs.influxdb]]
+  urls = ["https://ip:port FIXME"]
+  database = "FIXME"
+  skip_database_creation = true
+  username = "FIXME"
+  password = "FIXME"
+  insecure_skip_verify = true
+#### END OUTPUTS
+
+#### INPUTS
+[[inputs.cpu]]
+  percpu = true
+  totalcpu = true
+  collect_cpu_time = false
+  report_active = false
+  core_tags = false
+[[inputs.disk]]
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+[[inputs.diskio]]
+[[inputs.kernel]]
+[[inputs.mem]]
+[[inputs.processes]]
+[[inputs.swap]]
+[[inputs.system]]
+[[inputs.internal]]
+[[inputs.linux_sysctl_fs]]
+[[inputs.net]]
+  ignore_protocol_stats = true
+[[inputs.nstat]]
+[[inputs.netstat]]
+[[inputs.file]]
+  files = [ "/etc/telegraf/data/press_du.json" ]
+  tag_keys = [ "path" ]
+  name_override = "du"
+  data_format = "json"
+[[inputs.file]]
+  files = [ "/etc/telegraf/data/sumproc.influx" ]
+  data_format = "influx"
+[[inputs.mysql]]
+  servers = ["FIXME@unix(/var/run/mysqld/mysqld.sock)/"]
+  gather_process_list = true
+  gather_user_statistics = true
+  gather_innodb_metrics = true
+  gather_binary_logs = true
+  gather_table_io_waits = true
+  gather_table_lock_waits = true
+  mariadb_dialect = true 
+[[inputs.nginx]]
+  urls = ["http://{{ inventory_hostname }}/nginx_status"]
+[[inputs.phpfpm]]
+  urls = ["/var/run/php/*.sock:phpfpmstatus"]
+  timeout = "2s"
+[[inputs.ping]]
+  # FIXME
+  urls = ["8.8.8.8", "1.1.1.1"]
+  ping_interval = 2.0
+[[inputs.procstat]]
+  systemd_unit = "nginx.service"
+[[inputs.procstat]]
+  systemd_unit = "ssh.service"
+[[inputs.procstat]]
+  systemd_unit = "php{{ php_version }}-fpm.service"
+[[inputs.procstat]]
+  systemd_unit = "mariadb.service"
+[[inputs.procstat]]
+  systemd_unit = "docker.service"
+
+[[inputs.docker]]
+  endpoint = "unix:///var/run/docker.sock"
+  perdevice = false
+  perdevice_include = ["cpu", "blkio", "network"]
+  gather_services = false
+  timeout = "5s"
+  total = false
+[[inputs.kernel_vmstat]]
+[[inputs.mdstat]]
+[[inputs.ethtool]]
+  interface_include = ["{{ ansible_default_ipv4.alias }}"]
+[[inputs.linux_cpu]]
+  metrics = ["cpufreq"]
+
