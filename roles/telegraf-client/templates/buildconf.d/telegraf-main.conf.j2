@@ -56,15 +56,31 @@
 [[inputs.file]]
   files = [ "/etc/telegraf/data/sumproc.influx" ]
   data_format = "influx"
+{% if mysql_telegraf_user is defined %}
 [[inputs.mysql]]
-  servers = ["FIXME@unix(/var/run/mysqld/mysqld.sock)/"]
+  servers = ["{{ mysql_telegraf_user.username }}:{{ mysql_telegraf_user.password }}@unix({{ mariadb_unix_socket }})/"]
+  metric_version = 2
+  name_suffix = "_v2"
+  table_schema_databases = []
+  perf_summary_events = []
   gather_process_list = true
   gather_user_statistics = true
   gather_innodb_metrics = true
   gather_binary_logs = true
   gather_table_io_waits = true
   gather_table_lock_waits = true
-  mariadb_dialect = true 
+  gather_table_schema = true
+  gather_info_schema_auto_inc = true
+  gather_slave_status = true
+  gather_index_io_waits = true
+  gather_event_waits = true
+  gather_file_events_stats = true
+  gather_perf_events_statements = true
+  interval_slow = "30m"
+  mariadb_dialect = true
+{% else %}
+# inputs.mysql skipped because mysql_telegraf_user variables are not set
+{% endif %}
 [[inputs.nginx]]
   urls = ["http://{{ inventory_hostname }}/nginx_status"]
 [[inputs.phpfpm]]
