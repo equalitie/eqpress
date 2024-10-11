@@ -278,3 +278,23 @@
     - web_stats_db.changed
   tags:
     - mysql
+
+- name: Create the mysql monitoring for telegraf
+  become: yes
+  community.mysql.mysql_user:
+    name: "{{ mysql_telegraf_user.username }}"
+    host: "{{ item }}"
+    password: "{{ mysql_telegraf_user.password }}"
+    priv: "*.*:ALL,GRANT"
+    column_case_sensitive: yes
+    state: present
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  loop:
+    - localhost
+  when:
+    - (mysql_repl_role is defined and mysql_repl_role == 'master') or (auto_provision_host is defined and auto_provision_host)
+    - enable_telegraf is defined and enable_telegraf
+    - mysql_telegraf_user is defined
+  tags:
+    - mysql
+    - telegraf
