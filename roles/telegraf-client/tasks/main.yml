@@ -65,7 +65,7 @@
         dest: /etc/telegraf/buildconf.d/telegraf-main.conf
         owner: root
         group: root
-        mode: '0644'
+        mode: '0640'
 
   when: enable_telegraf | default(false)
   become: yes
