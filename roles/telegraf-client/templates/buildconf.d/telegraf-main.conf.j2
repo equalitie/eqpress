@@ -79,8 +79,10 @@
 {% else %}
 # inputs.mysql skipped because mysql_telegraf_user variables are not set
 {% endif %}
+{% if mysql_repl_role is defined and mysql_repl_role != "slave" %}
 [[inputs.nginx]]
   urls = ["http://{{ inventory_hostname }}/nginx_status"]
+{% endif %}
 [[inputs.phpfpm]]
   urls = ["/var/run/php/*.sock:phpfpmstatus"]
   timeout = "2s"
