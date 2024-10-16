@@ -58,3 +58,14 @@ mysql_bind_address: "{{ mysql_bind_address }}"
 mysql_root_db_pass: "{{ rand_result.results[0].stdout }}"
 mysql_innodb_buffer_pool_size: "256M"
 mysql_innodb_log_file_size: "32M"
+
+#enable_telegraf: yes
+#mysql_telegraf_user:
+#    username: "telegraf"
+#    password: ""
+#telegraf_influxdb:
+#    username: "telegraf"
+#    password: ""
+#    database: "telegraf"
+#    domain: ""
+#    port: "8086"
