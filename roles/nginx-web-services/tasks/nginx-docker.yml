@@ -100,7 +100,7 @@
     src: docker-nginx-systemd.j2
     owner: root
     group: root
-    mode: "0755"
+    mode: "0644"
   register: nginx_docker_systemd_template
   tags:
     - nginx
