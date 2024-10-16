@@ -21,8 +21,8 @@ if ($final_output = include_ping($main_conf_file, $ping_output_file)) {
 if (hash_file('sha256', $staging_file) != hash_file('sha256', $main_conf)) {
   copy($staging_file, $main_conf);
   chmod($main_conf, 0640);  
-  chown($main_conf, root);
-  chgrp($main_conf, telegraf);
+  chown($main_conf, 'root');
+  chgrp($main_conf, 'telegraf');
   restart_telegraf();
 }
 
