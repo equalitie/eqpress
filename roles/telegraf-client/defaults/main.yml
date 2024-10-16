@@ -1,4 +1,10 @@
 ---
+docker_group: "docker"
 telegraf_influxdata_uris: "https://repos.influxdata.com/ubuntu"
 telegraf_influxdata_repo_gpg: "https://repos.influxdata.com/influxdata-archive_compat.key"
-
+telegraf_main_conf: "/etc/telegraf/buildconf.d/telegraf-main.conf"
+telegraf_ping_extra_ip: ["8.8.8.8","1.1.1.1"]
+telegraf_ping_output_file: "/etc/telegraf/buildconf.d/inputs-ping.conf"
+telegraf_edge_ip_file: "/etc/nginx/conf.d/set_real_ip.conf"
+telegraf_inputs_ping_placeholder: "####inputs.ping####"
+telegraf_buildconf_staging_file: "/etc/telegraf/buildconf.d/telegraf.conf"

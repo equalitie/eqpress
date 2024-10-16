@@ -16,17 +16,15 @@
   precision = "0s"
   hostname = "{{ inventory_hostname }}"
   omit_hostname = false
-
 #### OUTPUTS
 [[outputs.influxdb]]
-  urls = ["https://ip:port FIXME"]
-  database = "FIXME"
+  urls = ["https://{{ telegraf_influxdb.domain }}:{{ telegraf_influxdb.port }}"]
+  database = "{{ telegraf_influxdb.database }}"
   skip_database_creation = true
-  username = "FIXME"
-  password = "FIXME"
+  username = "{{ telegraf_influxdb.username }}"
+  password = "{{ telegraf_influxdb.password }}"
   insecure_skip_verify = true
 #### END OUTPUTS
-
 #### INPUTS
 [[inputs.cpu]]
   percpu = true
@@ -86,10 +84,7 @@
 [[inputs.phpfpm]]
   urls = ["/var/run/php/*.sock:phpfpmstatus"]
   timeout = "2s"
-[[inputs.ping]]
-  # FIXME
-  urls = ["8.8.8.8", "1.1.1.1"]
-  ping_interval = 2.0
+{{ telegraf_inputs_ping_placeholder }}
 [[inputs.procstat]]
   systemd_unit = "nginx.service"
 [[inputs.procstat]]
@@ -100,7 +95,7 @@
   systemd_unit = "mariadb.service"
 [[inputs.procstat]]
   systemd_unit = "docker.service"
-
+{% if web_server_docker is defined and web_server_docker %}
 [[inputs.docker]]
   endpoint = "unix:///var/run/docker.sock"
   perdevice = false
@@ -108,10 +103,10 @@
   gather_services = false
   timeout = "5s"
   total = false
+{% endif %}
 [[inputs.kernel_vmstat]]
 [[inputs.mdstat]]
 [[inputs.ethtool]]
   interface_include = ["{{ ansible_default_ipv4.alias }}"]
 [[inputs.linux_cpu]]
   metrics = ["cpufreq"]
-

@@ -1,1 +1,7 @@
 ---
+- name: restart_telegraf
+  become: yes
+  ansible.builtin.systemd_service:
+    state: restarted
+    name: telegraf
+  ignore_errors: yes

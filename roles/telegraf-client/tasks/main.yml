@@ -42,6 +42,7 @@
       loop:
         - telegraf-sumproc.sh
         - telegraf-press_du.sh
+        - telegraf-buildconf
 
     - name: add cron to run telegraf-sumproc.sh
       ansible.builtin.cron:
@@ -59,10 +60,29 @@
         job: "/bin/bash -c '/usr/local/sbin/telegraf-press_du.sh > /etc/telegraf/data/press_du.json'"
         cron_file: "telegraf-press_du"
 
+    - name: add telegraf user to web group
+      ansible.builtin.user:
+        name: telegraf
+        groups: "{{ web_groupname }}"
+        append: yes
+      notify:
+        - restart_telegraf
+
+    - name: add telegraf user to docker group
+      ansible.builtin.user:
+        name: telegraf
+        groups: "{{ docker_group }}"
+        append: yes
+      when:
+        - web_server_docker is defined
+        - web_server_docker
+      notify:
+        - restart_telegraf
+
     - name: install telegraf-main.conf in buildconf.d
       ansible.builtin.template:
         src: buildconf.d/telegraf-main.conf.j2
-        dest: /etc/telegraf/buildconf.d/telegraf-main.conf
+        dest: "{{ telegraf_main_conf }}"
         owner: root
         group: root
         mode: '0640'
