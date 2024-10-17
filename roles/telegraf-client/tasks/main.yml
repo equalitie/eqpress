@@ -98,6 +98,20 @@
         group: root
         mode: '0640'
 
+    - name: install telegraf-buildconf service and timer
+      ansible.builtin.template:
+        src: "telegraf-buildconf.{{ item }}.j2"
+        dest: "/etc/systemd/system/telegraf-buildconf.{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - timer
+        - service
+      notify:
+        - systemd_daemon_reload
+        - enable_timer_telegraf-buildconf
+
   when: enable_telegraf | default(false)
   become: yes
   tags:

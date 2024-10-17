@@ -5,3 +5,15 @@
     state: restarted
     name: telegraf
   ignore_errors: yes
+
+- name: systemd_daemon_reload
+  become: yes
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: enable_timer_telegraf-buildconf
+  become: yes
+  ansible.builtin.systemd:
+    name: telegraf-buildconf.timer
+    enabled: yes
+    state: restarted
