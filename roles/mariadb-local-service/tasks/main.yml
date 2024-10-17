@@ -36,6 +36,7 @@
     - "restart mariadb"
   tags:
     - mysql
+    - mysql_cnf
 
 - name: Create datadir if it does not exist
   become: yes
