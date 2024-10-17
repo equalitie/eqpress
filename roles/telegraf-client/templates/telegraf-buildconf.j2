@@ -11,11 +11,18 @@ $main_conf = '/etc/telegraf/telegraf.conf';
 if ($ping_output = get_ping($edge_ip_file)) {
   file_put_contents($ping_output_file, $ping_output);
   chmod($ping_output_file, 0640);
+} else {
+  echo "inputs.ping not ready or not used. Create blank file.";
+  file_put_contents($ping_output_file, "#[[inputs.ping]] not inserted");
+  chmod($ping_output_file, 0640);
 }
 
 if ($final_output = include_ping($main_conf_file, $ping_output_file)) {
   file_put_contents($staging_file, $final_output);
   chmod($staging_file, 0640);
+} else {
+  fwrite(STDERR, "ERROR: telegraf-buildconf could not build conf file. Exiting\n");
+  exit(1);
 }
 
 if (hash_file('sha256', $staging_file) != hash_file('sha256', $main_conf)) {
@@ -26,8 +33,9 @@ if (hash_file('sha256', $staging_file) != hash_file('sha256', $main_conf)) {
   restart_telegraf();
 }
 
+// TODO: Should we check it telegraf is running here?
 
-exit;
+exit(0);
 
 // ################## FUNCTIONS
 
