@@ -135,7 +135,6 @@
     - eq_purge_site.sh
     - eq_purge_cache.sh
     - eq_security_scan.sh
-    - eq_setperms
     - eq_setup_replication.sh
     - eq_unprovision.sh
     - eq_update_wp.sh
@@ -200,6 +199,7 @@
     - nagios_check_mysql.php
     - site_snapshot.sh
     - gen_api_key.php
+    - press_setperms
   tags:
     - sbin
   when:
