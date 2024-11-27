@@ -1,4 +1,12 @@
 #!/bin/bash
-ionice -c 3 chown -R www-data:www-data $1
-ionice -c 3 find $1 -type d -exec chmod 775 {} \;
-ionice -c 3 find $1 -type f -exec chmod 664 {} \;
+
+# TODO: change this to a template so it is not static "www-data"
+
+# Change owner and group to www-data
+ionice -c 3 chown -R www-data:www-data "$1"
+
+# Change file mode of directories to 775
+ionice -c 3 find "$1" -type d -print0 | xargs -0 -r chmod 775
+
+# Change file mode of files to 664
+ionice -c 3 find "$1" -type f -print0 | xargs -0 -r chmod 664
