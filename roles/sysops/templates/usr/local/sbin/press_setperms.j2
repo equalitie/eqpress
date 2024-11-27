@@ -1,0 +1,26 @@
+#!/bin/bash
+# { ansible_managed }}
+
+# Change owner and group recurive to {{ web_user }}:{{ web_groupname }}
+ionice -c 3 chown -R {{ web_user }}:{{ web_groupname }} "$1"
+
+# Change directory mode to 775
+ionice -c 3 find "$1" -type d -print0 | xargs -0 -r chmod 775
+
+# Change file mode to 664
+ionice -c 3 find "$1" -type f -print0 | xargs -0 -r chmod 664
+
+# Change the root directory owner to root:root
+chown root:root "$1"
+
+# Change the root directory mode to 755
+chmod 755 "$1"
+
+# Change owner of must use press plugins to root:root
+ionice -c 3 chown -R root:root "$1/wordpress/wp-content/mu-plugins/*press*"
+
+# Change must use press plugin directory mode to 755
+ionice -c 3 find "$1/wordpress/wp-content/mu-plugins/*press*" -type d -print0 | xargs -0 -r chmod 755
+
+# Change must use press plugin files to 644
+ionice -c 3 find "$1/wordpress/wp-content/mu-plugins/*press*" -type f -print0 | xargs -0 -r chmod 644
