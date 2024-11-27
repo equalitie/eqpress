@@ -24,5 +24,5 @@ SFTP_PASSWORD=`< /dev/urandom tr -dc A-Za-z0-9 | head -c23`
 echo "${USER}:${SFTP_PASSWORD}" | chpasswd
 
 # RAMPASS
-  RAMPASS_SFTP=`curl -k -s -XPOST -H "Content-Type: application/json" {{ rampass_url }}/api --data "{\"secret\":\"${SFTP_PASSWORD}\",\"time\":30,\"units\":\"days\",\"views\":7}" | jq ".data.url";
+  RAMPASS_SFTP=`curl -k -s -XPOST -H "Content-Type: application/json" {{ rampass_url }}/api --data "{\"secret\":\"${SFTP_PASSWORD}\",\"time\":30,\"units\":\"days\",\"views\":7}" | jq ".data.url"`
   echo -n "|${USER}|${RAMPASS_SFTP}|"
