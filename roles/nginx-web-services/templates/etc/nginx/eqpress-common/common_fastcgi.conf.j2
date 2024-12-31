@@ -67,7 +67,6 @@ if ($do_not_set_cache = "") {
 	add_header eqpress-Cache $upstream_cache_status;
 	add_header X-Frame-Options SAMEORIGIN;
 	add_header X-XSS-Protection "1; mode=block";
-	add_header Vary "Accept-Encoding, Cookie";
 }
 
 # Cacheing is not being used, so tell the client to ignore its local cache.
