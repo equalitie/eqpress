@@ -32,7 +32,7 @@ lc_messages                    = en_US
 skip-external-locking
 
 # MyISAM #
-key_buffer_size                = {{ mysql_innodb_log_file_size }}
+key_buffer_size                = {{ mysql_key_buffer_size | default('128M') }}
 myisam_recover_options         = FORCE,BACKUP
 
 # SAFETY #
