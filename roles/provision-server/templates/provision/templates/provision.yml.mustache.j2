@@ -12,6 +12,17 @@
 <%={{ }}=%>
 
   tasks:
+  - name: see if document root for {{ domain }} exists
+    become: yes
+    ansible.builtin.stat:
+      path: "/var/www/{{ domain }}"
+    register: domain_exists
+
+  - name: fail is document root for {{ domain }} exists
+    ansible.builtin.fail:
+      msg: "{{ domain }} already exist. We do not want to proceed"
+    when: domain_exists.stat.exists
+
   - name: Create the document root for {{ domain }}
     become: yes
     ansible.builtin.file:
