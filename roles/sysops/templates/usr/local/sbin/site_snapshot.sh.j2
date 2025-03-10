@@ -8,6 +8,7 @@ GIT_COMMIT_NAME="{{ org_name }}"
 GIT_COMMIT_EMAIL="{{ monitoring_email }}"
 SITES="{{ web_user_home }}"
 DATEFORMAT="+%F-%H%M%S%Z"
+SFTPGROUP="sftponly"
 
 function check_do_git
 {
@@ -140,11 +141,12 @@ function do_snapshot
 	fi
 	# Save one day back of database dump
 	cd $site
-	mv $DBNAME.sql.gz $DBNAME.sql.1.gz 2>/dev/null
+	mv $DBNAME.sql.gz $DBNAME.sql.1.gz 2>/dev/null && chown root:$SFTPGROUP $DBNAME.sql.1.gz && chmod 0640 $DBNAME.sql.1.gz
         cd $site/wordpress
         gzip $DBNAME.sql
         mv $DBNAME.sql.gz ../
-	chmod 600 ../$DBNAME.sql.gz
+        chown root:$SFTPGROUP ../$DBNAME.sql.gz
+	chmod 0640 ../$DBNAME.sql.gz
         unlock_site $site
       else
         echo "Site already locked"
