@@ -346,15 +346,11 @@ function do_password_reset( $domain ) {
 	if( file_exists( $flag ) ) {
 		echo "<br /><b>Password reset is in progress. Patience is power.</b>";
 	} else {
-                // Change to rampass -- FIXME: pwpush
 		$new_passwd = random( $passwd_length );
-                $http_response = surf( "{\"secret\":\"$new_passwd\",\"time\":10,\"units\":\"days\",\"views\":3}" );
-		// FIXME: remove this when above tested $http_response = surf( "cred=$new_passwd&time=10&units=days&views=3&url_only=yes" );
-                // FIXME: convert returned json $http_response['body'] we need data.url
-                echo '<p class="console-password">Is this correct url: <pre> ' . json_decode($http_response['body'])->data->url . '</pre></p>';
+    $http_response = surf( "{\"secret\":\"$new_passwd\",\"time\":10,\"units\":\"days\",\"views\":3}" );
+    echo '<p class="console-password">Password url: <pre> ' . json_decode($http_response['body'])->data->url . '</pre></p>';
 		$both_passwds = $new_passwd . "'" . json_decode($http_response['body'])->data->url;
-                // FIXME: comment out since does not yet work. Need to fix $both_passwds json .. json_decode($http_response['body'])->data->url; ??
-		// write_to_file( $flag, $both_passwds, $domain );
+		write_to_file( $flag, $both_passwds, $domain );
 		echo '<p class="console-password">Your new password is: <b>' . $new_passwd . "</b></p>";
 		echo 'The system will apply the new password within 60 seconds.';
 	}
