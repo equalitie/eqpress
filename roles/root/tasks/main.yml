@@ -133,6 +133,8 @@
     - adminer_newest is defined
     - adminer_download is defined
     - adminer_newest
+  tags:
+    - adminer
 
 - name: install adminer plugins
   become: yes
@@ -150,6 +152,8 @@
     - { url: "{{ adminer_dump_json_url }}", plugin: "dump-json.php" }
     - { url: "{{ adminer_dump_date_url }}", plugin: "dump-date.php" }
     - { url: "{{ adminer_database_hide_url }}", plugin: "database-hipe.php" } 
+  tags:
+    - adminer
 
 - name: install adminer css
   become: yes
@@ -162,6 +166,8 @@
   when:
     - adminer_newest is defined
     - adminer_newest
+  tags:
+    - adminer
 
 - name: install adminer index to enable plugins
   become: yes
@@ -171,3 +177,5 @@
     owner: root
     group: root
     mode: 0644
+  tags:
+    - adminer
