@@ -33,11 +33,12 @@
     - { dir: 'cache-purge/nginx-helper', owner: 'root', group: 'root', mode: '0755' }
     - { dir: 'mrtg' , owner: 'root', group: 'root', mode: '0755' }
     - { dir: 'adminer', owner: 'root', group: 'root', mode: '0755' }
-    - { dir: 'adminer/plugins', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'adminer/adminer-plugins', owner: 'root', group: 'root', mode: '0755' }
     - { dir: 'shared', owner: 'root', group: 'root', mode: '0755' }
     - { dir: 'shared/mu-plugins', owner: 'root', group: 'root', mode: '0755' }
   tags:
     - console_plugin
+    - adminer
 
 - name: webstat index script template
   become: yes
@@ -121,6 +122,15 @@
   tags:
     - console_plugin
 
+- name: remove old adminer files and dir, pre 5.2
+  become: yes
+  ansible.builtin.file:
+    path: "{{ eqpress_root_dir }}/adminer/{{ item }}"
+    state: absent
+  loop:
+    - plugins
+    - adminer.css
+
 - name: download and install adminer
   become: yes
   ansible.builtin.get_url:
@@ -129,10 +139,6 @@
     owner: root
     group: root
     mode: 0644
-  when:
-    - adminer_newest is defined
-    - adminer_download is defined
-    - adminer_newest
   tags:
     - adminer
 
@@ -140,32 +146,26 @@
   become: yes
   ansible.builtin.get_url:
     url: "{{ item.url }}"
-    dest: "{{ eqpress_root_dir }}/adminer/plugins/{{ item.plugin }}"
+    dest: "{{ eqpress_root_dir }}/adminer/adminer-plugins/{{ item.plugin }}"
     owner: root
     group: root
     mode: 0644
-  when:
-    - adminer_newest is defined
-    - adminer_newest
   loop:
-    - { url: "{{ adminer_plugin_url }}", plugin: "plugin.php" }
     - { url: "{{ adminer_dump_json_url }}", plugin: "dump-json.php" }
     - { url: "{{ adminer_dump_date_url }}", plugin: "dump-date.php" }
-    - { url: "{{ adminer_database_hide_url }}", plugin: "database-hipe.php" } 
+    - { url: "{{ adminer_database_hide_url }}", plugin: "database-hide.php" }
+    - { url: "{{ adminer_dark_switcher_url }}", plugin: "dark-swtcher.php" }
   tags:
     - adminer
 
-- name: install adminer css
+- name: install adminer-plugins.php
   become: yes
-  ansible.builtin.get_url:
-    url: "{{ adminer_css }}"
-    dest: "{{ eqpress_root_dir }}/adminer/adminer.css"
+  ansible.builtin.copy:
+    src: adminer/adminer-plugins.php
+    dest: "{{ eqpress_root_dir }}/adminer/adminer-plugins.php"
     owner: root
     group: root
     mode: 0644
-  when:
-    - adminer_newest is defined
-    - adminer_newest
   tags:
     - adminer
 
