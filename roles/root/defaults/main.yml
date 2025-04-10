@@ -1,8 +1,6 @@
 ---
-adminer_newest: yes
 adminer_download: "https://www.adminer.org/latest-mysql.php"
-adminer_plugin_url: "https://raw.github.com/vrana/adminer/master/plugins/plugin.php"
 adminer_dump_json_url: "https://raw.github.com/vrana/adminer/master/plugins/dump-json.php"
 adminer_dump_date_url: "https://raw.github.com/vrana/adminer/master/plugins/dump-date.php"
 adminer_database_hide_url: "https://raw.github.com/vrana/adminer/master/plugins/database-hide.php"
-adminer_css: "https://raw.githubusercontent.com/vrana/adminer/master/designs/hever/adminer.css"
+adminer_dark_switcher_url: "https://raw.githubusercontent.com/vrana/adminer/master/plugins/dark-switcher.php"
