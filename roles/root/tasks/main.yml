@@ -130,6 +130,8 @@
   loop:
     - plugins
     - adminer.css
+  tags:
+    - adminer
 
 - name: download and install adminer
   become: yes
