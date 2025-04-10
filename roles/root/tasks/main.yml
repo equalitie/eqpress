@@ -171,7 +171,7 @@
   tags:
     - adminer
 
-- name: install adminer index to enable plugins
+- name: install adminer index
   become: yes
   ansible.builtin.copy:
     src: adminer/index.php
