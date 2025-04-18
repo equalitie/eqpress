@@ -99,6 +99,12 @@ http {
 		error_log /var/log/nginx/catch-all.error.log;
 		server_name_in_redirect off;
 		root {{ eqpress_root_dir }}/catchall;
+
+		location / {
+			# Force return 503 but serve index.html
+			error_page 503 = /index.html;
+			return 503;
+		}
  	}
 	server {
 		listen 443 ssl default_server;
@@ -109,6 +115,12 @@ http {
 		server_name_in_redirect off;
 		root {{ eqpress_root_dir }}/catchall;
 		include /etc/nginx/eqpress-common/common_eqpress_ssl.conf;
+
+		location / {
+			# Force return 503 but serve index.html
+			error_page 503 = /index.html;
+			return 503;
+		}
 	}
  
         ##
