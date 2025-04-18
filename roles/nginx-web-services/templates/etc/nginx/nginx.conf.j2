@@ -99,11 +99,15 @@ http {
 		error_log /var/log/nginx/catch-all.error.log;
 		server_name_in_redirect off;
 		root {{ eqpress_root_dir }}/catchall;
+		error_page 503 /index.html;
 
 		location / {
 			# Force return 503 but serve index.html
-			error_page 503 = /index.html;
 			return 503;
+		}
+
+		location = /index.html {
+			internal;
 		}
  	}
 	server {
@@ -115,11 +119,15 @@ http {
 		server_name_in_redirect off;
 		root {{ eqpress_root_dir }}/catchall;
 		include /etc/nginx/eqpress-common/common_eqpress_ssl.conf;
+		error_page 503 /index.html;
 
 		location / {
 			# Force return 503 but serve index.html
-			error_page 503 = /index.html;
 			return 503;
+		}
+
+		location = /index.html {
+			internal;
 		}
 	}
  
