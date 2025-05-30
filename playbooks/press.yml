@@ -50,6 +50,7 @@
     - postfix-email-service
     - telegraf-client
     - timed-jobs
+    - cleanups
 
   tasks:
     - name: create TOOLS_FAQ

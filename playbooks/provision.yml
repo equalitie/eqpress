@@ -19,3 +19,4 @@
      - nginx-web-services
      - provision-server
      - timed-jobs
+     - cleanups
