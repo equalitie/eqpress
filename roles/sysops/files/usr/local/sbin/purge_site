@@ -162,7 +162,7 @@ EOT;
 An archive will be saved to:
 - {$archiveFile}
 EOT;
-}
+  }
 
   echo <<<EOT
 
