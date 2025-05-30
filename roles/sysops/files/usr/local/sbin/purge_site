@@ -154,8 +154,17 @@ You are about to PERMANENTLY delete the following:
 - MySQL user: {$dbUser}
 - Nginx config: {$nginxAvailable}, {$nginxEnabled}
 - PHP-FPM pool config: {$phpFpmPool}
+EOT;
+
+  if (!$noBackup) {
+    echo EOT<<<
+
 An archive will be saved to:
 - {$archiveFile}
+EOT;
+}
+
+  echo <<<EOT
 
 This cannot be undone.
 EOT;
