@@ -1,0 +1,189 @@
+#!/usr/bin/env php
+<?php
+/**
+ * purge_site
+ *
+ * PHP CLI script to purge a WordPress site from the server.
+ * Archives files, nginx config, PHP-FPM pool config, and MySQL database before removal.
+ *
+ * Usage:
+ *   php purge_site <domain> [options]
+ */
+
+$domain = $argv[1] ?? null;
+
+if (in_array('--help', $argv) || !$domain || str_starts_with($domain, '--')) {
+  echo <<<HELP
+Usage:
+  php purge_site <domain> [options]
+
+Options:
+  --simulate      Show actions without performing them
+  --verbose       Output more detailed progress info
+  --force-db      Skip DB ownership checks
+  --no-backup     Skip archive and DB dump creation
+  --yes           Skip confirmation prompt
+  --php=<version> Override the detected PHP version (e.g., --php=8.4)
+  --help          Show this help message
+
+HELP;
+  exit(0);
+}
+
+if (!preg_match('/^[a-z0-9.-]+\.[a-z]{2,}$/', $domain)) {
+  fwrite(STDERR, "Invalid domain format.\n");
+  exit(1);
+}
+
+$options = getopt('', ['simulate', 'verbose', 'force-db', 'no-backup', 'yes', 'dry-run', 'php:']);
+$simulate = isset($options['simulate']) || isset($options['dry-run']);
+$verbose  = isset($options['verbose']);
+$forceDB  = isset($options['force-db']);
+$noBackup = isset($options['no-backup']);
+$autoYes  = isset($options['yes']);
+
+$webRoot = "/var/www/{$domain}";
+$nginxAvailable = "/etc/nginx/sites-available/{$domain}";
+$nginxEnabled = "/etc/nginx/sites-enabled/{$domain}";
+$timestamp = date('Ymd_His');
+$archiveRoot = "/var/www/archive/{$domain}";
+$archiveFile = "{$archiveRoot}/{$domain}-{$timestamp}.tar.gz";
+$phpVersion = $options['php'] ?? trim(shell_exec("php -r 'echo PHP_MAJOR_VERSION . \".\" . PHP_MINOR_VERSION;'"));
+$phpFpmPool = "/etc/php/{$phpVersion}/fpm/pool.d/{$domain}_pool.conf";
+
+purge_site($domain);
+
+////////////////////////////////////////////////////////////////////////////////
+function verbose($message)
+{
+  global $verbose;
+  if ($verbose) echo "[INFO] $message\n";
+}
+
+function action($description, callable $callback)
+{
+  global $simulate;
+  verbose($description);
+  if ($simulate) {
+    echo "[SIMULATE] $description\n";
+  } else {
+    $callback();
+  }
+}
+
+function extract_wp_config_value($file, $key)
+{
+  if (!file_exists($file)) return null;
+  $contents = file_get_contents($file);
+  if (preg_match("/define\s*\(\s*['\"]{$key}['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*\)/", $contents, $matches)) {
+    return $matches[1];
+  }
+  return null;
+}
+
+function archive_site($webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $dbName, $archiveFile, $archiveRoot)
+{
+  global $noBackup, $simulate;
+
+  if ($noBackup) return;
+
+  action("Creating archive directory", function () use ($archiveRoot) {
+    if (!is_dir($archiveRoot)) mkdir($archiveRoot, 0750, true);
+  });
+
+  action("Dumping MySQL database", function () use ($dbName, $archiveRoot) {
+    $dumpFile = "$archiveRoot/db.sql";
+    system("mysqldump -u root {$dbName} > {$dumpFile}");
+  });
+
+  action("Creating site archive", function () use ($webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $archiveFile) {
+    $files = array_filter([$nginxAvailable, $nginxEnabled, $phpFpmPool], 'file_exists');
+    $cmd = "tar --exclude='*.log' --exclude='*.wpress' --exclude='*/tmp/*' --exclude='*/cache/*' -czf {$archiveFile} ";
+    $cmd .= implode(' ', array_map('escapeshellarg', $files));
+    $cmd .= ' ' . escapeshellarg($webRoot);
+    system($cmd);
+  });
+}
+
+function prompt_confirm($message)
+{
+  global $autoYes;
+  if ($autoYes) return true;
+
+  fwrite(STDOUT, "$message [y/N]: ");
+  $handle = fopen("php://stdin", "r");
+  $line = strtolower(trim(fgets($handle)));
+  return in_array($line, ['y', 'yes']);
+}
+
+function purge_site($domain)
+{
+  global $webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $forceDB, $archiveFile, $archiveRoot, $phpVersion;
+
+  if (!is_dir($webRoot)) {
+    fwrite(STDERR, "$domain does not exist.\n");
+    exit(1);
+  }
+
+  $wpConfig = "$webRoot/wordpress/wp-config.php";
+  $dbName = extract_wp_config_value($wpConfig, 'DB_NAME');
+  $dbUser = extract_wp_config_value($wpConfig, 'DB_USER');
+  $dbPass = extract_wp_config_value($wpConfig, 'DB_PASSWORD');
+
+  if (!$dbName || !$dbUser || !$dbPass) {
+    fwrite(STDERR, "Could not extract DB credentials.\n");
+    exit(1);
+  }
+
+  $grants = shell_exec("mysql -u root -e \"SHOW GRANTS FOR '{$dbUser}'@'localhost'\"");
+  if (!str_contains($grants, $dbName) && !$forceDB) {
+    fwrite(STDERR, "Aborting: DB user does not appear to own DB. Use --force-db to override.\n");
+    exit(1);
+  }
+
+  $canLogin = shell_exec("mysql -u {$dbUser} -p'{$dbPass}' -e 'USE {$dbName}; SELECT 1;' 2>&1");
+  if (!str_contains($canLogin, '1') && !$forceDB) {
+    fwrite(STDERR, "Aborting: Cannot log in to '{$dbName}' as '{$dbUser}'. Use --force-db to override.\n");
+    exit(1);
+  }
+
+  echo <<<EOT
+You are about to PERMANENTLY delete the following:
+- Web root: {$webRoot}
+- MySQL database: {$dbName}
+- MySQL user: {$dbUser}
+- Nginx config: {$nginxAvailable}, {$nginxEnabled}
+- PHP-FPM pool config: {$phpFpmPool}
+An archive will be saved to:
+- {$archiveFile}
+
+This cannot be undone.
+EOT;
+
+  echo "\n";
+  if (!prompt_confirm("Are you sure you want to proceed?")) {
+    echo "Aborted.\n";
+    exit(0);
+  }
+
+  archive_site($webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $dbName, $archiveFile, $archiveRoot);
+
+  action("Dropping MySQL database", fn() => system("mysqladmin --force -u root drop {$dbName}"));
+  action("Dropping MySQL user", fn() => system("mysql -u root -e \"DROP USER '{$dbUser}'@'localhost'\""));
+  action("Deleting system user", fn() => system("userdel {$dbUser}"));
+  action("Deleting nginx config", function () use ($nginxAvailable, $nginxEnabled) {
+    @unlink($nginxAvailable);
+    @unlink($nginxEnabled);
+  });
+  action("Delete PHP-FPM pool config", function () use ($phpFpmPool) {
+    if (file_exists($phpFpmPool)) {
+      @unlink($phpFpmPool);
+    }
+  });
+  action("Deleting webroot", fn() => system("rm -rf {$webRoot}"));
+  action("Reloading nginx", fn() => system("nginx -s reload"));
+  action("Reloading PHP-FPM", fn() => system("systemctl reload php{$phpVersion}-fpm"));
+
+  echo "Site '{$domain}' purged successfully.\n";
+  exit(0);
+}
