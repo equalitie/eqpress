@@ -118,7 +118,7 @@ function prompt_confirm($message)
 
 function purge_site($domain)
 {
-  global $webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $forceDB, $archiveFile, $archiveRoot, $phpVersion;
+  global $webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $forceDB, $archiveFile, $archiveRoot, $phpVersion, $noBackup;
 
   if (!is_dir($webRoot)) {
     fwrite(STDERR, "$domain does not exist.\n");
@@ -157,7 +157,7 @@ You are about to PERMANENTLY delete the following:
 EOT;
 
   if (!$noBackup) {
-    echo EOT<<<
+    echo <<<EOT
 
 An archive will be saved to:
 - {$archiveFile}
