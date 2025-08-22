@@ -1,0 +1,129 @@
+---
+- name: setup docker nginx modules
+  become: yes
+  ansible.builtin.template:
+    src: nginx_modules.conf.j2
+    dest: /etc/nginx/modules-enabled/modules.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    reload_nginx
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: add "{{ docker_group }}" to user "{{ ansible_user_id }}"
+  become: yes
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    create_home: no
+    append: yes
+    groups: "{{ docker_group }}"
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: create directories
+  ansible.builtin.file:
+    path: "{{ item.dir }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "0700"
+    state: directory
+  loop:
+    - { dir: '{{ ansible_user_dir }}/docker', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
+    - { dir: '{{ ansible_user_dir }}/docker/eqpress_nginx', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: create compose.yaml for nginx
+  ansible.builtin.template:
+    dest: "{{ ansible_user_dir }}/docker/eqpress_nginx/compose.yaml"
+    src: nginx-compose.yaml.j2
+    mode: '0640'
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: create Dockerfile for nginx
+  ansible.builtin.template:
+    dest: "{{ ansible_user_dir }}/docker/eqpress_nginx/Dockerfile"
+    src: Dockerfile.j2
+    mode: '0640'
+  tags:
+    - nginx
+    - nginx_docker
+
+# NOTE: docker_compose_v2 is using the docker compose plugin
+# ie; docker compose up
+- name: install and bring up nginx container with docker compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ ansible_user_dir }}/docker/eqpress_nginx"
+    state: present
+  register: docker_compose_results
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: install dockerized nginx command
+  become: yes
+  ansible.builtin.template:
+    dest: /usr/local/sbin/docker-nginx
+    src: docker-nginx.j2
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+    - nginx
+    - nginx_docker_script
+    - nginx_docker
+
+- name: symlink docker-nginx -> /usr/sbin/nginx
+  become: yes
+  ansible.builtin.file:
+    src: /usr/local/sbin/docker-nginx
+    dest: /usr/sbin/nginx
+    owner: root
+    group: root
+    state: link
+  tags:
+    - nginx
+    - nginx_docker_script
+    - nginx_docker
+
+- name: install nginx systemd service file when for dockerized nginx
+  become: yes
+  ansible.builtin.template:
+    dest: /etc/systemd/system/nginx.service
+    src: docker-nginx-systemd.j2
+    owner: root
+    group: root
+    mode: "0644"
+  register: nginx_docker_systemd_template
+  tags:
+    - nginx
+    - nginx_docker_systemd
+    - nginx_docker
+
+- name: systemd daemon reload
+  become: yes
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: nginx_docker_systemd_template.changed|bool
+  tags:
+    - nginx
+    - nginx_docker_systemd
+    - nginx_docker
+
+- name: enable nginx systemd service
+  become: yes
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started
+  tags:
+    - nginx
+    - nginx_docker_systemd
+    - nginx_docker

@@ -1,0 +1,262 @@
+---
+- name: remove /var/www/html
+  become: yes
+  ansible.builtin.file:
+    path: /var/www/html
+    state: absent
+  tags:
+    - nginx
+
+- name: ensure {{ web_user_home }} exists and is owned by root
+  become: yes
+  ansible.builtin.file:
+    path: "{{ web_user_home }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  tags:
+    - nginx
+
+- name: install nginx related software
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - nginx-extras
+    state: present
+  when:
+    - web_server_docker is not defined or web_server_docker|bool == false
+  tags:
+    - nginx
+
+- name: create some default nginx directories
+  become: yes
+  ansible.builtin.file:
+    path: "/etc/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  loop:
+    - nginx
+    - nginx/sites-enabled
+    - nginx/sites-available
+    - nginx/modules-enabled
+    - nginx/conf.d
+  tags:
+    - nginx
+
+- name: create nginx eqpress common directory
+  become: yes
+  ansible.builtin.file:
+    path: /etc/nginx/eqpress-common
+    state: directory
+    mode: 0750
+    owner: root
+    group: "{{ web_groupname }}"
+  tags:
+    - nginx
+
+- name: create nginx log directory
+  become: yes
+  ansible.builtin.file:
+    path: /var/log/nginx
+    state: directory
+    mode: 0750
+    owner: root
+    group: "{{ web_groupname }}"
+  tags:
+    - nginx
+ 
+- name: remove default nginx config symlink
+  become: yes
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify:
+    - reload_nginx
+  tags:
+    - nginx
+
+- name: create directory ramdisk for nginx cache for tmpfs mount
+  become: yes
+  ansible.builtin.file:
+    path: /var/cache/nginx
+    owner: "{{ web_user }}"
+    group: root
+    state: directory
+    mode: 0750
+  tags:
+    - nginx
+
+- name: add tmpfs mount to fstab to /var/cache/nginx
+  become: yes
+  ansible.builtin.lineinfile:
+    dest: /etc/fstab
+    regexp: "/var/cache/nginx"
+    line: "tmpfs /var/cache/nginx tmpfs rw,noexec,nosuid,nodev,mode=0750,uid={{ web_user }} 0 0"
+    state: present
+  notify:
+    - remount
+  tags:
+    - nginx
+
+- name: create nginx-ondisk directory
+  become: yes
+  ansible.builtin.file:
+    path: /var/cache/nginx-ondisk
+    state: directory
+    owner: "{{ web_user }}"
+    group: root
+    mode: 0750
+  tags:
+    - nginx
+
+- name: templates nginx common files
+  become: yes
+  ansible.builtin.template:
+    src: "etc/nginx/{{ item }}.j2"
+    dest: "/etc/nginx/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - nginx.conf
+    - eqpress-common/common_adminer.conf
+    - eqpress-common/common_fastcgi.conf
+    - eqpress-common/common_headers.conf
+    - eqpress-common/common_eqpress_ssl.conf
+    - eqpress-common/common_cdn_realip.conf
+  notify:
+    - reload_nginx
+  tags:
+    - nginx_config
+    - nginx
+
+- name: copy nginx common files
+  become: yes
+  ansible.builtin.copy:
+    src: "etc/nginx/{{ item }}"
+    dest: "/etc/nginx/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - mime.types
+    - fastcgi_params
+    - eqpress-common/common_cache.conf
+    - eqpress-common/common_exceptions.conf
+    - eqpress-common/common_location.conf
+    - eqpress-common/common_location_ep.conf
+    - eqpress-common/common_log_formats.conf
+    - eqpress-common/common_login_limiter.conf
+    - eqpress-common/common_mobile_user_agents.conf
+    - eqpress-common/common_multisite_3.5.conf
+    - eqpress-common/common_w3tc.conf
+    - eqpress-common/lua_block_post_noreferrer.lua
+    - eqpress-common/lua_block_post_noreferrer_on.lua
+    - eqpress-common/lua_block_wplogin_noreferrer.lua
+  notify:
+    - reload_nginx
+  tags:
+    - nginx_config
+    - nginx
+
+- name: template nginx eqpress config
+  become: yes
+  ansible.builtin.template:
+    src: etc/nginx/sites-available/eqpress.j2
+    dest: /etc/nginx/sites-available/eqpress
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  when: not auto_provision_host | default(false) | bool
+  notify:
+    - reload_nginx
+  tags:
+    - nginx
+    - nginx_config
+
+- name: template nginx eqpress config provision
+  become: yes
+  ansible.builtin.template:
+    src: etc/nginx/sites-available/eqpress-provision.j2
+    dest: /etc/nginx/sites-available/eqpress-provision
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  when: auto_provision_host | default(false) | bool
+  notify:
+    - reload_nginx
+  tags:
+    - nginx
+    - nginx_config
+
+- name: link eqpress nginx config provision
+  become: yes
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/eqpress-provision
+    dest: /etc/nginx/sites-enabled/eqpress-provision
+    state: link
+  when: auto_provision_host | default(false) | bool
+  notify:
+    - reload_nginx
+  tags:
+    - nginx
+    - nginx_config
+
+- name: link eqpress nginx config
+  become: yes
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/eqpress
+    dest: /etc/nginx/sites-enabled/eqpress
+    state: link
+  when: not auto_provision_host | default(false) | bool
+  notify:
+    - reload_nginx
+  tags:
+    - nginx
+    - nginx_config
+
+- name: copy custom logrotate config for nginx access logs
+  become: yes
+  ansible.builtin.copy:
+    src: etc/logrotate.d/nginx
+    dest: /etc/logrotate.d
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - nginx
+
+- name: update nginx open file limits using ulimit in default file
+  become: yes
+  ansible.builtin.copy:
+    src: etc/default/nginx
+    dest: /etc/default/nginx
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    - web_server_docker is not defined or web_server_docker|bool == false
+  notify:
+    - restart_nginx
+  tags:
+    - nginx
+
+- name: nginx docker when web_server_docker
+  ansible.builtin.include_tasks: nginx-docker.yml
+  when: web_server_docker|bool == true
+  tags: always
+
+- name: ensure nginx will start at boot
+  become: yes
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: yes
+  when:
+    - web_server_docker is not defined or web_server_docker|bool == false
+  tags:
+    - nginx

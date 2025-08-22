@@ -1,0 +1,183 @@
+---
+- name: create eqpress directories
+  become: yes
+  ansible.builtin.file:
+    path: "{{ eqpress_root_dir }}/{{ item.dir }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { dir: '', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: '.sessions', owner: '{{ web_user }}', group: '{{ web_groupname }}', mode: '0770' }
+    - { dir: 'api', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'api/commands', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'catchall', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'webstats', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console/password', owner: 'root', group: '{{ web_groupname }}', mode: '0770' }
+    - { dir: 'console/lockdown', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console/lockdown/lock', owner: 'root', group: '{{ web_groupname }}', mode: '0770' }
+    - { dir: 'console/lockdown/unlock', owner: 'root', group: '{{ web_groupname }}', mode: '0770' }
+    - { dir: 'console/perms', owner: 'root', group: '{{ web_groupname }}', mode: '0770' }
+    - { dir: 'console/log', owner: 'root', group: '{{ web_groupname }}', mode: '0770' }
+    - { dir: 'console/proxy', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console/plugin', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console/plugin/eqpress-console', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console/plugin/eqpress-console/css', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console/plugin/eqpress-console/img', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console/plugin/eqpress-console/inc', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'console/plugin/eqpress-console/js', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'perf', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'cache-purge', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'cache-purge/nginx-helper', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'mrtg' , owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'adminer', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'adminer/adminer-plugins', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'shared', owner: 'root', group: 'root', mode: '0755' }
+    - { dir: 'shared/mu-plugins', owner: 'root', group: 'root', mode: '0755' }
+  tags:
+    - console_plugin
+    - adminer
+
+- name: webstat index script template
+  become: yes
+  ansible.builtin.template:
+    src: webstats/index.php.j2
+    dest: "{{ eqpress_root_dir }}/webstats/index.php"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: copy console files 
+  become: yes
+  ansible.builtin.copy:
+    src: "console/{{ item }}"
+    dest: "{{ eqpress_root_dir }}/console/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - plugin/eqpress-console/eqpress-console.php
+    - plugin/eqpress-console/css/style.css
+    - plugin/eqpress-console/img/eqpress-bolt.png
+    - plugin/eqpress-console/img/eqpress_icon.png
+    - plugin/eqpress-console/img/eqpress-logo.png
+    - plugin/eqpress-console/inc/class-curl-request.php
+# TODO -- this is same file that is in /usr/local/sbin . We should probably link class-http-log-parser.php
+    - plugin/eqpress-console/inc/class-http-log-parser.php
+    - plugin/eqpress-console/js/countdown-int.js
+    - plugin/eqpress-console/js/countdown.js
+  tags:
+    - console_plugin
+
+- name: console templates
+  become: yes
+  ansible.builtin.template:
+    src: "console/{{ item }}.j2"
+    dest: "{{ eqpress_root_dir }}/console/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - plugin/eqpress.php
+    - plugin/eqpress-console/inc/eqpress-console-text.php
+    - proxy/eqpress-console-proxy.php
+  tags:
+    - console_plugin
+
+- name: catchall templates
+  become: yes
+  ansible.builtin.template:
+    src: "catchall/{{ item }}.j2"
+    dest: "{{ eqpress_root_dir }}/catchall/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - index.html
+
+- name: copy perf files
+  become: yes
+  ansible.builtin.copy:
+    src: "perf/{{ item }}"
+    dest: "{{ eqpress_root_dir }}/perf/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - opcache.php
+
+- name: copy cache-purge files
+  become: yes
+  ansible.builtin.copy:
+    src: "cache-purge/{{ item }}"
+    dest: "{{ eqpress_root_dir }}/cache-purge/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - nginx-helper.php
+    - nginx-helper/purger.php
+  tags:
+    - console_plugin
+
+- name: remove old adminer files and dir, pre 5.2
+  become: yes
+  ansible.builtin.file:
+    path: "{{ eqpress_root_dir }}/adminer/{{ item }}"
+    state: absent
+  loop:
+    - plugins
+    - adminer.css
+  tags:
+    - adminer
+
+- name: download and install adminer
+  become: yes
+  ansible.builtin.get_url:
+    url: "{{ adminer_download }}"
+    dest: "{{ eqpress_root_dir }}/adminer/adminer.php"
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - adminer
+
+- name: install adminer plugins
+  become: yes
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ eqpress_root_dir }}/adminer/adminer-plugins/{{ item.plugin }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - { url: "{{ adminer_dump_json_url }}", plugin: "dump-json.php" }
+    - { url: "{{ adminer_dump_date_url }}", plugin: "dump-date.php" }
+    - { url: "{{ adminer_database_hide_url }}", plugin: "database-hide.php" }
+    - { url: "{{ adminer_dark_switcher_url }}", plugin: "dark-swtcher.php" }
+  tags:
+    - adminer
+
+- name: install adminer-plugins.php
+  become: yes
+  ansible.builtin.copy:
+    src: adminer/adminer-plugins.php
+    dest: "{{ eqpress_root_dir }}/adminer/adminer-plugins.php"
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - adminer
+
+- name: install adminer index
+  become: yes
+  ansible.builtin.copy:
+    src: adminer/index.php
+    dest: "{{ eqpress_root_dir }}/adminer/index.php"
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - adminer

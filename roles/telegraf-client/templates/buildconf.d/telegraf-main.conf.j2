@@ -1,0 +1,114 @@
+# {{ ansible_managed }}
+#
+{% set cluster_name = group_names[0] if group_names else 'unknown' %}
+{% set role_name = (mysql_repl_role if mysql_repl_role else ('provision' if cluster_name == 'provision' else 'unknown')) %}
+[global_tags]
+  cluster="{{ cluster_name }}"
+  role="{{ role_name }}"
+[agent]
+  interval = "10s"
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_interval = "10s"
+  flush_jitter = "0s"
+  precision = "0s"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+#### OUTPUTS
+[[outputs.influxdb]]
+  urls = ["https://{{ telegraf_influxdb.domain }}:{{ telegraf_influxdb.port }}"]
+  database = "{{ telegraf_influxdb.database }}"
+  skip_database_creation = true
+  username = "{{ telegraf_influxdb.username }}"
+  password = "{{ telegraf_influxdb.password }}"
+  insecure_skip_verify = true
+#### END OUTPUTS
+#### INPUTS
+[[inputs.cpu]]
+  percpu = true
+  totalcpu = true
+  collect_cpu_time = false
+  report_active = false
+  core_tags = false
+[[inputs.disk]]
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+[[inputs.diskio]]
+[[inputs.kernel]]
+[[inputs.mem]]
+[[inputs.processes]]
+[[inputs.swap]]
+[[inputs.system]]
+[[inputs.internal]]
+[[inputs.linux_sysctl_fs]]
+[[inputs.net]]
+  ignore_protocol_stats = true
+[[inputs.nstat]]
+[[inputs.netstat]]
+[[inputs.file]]
+  files = [ "/etc/telegraf/data/press_du.json" ]
+  tag_keys = [ "path" ]
+  name_override = "du"
+  data_format = "json"
+[[inputs.file]]
+  files = [ "/etc/telegraf/data/sumproc.influx" ]
+  data_format = "influx"
+{% if mysql_telegraf_user is defined %}
+[[inputs.mysql]]
+  servers = ["{{ mysql_telegraf_user.username }}:{{ mysql_telegraf_user.password }}@unix({{ mariadb_unix_socket }})/"]
+  metric_version = 2
+  name_suffix = "_v2"
+  table_schema_databases = []
+  perf_summary_events = []
+  gather_process_list = true
+  gather_user_statistics = true
+  gather_innodb_metrics = true
+  gather_binary_logs = true
+  gather_table_io_waits = true
+  gather_table_lock_waits = true
+  gather_table_schema = true
+  gather_info_schema_auto_inc = true
+  gather_slave_status = true
+  gather_index_io_waits = true
+  gather_event_waits = true
+  gather_file_events_stats = true
+  gather_perf_events_statements = true
+  interval_slow = "30m"
+  mariadb_dialect = true
+{% else %}
+# inputs.mysql skipped because mysql_telegraf_user variables are not set
+{% endif %}
+{% if mysql_repl_role is defined and mysql_repl_role != "slave" %}
+[[inputs.nginx]]
+  urls = ["http://{{ inventory_hostname }}/nginx_status"]
+{% endif %}
+[[inputs.phpfpm]]
+  urls = ["/var/run/php/*.sock:phpfpmstatus"]
+  timeout = "2s"
+{{ telegraf_inputs_ping_placeholder }}
+[[inputs.procstat]]
+  systemd_unit = "nginx.service"
+[[inputs.procstat]]
+  systemd_unit = "ssh.service"
+[[inputs.procstat]]
+  systemd_unit = "php{{ php_version }}-fpm.service"
+[[inputs.procstat]]
+  systemd_unit = "mariadb.service"
+[[inputs.procstat]]
+  systemd_unit = "docker.service"
+{% if web_server_docker is defined and web_server_docker %}
+[[inputs.docker]]
+  endpoint = "unix:///var/run/docker.sock"
+  perdevice = false
+  perdevice_include = ["cpu", "blkio", "network"]
+  gather_services = false
+  timeout = "5s"
+  total = false
+{% endif %}
+[[inputs.kernel_vmstat]]
+[[inputs.mdstat]]
+[[inputs.ethtool]]
+  interface_include = ["{{ ansible_default_ipv4.alias }}"]
+[[inputs.linux_cpu]]
+  metrics = ["cpufreq"]

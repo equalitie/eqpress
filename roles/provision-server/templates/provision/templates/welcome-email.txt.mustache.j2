@@ -1,0 +1,56 @@
+{% raw -%}
+Welcome aboard,
+{{first_name}} {{last_name}}!
+
+Thank you for using
+{{org_name}} eqpress Hosting.
+Here are some important links:
+
+Website Address:  http://{{domain}}/
+Admin Address:    https://{{domain}}/wp-admin/
+Admin Username:   {{wp_admin}}
+Admin Password:   {{pwp_wp}}
+
+Database Admin Address:   https://{{domain}}/adminer/?db={{db_name}}
+Database Admin Username:  {{db_user}}
+Database Admin Password:  {{pwp_db}}
+
+SFTP Server:	* See below to request by email.
+SFTP Username:  {{sftp_user}}
+SFTP Password:  {{pwp_sftp}}
+
+
+IMPORTANT WARNING
+Please save all passwords in a safe place.
+The password links above will expire quickly
+and not be available to you online.
+
+Note:
+If you do not have your DNS service with
+us you will need to set this up on your
+end before the above links will work.
+
+Also note:
+The links above with (https) prefix will not
+work unless there is a TLS option choosen in
+your setup with us. We have a few options and
+we recommend this to be setup before you login
+to any password protected services. If for some
+reason you do not want TLS protection for your
+site, you can type in the links above by changing
+any (https) link to a (http) link. This is not
+recommended and your login credentials could be
+easily stolen unexpectedly.
+
+Feel free to email us at {{org_email}}
+if you have any questions.
+
+* If you need SFTP access please email us
+at {{org_email}} and request the current address.
+This address expires for security reasons but the
+new address can be requested as needed at anytime.
+
+Sincerely,
+
+The team at {{org_name}}
+{%- endraw %}

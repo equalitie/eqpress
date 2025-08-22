@@ -1,0 +1,22 @@
+---
+- hosts: provision
+  gather_facts: yes
+
+  vars:
+    is_local: no
+
+  roles:
+     - prerequisites
+     - common
+     - ssh-config
+     - ssl-config
+     - php-services
+     - firewall-hardening
+     - sysops
+     - docker
+     - postfix-email-service
+     - mariadb-local-service
+     - nginx-web-services
+     - provision-server
+     - timed-jobs
+     - cleanups

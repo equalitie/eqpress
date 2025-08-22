@@ -1,0 +1,47 @@
+---
+# {{ ansible_managed }}
+# version: "3.8"
+# don't use version anymore.
+
+services:
+  eqpress-nginx:
+    #image: nginx:{{ nginx_docker_version }}
+    build: .
+    container_name: {{ nginx_container_name }}
+    volumes:
+      - type: bind
+        source: /etc/nginx
+        target: /etc/nginx
+        read_only: true
+      - type: bind
+        source: /var/log/nginx
+        target: /var/log/nginx
+        read_only: false
+      - type: bind
+        source: {{ eqpress_base_dir }}
+        target: {{ eqpress_base_dir }}
+        read_only: true
+      - type: bind
+        source: /var/www
+        target: /var/www
+        read_only: true
+      - type: bind
+        source: /var/cache/nginx
+        target: /var/cache/nginx
+        read_only: false
+      - type: bind
+        source: /var/cache/nginx-ondisk
+        target: /var/cache/nginx-ondisk
+        read_only: false
+      - type: bind
+        source: /etc/ssl/eqpress
+        target: /etc/ssl/eqpress
+        read_only: true
+      - type: bind
+        source: /var/run/php
+        target: /var/run/php
+        read_only: false
+    network_mode: host
+    restart: unless-stopped
+    cap_add:
+      - CAP_SYS_NICE

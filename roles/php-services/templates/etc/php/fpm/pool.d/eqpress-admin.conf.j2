@@ -1,0 +1,21 @@
+[eqpress-admin]
+user = {{ web_user }}
+group = {{ web_groupname }}
+listen = /var/run/php/php{{ php_version }}-fpm-admin.sock
+listen.owner = {{ web_user }}
+listen.group = {{ web_groupname }}
+listen.mode = 0660
+pm = dynamic
+pm.max_children = 25 
+pm.start_servers = 2
+pm.min_spare_servers = 2
+pm.max_spare_servers = 6
+pm.process_idle_timeout = 10s
+pm.max_requests = 128
+pm.status_path = /phpfpmstatus
+slowlog = /var/log/$pool.slow.log
+php_admin_value[memory_limit] = 256M
+env[TMP] = /var/tmp
+env[TMPDIR] = /var/tmp
+env[TEMP] = /var/tmp
+env[CONSOLE_API_KEY_SECRET] = "{{ console_secret_key }}"

@@ -1,0 +1,23 @@
+---
+- name: remount
+  become: yes
+  ansible.builtin.command:
+    cmd: /bin/mount -a
+
+- name: restart_docker
+  become: yes
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
+
+- name: reload_nginx
+  become: yes
+  ansible.builtin.systemd:
+    name: nginx
+    state: reloaded
+
+- name: restart_nginx
+  become: yes
+  ansible.builtin.systemd:
+    name: nginx
+    state: restarted

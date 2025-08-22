@@ -1,0 +1,71 @@
+# {{ ansible_managed }}
+# Copyright (c) 2024, eQualit.ie inc.
+# All rights reserved.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# Note: This image 'will not' run on its own. The image depends on mounted volumes for
+# it's config, log, and data directories.
+
+
+FROM debian:bookworm-slim AS purge-plugin-build-target
+
+ENV NGINX_VERSION   {{ nginx_docker_version }}
+ENV PURGE_VERSION   {{ nginx_docker_purge_module_version }}
+
+RUN set -x \
+ && DEBIAN_FRONTEND=noninteractive apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    nginx-extras \
+    build-essential \
+    git \
+    libpcre3-dev \
+    libssl-dev \
+    zlib1g-dev
+
+WORKDIR /root
+
+RUN git clone https://github.com/nginx-modules/ngx_cache_purge --depth 1 --branch ${PURGE_VERSION}
+RUN git clone https://github.com/nginx/nginx.git --depth 1 --branch release-${NGINX_VERSION}
+
+WORKDIR /root/nginx
+
+# XXX the plugin needs to be build with exactly the same configuration as nginx
+# itself.
+# nginx -V
+RUN ./auto/configure \
+    --add-dynamic-module=/root/ngx_cache_purge/ \
+    --prefix=/etc/nginx --sbin-path=/usr/sbin/nginx \
+    --modules-path=/usr/lib/nginx/modules --conf-path=/etc/nginx/nginx.conf \
+    --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log \
+    --pid-path=/var/run/nginx.pid --lock-path=/var/run/nginx.lock \
+    --http-client-body-temp-path=/var/cache/nginx/client_temp \
+    --http-proxy-temp-path=/var/cache/nginx/proxy_temp \
+    --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
+    --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
+    --http-scgi-temp-path=/var/cache/nginx/scgi_temp --user=nginx --group=nginx \
+    --with-compat --with-file-aio --with-threads --with-http_addition_module \
+    --with-http_auth_request_module --with-http_dav_module --with-http_flv_module \
+    --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module \
+    --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module \
+    --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module \
+    --with-http_sub_module --with-http_v2_module --with-http_v3_module --with-mail \
+    --with-mail_ssl_module --with-stream --with-stream_realip_module --with-stream_ssl_module \
+    --with-stream_ssl_preread_module \
+    --with-cc-opt='-g -O2 -ffile-prefix-map=/data/builder/debuild/nginx-${NGINX_VERSION}/debian/debuild-base/nginx-${NGINX_VERSION}=. -fstack-protector-strong -Wformat -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fPIC' \
+    --with-ld-opt='-Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie' \
+    && make modules
+
+FROM nginx:{{ nginx_docker_version }}
+
+RUN set -x \
+ && DEBIAN_FRONTEND=noninteractive apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    psmisc
+
+COPY --from=purge-plugin-build-target \
+    /root/nginx/objs/ngx_http_cache_purge_module.so \
+    /usr/lib/nginx/modules/ngx_http_cache_purge_module.so
+
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,12 @@
+---
+- name: "reload php-fpm"
+  become: yes
+  ansible.builtin.systemd:
+    name: "php{{ php_version }}-fpm"
+    state: reloaded
+
+- name: "restart php-fpm"
+  become: yes
+  ansible.builtin.systemd:
+    name: "php{{ php_version }}-fpm"
+    state: restarted

@@ -1,0 +1,79 @@
+---
+- name: only install docker when using
+  block:
+    - name: remove any unofficial docker packages
+      become: yes
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose
+          - docker-compose-v2
+          - docker-doc
+          - podman-docker
+          - containerd
+          - runc
+        state: absent
+
+    - name: install docker repo
+      become: yes
+      ansible.builtin.deb822_repository:
+        name: docker
+        types: deb
+        uris: "{{ docker_repo }}"
+        suites: "{{ ansible_distribution_release }}"
+        architectures: amd64
+        components: stable
+        signed_by: "{{ docker_gpg_key_url }}"
+
+
+    #- name: get docker.asc
+    #  ansible.builtin.get_url:
+    #    url: '{{ docker_gpg_key_url }}'
+    #    dest: /tmp/docker.asc.key
+    #  register: get_docker_key
+
+    #- name: install docker.asc
+    #  become: yes
+    #  ansible.builtin.shell:
+    #    cmd: cat /tmp/docker.asc.key | gpg --dearmor | tee /usr/share/keyrings/docker.gpg
+    #  when: get_docker_key is defined and get_docker_key.changed
+
+    #- name: install docker repo
+    #  become: yes
+    #  ansible.builtin.apt_repository:
+    #    repo: 'deb [arch=amd64 signed-by=/usr/share/keyrings/docker.gpg] {{ docker_repo }} {{ ansible_distribution_release }} stable'
+    #    filename: docker
+    #    state: present
+    #    update_cache: yes
+
+    - name: install docker packages
+      become: yes
+      ansible.builtin.apt:
+        update_cache: yes
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: install dockerd daemon config
+      become: yes
+      ansible.builtin.template:
+        src: docker_daemon.json.j2
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - restart_docker
+
+  when:
+    - web_server_docker|bool == true
+  tags:
+    - nginx
+    - docker
+
+- name: flush handlers
+  ansible.builtin.meta: flush_handlers

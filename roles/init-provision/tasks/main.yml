@@ -1,0 +1,41 @@
+---
+- name: Use DNS for host external IPv4 address
+  local_action:
+    module: command
+    cmd: "/usr/bin/dig +noall +short {{ auto_provision_server }}"
+  register: dns_ip_ap
+
+- name: DNS lookup of auto_provision_node_hostname
+  local_action:
+    module: command
+    cmd: "/usr/bin/dig +noall +short {{ auto_provision_node_hostname }}"
+  register: dns_ip_node
+
+# TODO: Use this method for passwords
+- ansible.builtin.set_fact:
+    random_password1: "{{ lookup('password', '/dev/null chars=ascii_lowercase,ascii_uppercase,punctuation,digits length=' + item + '') }}"
+  loop:
+    - '{{ 25|random(20,1) }}'
+
+- name: generate random strings
+  local_action:
+    module: shell
+    cmd: "< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c {{ item.size }}"
+  register: rand_result
+  loop:
+    - { size: '{{15|random(10,1)}}' }
+    - { size: '{{15|random(10,1)}}' }
+    - { size: '32' }
+    - { size: '{{15|random(10,1)}}' }
+
+- name: Create the main variables file.
+  local_action:
+    module: template
+    src: auto-provision.yml.j2
+    dest: "{{ playbook_dir }}/group_vars/provision.yml"
+
+- name: Create host variable file for auto-provision server
+  local_action:
+    module: template
+    src: auto-provision-host.yml.j2
+    dest: "{{ playbook_dir }}/host_vars/{{ auto_provision_server }}.yml"

@@ -1,0 +1,196 @@
+---
+- name: install nodejs repo
+  become: yes
+  ansible.builtin.deb822_repository:
+    name: nodejs
+    types: deb
+    uris: "{{ nodejs_repo }}"
+    suites: nodistro
+    components: main
+    signed_by: "{{ nodejs_gpg_key_url }}"
+  tags:
+    - provision
+    - rampass
+    - nodejs
+
+- name: install required packages
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - nodejs
+      - composer
+    state: present
+    update_cache: yes
+  tags:
+    - provision
+    - rampass
+    - nodejs
+    - composer
+
+- name: create rampass user
+  become: yes
+  ansible.builtin.user:
+    name: rampass
+    create_home: yes
+    group: "{{ web_groupname }}"
+    password: '!'
+    shell: /usr/sbin/nologin
+    home: "{{ eqpress_base_dir }}/rampass"
+  tags:
+    - provision
+    - rampass
+
+# TODO: For now use pwpusher vars for mysql user/database
+# ep_pwpusher_db:
+# ep_pwpusher_user:
+# ep_pwpusher_pw:
+
+- name: create rampass mysql database
+  become: yes
+  community.mysql.mysql_db:
+    name: "{{ eq_pwpusher_db }}"
+    state: present
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  tags:
+    - provision
+    - rampass
+
+- name: create rampass mysql users
+  become: yes
+  community.mysql.mysql_user:
+    name: "{{ eq_pwpusher_user }}"
+    host: localhost
+    password: "{{ eq_pwpusher_pw }}"
+    priv: "{{ eq_pwpusher_db }}.*:ALL"
+    state: present
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  no_log: no
+  tags:
+    - provision
+    - rampass
+
+- name: rampass directory to owner rampass
+  become: yes
+  ansible.builtin.file:
+    state: directory
+    path: "{{ eqpress_base_dir }}/rampass"
+    owner: rampass
+    group: "{{ web_groupname }}"
+    recurse: yes
+  tags:
+    - provision
+    - rampass
+
+- name: clone rampass
+  become: yes
+  become_user: rampass
+  ansible.builtin.git:
+    repo: "{{ rampass_repo }}"
+    dest: "{{ eqpress_base_dir }}/rampass/rampass"
+    bare: no
+    version: "{{ rampass_version }}"
+    force: yes
+    accept_hostkey: yes
+  tags:
+    - provision
+    - rampass
+
+# Note: We do not want to overwrite because we have salt key in here
+- name: .env install from template [do not overwrite]
+  become: yes
+  ansible.builtin.template:
+    src: rampass/env.j2
+    dest: "{{ eqpress_base_dir }}/rampass/rampass/.env"
+    owner: rampass
+    group: "{{ web_groupname }}"
+    mode: "0640"
+    force: no
+  tags:
+    - provision
+    - rampass
+
+- name: run composer update
+  become: yes
+  become_user: rampass
+  community.general.composer:
+    command: "update"
+    working_dir: "{{ eqpress_base_dir }}/rampass/rampass"
+    executable: "/usr/bin/php{{ php_version }}"
+  tags:
+    - provision
+    - rampass
+    - composer
+
+- name: run command for new install
+  become: yes
+  become_user: rampass
+  ansible.builtin.command:
+    cmd: "{{ item }}"
+  args:
+    chdir: "{{ eqpress_base_dir }}/rampass/rampass"
+  loop:
+    - "npm install"
+    - "npm run build"
+    - "php artisan key:generate -n"
+    - "php artisan salt:generate -n"
+    - "php artisan storage:link"
+    - "php artisan migrate --force"
+  tags:
+    - provision
+    - rampass
+
+- name: secure rampass directory
+  become: yes
+  ansible.builtin.file:
+    state: directory
+    path: "{{ eqpress_base_dir }}/rampass/{{ item.name }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    recurse: "{{ item.recurse }}"
+  loop:
+    - { name: "rampass", owner: "rampass", group: "{{ web_groupname }}", recurse: no }
+    - { name: "rampass/storage", owner: "{{ web_user }}", group: "{{ web_groupname }}", recurse: yes }
+  tags:
+    - provision
+    - rampass
+
+- name: fix .env owner
+  become: yes
+  ansible.builtin.file:
+    path: "{{ eqpress_base_dir }}/rampass/rampass/.env"
+    mode: "0640"
+    owner: rampass
+    group: "{{ web_groupname }}"
+    state: touch
+  tags:
+    - provision
+    - rampass
+
+- name: nginx sites-available for rampass
+  become: yes
+  ansible.builtin.template:
+    src: rampass/nginx-rampass.conf.j2
+    dest: /etc/nginx/sites-available/rampass.conf
+    owner: root
+    group: root
+    mode: '0644'
+    force: yes
+  notify:
+    - reload_nginx
+  tags:
+    - provision
+    - rampass
+
+- name: nginx sites-enabled for rampass
+  become: yes
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/rampass.conf
+    dest: /etc/nginx/sites-enabled/rampass.conf
+    owner: root
+    group: root
+    state: link
+  notify:
+    - reload_nginx
+  tags:
+    - provision
+    - rampass

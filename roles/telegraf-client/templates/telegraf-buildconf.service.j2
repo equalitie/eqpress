@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Update telegraf conf and Install
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/telegraf-buildconf
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,141 @@
+---
+# TODO - Look to see the steps needed to dockerize this with the dockerized nginx
+
+# https://wordpress.org/about/requirements/
+- name: install php related software
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - "php{{ php_version }}"
+      - "php{{ php_version }}-cli"
+      - "php{{ php_version }}-curl"
+      - "php{{ php_version }}-dev"
+      - "php{{ php_version }}-fpm"
+      - "php{{ php_version }}-gd"
+      - "php{{ php_version }}-mysql"
+      - "php{{ php_version }}-xsl"
+      - "php{{ php_version }}-xml"
+      - "php{{ php_version }}-xmlrpc"
+      - "php{{ php_version }}-ldap"
+      - "php{{ php_version }}-zip"
+      - "php{{ php_version }}-soap"
+      - "php{{ php_version }}-mbstring"
+      - "php{{ php_version }}-memcached"
+      - "php{{ php_version }}-redis"
+      - "php{{ php_version }}-ssh2"
+      - "php{{ php_version }}-imagick"
+      - "php{{ php_version }}-intl"
+      #- "php-json"
+      #- "php{{ php_version }}-mcrypt"
+    state: present
+  tags:
+    - php
+  notify:
+    - "reload php-fpm"
+
+- name: ensure php{{ php_version }}-fpm will start at boot
+  become: yes
+  ansible.builtin.systemd:
+    name: "php{{ php_version }}-fpm"
+    enabled: yes
+  tags:
+    - php
+
+- name: copy php config fpm
+  become: yes
+  ansible.builtin.template:
+    src: "etc/php/{{ item }}.j2"
+    dest: "/etc/php/{{ php_version }}/{{ item }}"
+    owner: root
+    group: "{{ web_groupname }}" 
+    mode: 0640
+  loop:
+    - fpm/php.ini
+    - fpm/php-fpm.conf
+    - fpm/pool.d/www.conf
+    - fpm/pool.d/eqpress-admin.conf
+  tags:
+    - php
+  notify:
+    - "restart php-fpm"
+
+- name: copy php config more
+  become: yes
+  ansible.builtin.template:
+    src: "etc/php/{{ item }}.j2"
+    dest: "/etc/php/{{ php_version }}/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - php
+  loop:
+    - cli/php.ini
+    - mods-available/opcache.ini
+
+- name: symlink opcache.ini
+  become: yes
+  ansible.builtin.file:
+    src: "/etc/php/{{ php_version }}/mods-available/opcache.ini"
+    dest: "/etc/php/{{ php_version }}/{{ item }}/conf.d/05-opcache.ini"
+    state: link
+  loop:
+    - fpm
+    - cli
+  tags:
+    - php
+  notify:
+    - "restart php-fpm"
+
+- name: fix too many cli opcache.ini
+  become: yes
+  ansible.builtin.file:
+    path: "/etc/php/{{ php_version }}/cli/conf.d/{{ item }}-opcache.ini"
+    state: absent
+  loop:
+    - "10"
+    - "15"
+    - "20"
+  tags:
+    - php
+
+- name: fix too many fpm opcache.ini
+  become: yes
+  ansible.builtin.file:
+    path: "/etc/php/{{ php_version }}/fpm/conf.d/{{ item }}-opcache.ini"
+    state: absent
+  loop:
+    - "10"
+    - "15"
+    - "20"
+  tags:
+    - php
+  notify:
+    - "restart php-fpm"
+
+- name: install php-update-pool.php to /usr/local/sbin
+  become: yes
+  ansible.builtin.template:
+    src: php-update-pool.php.j2
+    dest: /usr/local/sbin/php-update-pool.php
+    owner: root
+    group: root
+    mode: '0755'
+  when: not auto_provision_host | default(false) | bool
+  tags:
+    - sbin
+    - php
+
+- name: copy php config provision
+  become: yes
+  ansible.builtin.template:
+    src: "etc/php/fpm/pool.d/auto-provision.conf.j2"
+    dest: "/etc/php/{{ php_version }}/fpm/pool.d/auto-provision.conf"
+    owner: root
+    group: "{{ web_groupname }}" 
+    mode: 0640
+  when: auto_provision_host | default(false) | bool
+  tags:
+    - php
+  notify:
+    - "restart php-fpm"

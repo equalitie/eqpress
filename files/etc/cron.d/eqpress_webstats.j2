@@ -1,2 +1,0 @@
-31 4    * * *   root    /usr/bin/php /usr/local/sbin/webstats.php
-41 4    * * *   root    y=`php /usr/local/sbin/webstats_totals.php` && /bin/echo "<pre>$y</pre>"|mail -s "$(/bin/echo -e "eqpress web stats on {{ inventory_hostname }}\nContent-Type: text/html")" {{monitoring_email}} 

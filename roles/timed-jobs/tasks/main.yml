@@ -1,0 +1,161 @@
+---
+- name: copy webstats cron jobs for master
+  become: yes
+  ansible.builtin.template:
+    src: etc/cron.d/eqpress_webstats.j2
+    dest: /etc/cron.d/eqpress_webstats
+    owner: root
+    group: root
+    mode: 0640
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == "master"
+  tags:
+    - timers
+    - cron
+  notify:
+    - "restart cron"
+
+- name: add cron.d/press_backups to master
+  become: yes
+  ansible.builtin.cron:
+    name: "press_backups"
+    minute: "13"
+    hour: "11,23"
+    user: root
+    job: "/bin/bash -c '/usr/local/sbin/site_snapshot.sh'"
+    cron_file: "press_backups"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == "master"
+  tags:
+    - timers
+    - cron
+
+- name: copy backup cron jobs slave only
+  become: yes
+  ansible.builtin.copy:
+    src: "etc/cron.d/backups.{{ mysql_repl_role }}"
+    dest: /etc/cron.d/backups
+    owner: root
+    group: root
+    mode: 0640
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == "slave"
+  tags:
+    - timers
+    - cron
+  notify:
+    - "restart cron"
+
+- name: copy system checks cron jobs
+  become: yes
+  ansible.builtin.copy:
+    src: "etc/cron.d/eqpress_system_checks.{{ mysql_repl_role }}"
+    dest: /etc/cron.d/eqpress_system_checks
+    owner: root
+    group: root
+    mode: 0640
+  when:
+    - mysql_repl_role is defined
+  tags:
+    - timers
+    - cron
+  notify:
+    - "restart cron"
+
+- name: copy cronjob to purge PHP sessions
+  become: yes
+  ansible.builtin.copy:
+    src: etc/cron.d/php
+    dest: /etc/cron.d/eqpress_php
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    - mysql_repl_role is defined
+  tags:
+    - timers
+    - cron
+  notify:
+    - "restart cron"
+
+- name: install edgespermit service and timer
+  become: yes
+  ansible.builtin.copy:
+    src: "etc/systemd/system/edgespermit.{{ item }}"
+    dest: "/etc/systemd/system/edgespermit.{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: method_allowedges
+  loop:
+    - timer
+    - service
+  notify:
+    - systemd_daemon_reload
+    - enable_timer_edgespermit
+  tags:
+    - timers
+    - edgespermit
+
+- name: install generic timers for all servers
+  become: yes
+  ansible.builtin.template:
+    src: "generic_script.{{ item.type }}.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.{{ item.type }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { name: "mon_connections", type: "service", generic_script_description: "Monitor Connections Script", generic_script: "/usr/local/sbin/monit_connections.sh" }
+    - { name: "mon_connections", type: "timer", generic_script_description: "Monitor Connections Script", generic_script_seconds: "60" }
+    - { name: "mon_check-mailq", type: "service", generic_script_description: "Monitor Mail Queue", generic_script: "/usr/local/sbin/monit_check_mailq.sh" }
+    - { name: "mon_check-mailq", type: "timer", generic_script_description: "Monitor Mail Queue", generic_script_seconds: "60" }
+  tags:
+    - generic_timers
+  notify:
+    - systemd_daemon_reload
+    - "{{ (item.type == 'timer') | ternary('enable_timer_' + item.name, 'noop') }}"
+
+- name: install generic timers for provision server
+  become: yes
+  ansible.builtin.template:
+    src: "generic_script.{{ item.type }}.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.{{ item.type }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { name: "mon_provision", type: "service", generic_script_description: "Provision Script", generic_script: "/usr/local/sbin/monit_provision.sh" }
+    - { name: "mon_provision", type: "timer", generic_script_description: "Provision Script", generic_script_seconds: "10" }
+  when: auto_provision_host | default(false) | bool
+  tags:
+    - generic_timers
+  notify:
+    - systemd_daemon_reload
+    - "{{ (item.type == 'timer') | ternary('enable_timer_' + item.name, 'noop') }}"
+
+- name: install generic timers for nodes
+  become: yes
+  ansible.builtin.template:
+    src: "generic_script.{{ item.type }}.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.{{ item.type }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { name: "mon_press-console-perms", type: "service", generic_script_description: "Console Perms Script", generic_script: "/usr/local/sbin/monit_console_perms.sh" }
+    - { name: "mon_press-console-perms", type: "timer", generic_script_description: "Console Perms Script", generic_script_seconds: "60" }
+    - { name: "mon_press-console-lockdown", type: "service", generic_script_description: "Console Lockdown Script", generic_script: "/usr/local/sbin/monit_console_lockdown.sh" }
+    - { name: "mon_press-console-lockdown", type: "timer", generic_script_description: "Console Lockdown Script", generic_script_seconds: "60" }
+    - { name: "mon_press-reset-password", type: "service", generic_script_description: "Console Reset Password Script", generic_script: "/usr/local/sbin/monit_console_reset_password.sh" }
+    - { name: "mon_press-reset-password", type: "timer", generic_script_description: "Console Reset Password Script", generic_script_seconds: "60" }
+  when:
+    - mysql_repl_role is defined
+  tags:
+    - generic_timers
+  notify:
+    - systemd_daemon_reload
+    - "{{ (item.type == 'timer') | ternary('enable_timer_' + item.name, 'noop') }}"

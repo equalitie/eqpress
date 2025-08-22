@@ -1,0 +1,148 @@
+{% raw -%}
+---
+- hosts: {{ server }}
+{{=<% %>=}}
+{%- endraw %}
+
+  remote_user: {{ eq_remote_user }}
+{% raw %}
+
+  vars:
+    contents: "{{ lookup('file', '<%prov_dir%>processing/<% domain %>/welcome-email.txt') }}"
+<%={{ }}=%>
+
+  tasks:
+  - name: see if document root for {{ domain }} exists
+    become: yes
+    ansible.builtin.stat:
+      path: "/var/www/{{ domain }}"
+    register: domain_exists
+
+  - name: fail is document root for {{ domain }} exists
+    ansible.builtin.fail:
+      msg: "{{ domain }} already exist. We do not want to proceed"
+    when: domain_exists.stat.exists
+
+  - name: Create the document root for {{ domain }}
+    become: yes
+    ansible.builtin.file:
+      path: "/var/www/{{ domain }}"
+      state: directory
+      mode: 0755
+
+  - name: Ensure directory containing WordPress archive exists for {{ domain }}
+    become: yes
+    ansible.builtin.file:
+      path: /home/wordpress
+      state: directory
+      mode: 0755
+
+  - name: Ensure WordPress archive exists and it's the latest version for {{ domain }}
+    become: yes
+    ansible.builtin.copy:
+      src: /home/wordpress/latest.tar.gz
+      dest: /home/wordpress/latest.tar.gz
+
+  - name: Extract WordPress archive for {{ domain }}
+    become: yes
+    ansible.builtin.command:
+      chdir: "/var/www/{{ domain }}"
+      cmd: /bin/tar xfz /home/wordpress/latest.tar.gz
+      creates: "/var/www/{{ domain }}/wordpress"
+
+  - name: Create the .sessions directory for {{ domain }}
+    become: yes
+    ansible.builtin.file:
+      path: "/var/www/{{ domain }}/wordpress/.sessions"
+      state: directory
+      mode: '0755'
+
+  - name: Create WordPress database for {{ domain }}
+    become: yes
+    community.mysql.mysql_db:
+      name: "{{ db_name }}"
+      state: present
+      collation: "{{ db_collate }}"
+      encoding: "{{ db_charset }}"
+  
+  - name: Create WordPress database user for {{ domain }}
+    become: yes
+    community.mysql.mysql_user:
+      name: "{{ db_user }}"
+      password: "{{ db_pass }}"
+      priv: "{{ db_name }}.*:ALL"
+      host: "{{ db_host }}"
+      state: present
+  
+  - name: Copy wp-config.php for {{ domain }}
+    become: yes
+    ansible.builtin.copy:
+      src: "{{ prov_dir }}processing/{{ domain }}/wp-config.php"
+      dest: "/var/www/{{ domain }}/wordpress/wp-config.php"
+      force: yes
+  
+  - name: Install cache-purge as must-use plugins for {{ domain }}
+    become: yes
+    ansible.builtin.command:
+      cmd: "/usr/local/sbin/install_cache_purge.sh {{ domain }}"
+      creates: "/var/www/{{ domain }}/wordpress/wp-content/mu-plugins/nginx-helper.php"
+    ignore_errors: yes
+
+  - name: install php pool conf
+    become: yes
+    ansible.builtin.command:
+      cmd: /usr/local/sbin/php-update-pool.php --site="{{ domain }}" --reload
+
+{{ console }}
+
+  - name: Install WordPress using WP-CLI # must be after console so WP doesn't send its email
+    become: yes
+    ansible.builtin.command:
+      cmd: /usr/local/sbin/wp --allow-root core install --url=https://{{ domain }}/ --admin_user={{ wpadmin_user }} --admin_password={{ wpadmin_pass }} --admin_email={{ wpadmin_email }} --title="Just another eqpress site"
+      chdir: "/var/www/{{ domain }}/wordpress"
+
+{{ switch_to_dev }}
+
+{{ multisite_config }}
+
+  - name: Change ownership of WordPress installation for {{ domain }}
+    become: yes
+    command: /usr/local/sbin/chwebown /var/www/{{ domain }}/wordpress
+
+  - name: Add SFTP user for {{ domain }}
+    become: yes
+    user: name={{ sftp_user }} group=sftponly groups=www-data shell=/bin/false home=/var/www/{{ domain }} createhome=no
+  
+  - name: Set SFTP user password for {{ domain }}
+    become: yes
+    shell: /bin/echo {{ sftp_user }}:{{ sftp_pass }} | /usr/sbin/chpasswd
+
+  - name: Create .ssh directory for {{ domain }}
+    become: yes
+    file: path=/var/www/{{ domain }}/.ssh state=directory mode=0700 owner={{ sftp_user }} group=root
+  
+  - name: Create SSH authorized keys file for {{ domain }}
+    become: yes
+    file: path=/var/www/{{ domain }}/.ssh/authorized_keys state=touch mode=0600 owner={{ sftp_user }} group=root
+
+  - name: Copy nginx config for {{ domain }}
+    become: yes
+    copy: src={{ prov_dir }}processing/{{ domain }}/{{ domain }}_ngx.conf dest=/etc/nginx/sites-available/{{ domain }} owner=root group=staff mode=0664
+
+  - name: Link to nginx config for {{ domain }}
+    become: yes
+    file: src=/etc/nginx/sites-available/{{ domain }} dest=/etc/nginx/sites-enabled/{{ domain }} state=link
+
+  - name: Reload nginx configuration for {{ domain }}
+    become: yes
+    command: /usr/sbin/nginx -s reload
+
+{{=<% %>=}}
+  - name: send welcome email for <% domain %>
+    local_action: mail
+      subject="<% subject %>"
+      body="{{ contents }}"
+      from="<% from_email %>"
+      to="<% email %>"
+      bcc="<% bcc_email %>"
+{%- endraw %}

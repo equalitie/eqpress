@@ -1,0 +1,33 @@
+#
+# OpenSSL configuration file for signing client and web server certificate
+#
+[ca]
+default_ca = ca_Default
+
+[cert_ext]
+basicConstraints        = critical,CA:false
+keyUsage                = digitalSignature,keyEncipherment
+extendedKeyUsage	= serverAuth,clientAuth
+#nsCaPolicyUrl           = http://example.com/ca-policy/
+subjectKeyIdentifier    = hash
+#crlDistributionPoints   = URI:http://example.com/root_CA_crl.pem
+
+[ ca_Default ]
+default_md              = sha256
+private_key             = root_CA.key
+serial                  = serial.txt
+database                = index.txt
+certs                   = .
+new_certs_dir           = .
+x509_extensions         = cert_ext
+policy                  = policy_anything
+
+[ policy_anything ]
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+

@@ -1,0 +1,16 @@
+---
+- debug:
+    msg: "{{ ansible_version }}"
+
+- name: check if Ubuntu and is version greater than {{ min_distribution_version }}
+  ansible.builtin.fail:
+    msg: "FAILED - '{{ ansible_distribution }}' version '{{ ansible_distribution_major_version }}'"
+  when:
+    - ansible_distribution_version is version(min_distribution_version,'<') or ansible_distribution != 'Ubuntu'
+
+- name: check that play set variables are set
+  ansible.builtin.fail:
+    msg: "FAILED - '{{ item }}' variable not set"
+  when: "item is not defined" 
+  loop:
+    - is_local

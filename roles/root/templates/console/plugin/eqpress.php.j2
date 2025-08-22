@@ -1,0 +1,178 @@
+<?php
+/*
+Plugin Name: eqpress Console
+Text Domain: eqpress 
+Description: The eqpress Console.
+Author: equalit.ie 
+Author URI: http://equalit.ie
+Plugin URI: http://equalit.ie
+Version: 2.0
+*/
+
+// required for nginx to let WordPress know it's doing pretty permalinks
+add_filter( 'got_rewrite', '__return_true' );
+
+// Set error reporting level
+error_reporting( E_COMPILE_ERROR|E_RECOVERABLE_ERROR|E_ERROR|E_CORE_ERROR );
+
+// eqpress console plugin
+require dirname(__FILE__) . '/eqpress-console/eqpress-console.php';
+
+/**
+ * Don't send the welcome e-mail
+ * @param type $args
+ * @return array
+ *
+ */
+add_filter( 'wp_mail', 'ep_cancel_new_site_email' );
+function ep_cancel_new_site_email( $args ) {
+	if ( __( 'New WordPress Site' ) === $args['subject'] ) {
+		$args = array(
+			'to'          => '',
+			'subject'     => '',
+			'message'     => '',
+			'headers'     => '',
+			'attachments' => array()
+		);
+	}
+	return $args;
+}
+
+/**
+ * Show "Lock Down" in the admin bar when site is locked down
+ *
+ */
+add_action( 'admin_bar_menu', 'ep_lockdown_on_admin_bar', 999 );
+function ep_lockdown_on_admin_bar( $wp_admin_bar ) {
+	if ( is_multisite() ) {
+		$perms = 'manage_network';
+	} else {
+		$perms = 'manage_options';
+	}
+	if ( current_user_can( $perms ) )  {
+// FIXME -- we need a better way to do this fileowner 33
+		if ( 33 != fileowner( $_SERVER['DOCUMENT_ROOT'] . '/wp-login.php' ) ) {
+			$args = array(
+				'id' => 'ep_lockdown',
+				'title' => 'Site Locked Down',
+				'href' => admin_url() . 'admin.php?page=ep_lockdown'
+			);
+			$wp_admin_bar->add_node( $args );
+		}
+	}
+}
+
+/**
+ * Show a warning message when the database is in read-only mode.
+ *
+ */
+add_action( 'admin_notices', 'ep_db_read_only_message' );
+function ep_db_read_only_message() {
+	global $wpdb;
+	$is_read_only = $wpdb->get_var( "show variables like 'read_only'", 1, 0 );
+	if ( $is_read_only === "ON" ) {
+	echo '<div class="error">
+		<p>*****************************************************************************************************</p>
+		<p><h3>We are performing server maintenance. All edit capabilities are currently disabled.</h3></p>
+		<p>Sorry for the inconvenience. <i>--The {{ org_name }} Team</i></p>
+		<p>*****************************************************************************************************</p>
+		</div>';
+	}
+}
+
+/**
+ *  Block known vulnerabilities in plugins and themes.
+ *
+ */
+add_action( 'muplugins_loaded', 'ep_security_countermeasures' );
+function ep_security_countermeasures() {
+
+	// block access to Slider Revolution hack
+	if ( preg_match( '/\/wp\-admin\/admin\-ajax\.php/', $_SERVER['REQUEST_URI'] ) ) {
+		if ( isset( $_REQUEST['action'] ) && $_REQUEST['action'] == 'revslider_show_image' && isset( $_REQUEST['img'] ) && preg_match( '/\.php$/i', $_REQUEST['img'] ) ) {
+			error_log( "Slider Revolution Hack attempt detected from " . $_SERVER['REMOTE_ADDR'] );
+			header('HTTP/1.1 403 Forbidden');
+			exit;
+		}
+	}
+	// block requests to xmlrpc.php that are trying to use system.multicall
+	if ( $_SERVER['REQUEST_METHOD'] == 'POST' && strpos($_SERVER['SCRIPT_NAME'], '/xmlrpc.php') !== FALSE ) {
+	// Get the raw POST data:
+		$RAW_DATA = file_get_contents( 'php://input' );
+
+		// Do not kill Jetpack XMLRPC response.
+		if ( false !== strpos( $RAW_DATA, '<string>jetpack.jsonAPI</string>' ) ) {
+			return;
+		}
+
+		$count_profile = $count_categories = $count_blogs = $count_lines = $attack = 0;
+
+		$user_agent = ! empty( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '';
+
+		// Stop 'admin' user brute-force attacks.
+		if ( false !== strpos( $RAW_DATA, '<string>admin</string>' ) ) {
+			$attack = 1;
+		}
+
+		// Block any XMLRPC request not created by the following user-agents:
+		// - wp-iphone
+		// - wp-android
+		// - eb-iphone
+		// - Jetpack by WordPress.com
+		// - IFTTT production
+		if ( false === strpos( $user_agent, 'wp-iphone/' ) && false === strpos( $user_agent, 'wp-android/' ) && false === strpos( $user_agent, 'eb-iphone/' ) && false === strpos( $user_agent, 'Jetpack by WordPress.com' ) && false === strpos( $user_agent, 'IFTTT production' ) ) {
+		// Sanity check.  Count number of lines of the request.
+		// Most malicious XMLRPC requests have more than 1 line.
+			$count_lines = substr_count( $RAW_DATA, "\n" );
+			if ( $count_lines > 0 && false === strpos( $RAW_DATA, '<methodName>pingback.ping</methodName>' ) ) {
+				$attack = 1;
+			}
+		}
+
+		// See if this is a long request
+		if ( strlen( $RAW_DATA ) > 1200 ) {
+			$count_profile    = substr_count( $RAW_DATA, '<string>wp.getProfile</string>', 0, 1200 );
+			$count_categories = substr_count( $RAW_DATA, '<string>wp.getCategories</string>', 0, 1200 );
+			$count_blogs      = substr_count( $RAW_DATA, '.getUsersBlogs</string>', 0, 1200 );
+		}
+
+		// Block bad XMLRPC queries.
+		// We're blocking pingbacks and large wp.getProfile / wp.getCategories / wp.getUsersBlogs calls.
+		// wp.getProfile / wp.getCategories / wp.getUsersBlogs checks.
+		if ( strpos($RAW_DATA, '<methodName>pingback.ping</methodName>') !== FALSE || $count_profile > 0 || $count_categories > 0 || $count_blogs > 0 || $attack > 0 ) {
+			// Reject it with a 403 Forbidden and quit:
+			header('HTTP/1.1 403 Forbidden');
+			exit;
+		}
+
+		// Search for 'system.multicall' substring:
+		if ( strpos($RAW_DATA, 'system.multicall') !== FALSE ) {
+			// Reject it with a 403 Forbidden and quit:
+			header('HTTP/1.1 403 Forbidden');
+			exit;
+		}
+	}
+}
+
+/**
+ *  Block XML RPC pingbacks
+ *
+ */
+add_filter( 'xmlrpc_methods', 'ep_remove_pingbacks' );
+function ep_remove_pingbacks( $methods ) {
+    unset( $methods['pingback.ping'] );
+    unset( $methods['pingback.extensions.getPingbacks'] );
+    unset( $methods['system.multicall'] );
+    unset( $methods['system.listMethods'] );
+    unset( $methods['system.getCapabilities'] );
+    return $methods;
+}
+
+/**
+ * Enforce a stronger password
+ *
+ */
+add_action( 'admin_enqueue_scripts', 'pass_strength' );
+function pass_strength() {
+	wp_add_inline_style( 'admin-menu', '.pw-weak {display: none !important;}' );
+}

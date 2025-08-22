@@ -1,0 +1,45 @@
+- hosts: localhost
+  gather_facts: no
+
+  vars:
+    is_local: true
+
+  vars_prompt:
+
+    - name: "ansible_group_name"
+      prompt: "what is the group name for these press servers"
+      default: "CA1"
+      private: no
+
+    - name: "master_hostname"
+      prompt: "Master server hostname"
+      default: "eqpress1.devtest"
+      private: no
+
+    - name: "dns_ip_master"
+      prompt: "Master server IP address"
+      default: "127.0.0.1"
+      private: no
+
+    - name: "slave_hostname"
+      prompt: "Slave server hostname"
+      default: "eqpress2.devtest"
+      private: no
+
+    - name: "dns_ip_slave"
+      prompt: "Slave server IP address"
+      default: "127.0.0.1"
+      private: no
+
+    - name: "eq_remote_user"
+      prompt: "remote user account"
+      default: "user"
+      private: no 
+
+    - name: "cdn_real_ips"
+      prompt: "real ip list comma separated, leave blank if none"
+      default: ""
+      private: no
+
+  roles:
+    - init-press
