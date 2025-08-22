@@ -1,0 +1,403 @@
+#!/usr/bin/php
+<?php
+// {{ ansible_managed }}
+$php_version = "{{ php_version }}";
+$sites_dir = "{{ web_user_home }}";
+$phpPoolDir = "/etc/php/$php_version/fpm/pool.d";
+$webuser = "{{ web_user }}";
+$webgroup = "{{ web_groupname }}";
+
+$validTmpl = [1 => 'Minimum', 2 => 'Medium', 3 => 'Large', 4 => 'Extra Large'];
+
+// Make sure running as root
+check_valid();
+
+if (count($options = getopt("h", array("site::", "type::", "reload", "help")))) {
+  if(!getoptParse($options)) {
+    echo "Exiting ...." . PHP_EOL;
+    exit(1);
+  }
+}
+
+if (defined("SITE")) {
+  $site = SITE;
+} elseif (!$site = getSite($sites_dir)) {
+  echo 'Check the site name and try again. Exiting ....' . PHP_EOL;
+  exit(1);
+}
+
+// Which template version
+if (defined("TYPE")) {
+  $tmpl = TYPE;
+} else {
+$tmpl = getTmplType($validTmpl);
+}
+
+// Define data to pass to the template
+$data = poolData($site, $tmpl);
+
+$template = createPoolconf($data);
+
+// Define the path to the output file
+$phpConf = $phpPoolDir . '/' . $data['pool_name'] . '.conf';
+
+// Write the rendered template to the output file
+if (file_put_contents($phpConf, $template, LOCK_EX)) {
+  shell_exec("chown root:{$webgroup} $phpConf && chmod 0640 $phpConf");
+}
+
+echo PHP_EOL . 'Configuration file "' . basename($phpConf) . '" successfully written.' . PHP_EOL;
+
+reloadPHP($php_version);
+
+exit(0);
+
+// We do not need these unless we add a global pool.
+// Leaving in for now incase we decide to add.
+//
+// update nginx site conf "editSiteConfFile($conf)"
+// reload nginx
+
+
+// Functions
+//
+function help() {
+  global $validTmpl;
+  $message = <<<"END"
+    This tool will update the sites php pool.
+    Using this tool without options will be interactive.
+
+    Avaialble options:
+      --reload          Reload php fpm when finished.
+      --site=<site>     <site> is a valid Worpress site on the server.
+      --type=<type>     <type> is a valid number for the pool type.
+                        Will default to 2 if site option is defined and not type.
+
+    END;
+  foreach($validTmpl as $key => $value) {
+    $message .= '                      ' . $key . '    ' . $value . PHP_EOL;
+  }
+
+  $message .= PHP_EOL . "Tool will be non-interactive if --site and --reload are supplied and will default to --type=2" . PHP_EOL;
+
+  echo $message . PHP_EOL;
+  exit(0);
+}
+
+function getoptParse($opts) {
+  global $validTmpl;
+  $errorMessage = array();
+  $ret = true;
+
+  if (isset($opts['h']) || isset($opts['help'])) {
+    help();
+  }
+
+  if (isset($opts['site'])) {
+    if (empty($opts['site'])) {
+      array_push($errorMessage, "--site must have a option. Usage: --site=<site>.");
+    } elseif (!validateSite($opts['site'])) {
+      array_push($errorMessage, '--site=' . $opts['site'] . ' is not a valid Worpress site.'); 
+    } else {
+      define("SITE", $opts['site']);
+    }
+  }
+
+  if (isset($opts['type'])) {
+    if (!in_array((int)$opts['type'], array_keys($validTmpl))) {
+      array_push($errorMessage, '--type=' . $opts['type'] . ' is not a valid template type.'); 
+    }
+  } else {
+    define("TYPE", 2); // Default to 2
+  }
+
+  if (isset($opts['reload'])) {
+    define("RELOAD", true);
+  }
+
+  if (count($errorMessage)) {
+    foreach ($errorMessage as $message) {
+      echo $message . PHP_EOL;
+    }
+    $ret = false;
+  }
+
+  return $ret;
+}
+
+function getSite($sites_dir)
+{
+
+  $GLOBALS['dirNames'] = getDirectoryNames($sites_dir);
+
+  // Set custom auto-completion function
+  readline_completion_function('customAutoComplete');
+
+  $site = trim(readline('Enter site name (Tab for auto-completion): '));
+
+  // Perform auto-completion
+  $matches = autoComplete($site, 0, $GLOBALS['dirNames']);
+
+  // Display auto-completion suggestions
+  if (!empty($matches)) {
+    echo "Auto-completion suggestions: " . implode(', ', $matches) . PHP_EOL;
+  } else {
+    echo "No matches found." . PHP_EOL;
+  }
+
+  if (!validateSite($site)) {
+    echo "\"$site\" is not a valid Wordpress site." . PHP_EOL;
+    $site = false;
+  }
+
+  return $site;
+}
+
+function getTmplType($validTmpl)
+{
+  $display = <<<"END"
+
+	Select the number for the type of php pool you want.
+	
+	END;
+
+  foreach ($validTmpl as $key => $value) {
+    $display .= "	{$key}.  $value" . PHP_EOL;
+  }
+
+  echo $display . PHP_EOL;
+
+  $validKeys = array_keys($validTmpl);
+
+  $count = 5;
+  $last = '';
+  while ($count) {
+    echo "Please enter a valid number: ";
+    $input = trim(fgets(STDIN));
+    if (is_numeric($input) && in_array((int)$input, $validKeys)) {
+      return (int)$input;
+    } else {
+      if ($count === 2) {
+        $last = PHP_EOL . 'One more try or will exit.' . PHP_EOL;
+      }
+      echo 'Invalid type entered.' . PHP_EOL . $last . 'Please enter a number from the valid list: ' .
+	      implode(", ", $validKeys) . PHP_EOL;
+      $count--;
+    }
+  }
+
+  echo "Exiting ...." . PHP_EOL;
+  exit(1);
+}
+
+function getDirectoryNames($sites_dir)
+{
+  // Get list of directory names
+  $dirNames = array_filter(scandir($sites_dir), function ($item) use ($sites_dir) {
+    // Prepend directory path to item
+    $path = $sites_dir . '/' . $item;
+    return is_dir($path) && !in_array($item, ['.', '..']);
+  });
+
+  return $dirNames;
+}
+
+// Function to handle auto-completion
+function autoComplete($input, $index, $list)
+{
+  $matches = [];
+  foreach ($list as $item) {
+    if (strpos($item, $input) === 0) {
+      $matches[] = $item;
+    }
+  }
+  return $matches;
+}
+
+// Custom auto-completion function
+function customAutoComplete($input, $index)
+{
+  return autoComplete($input, $index, $GLOBALS['dirNames']);
+}
+
+function createPoolconf(array $data)
+{
+  // {% raw %}
+  //
+  // Define the template string
+  $template = <<<"TEMPLATE"
+    [{{ pool_name }}]
+    ; Autogenerated
+
+    user = {{ webuser }} 
+    group = {{ webgroup }}
+    listen.owner = {{ webuser }}
+    listen.group = {{ webgroup }}
+    listen.mode = 0660
+    listen = /run/php/\$pool-fpm.sock
+
+    {{ tune }}
+
+    pm.status_path = /phpfpmstatus
+    slowlog = /var/log/\$pool.slow.log
+    chdir = /
+
+    request_slowlog_timeout = 20
+    security.limit_extensions = .php
+
+    ; php_admin_value[] can override php.ini directives
+    ; maked as INI_ALL or INI_PERDIR
+    ; https://www.php.net/manual/en/ini.list.php
+    php_admin_value[memory_limit] = 256M
+    env[TMP] = /var/tmp
+    env[TMPDIR] = /var/tmp
+    env[TEMP] = /var/tmp
+    TEMPLATE;
+
+  // Iterate over each key-value pair in the data array
+  foreach ($data as $key => $value) {
+    // Create a regular expression pattern to match the placeholder
+    $pattern = '/{{\s*' . preg_quote($key, '/') . '\s*}}/';
+
+    // Replace occurrences of the placeholder with the corresponding value
+    $template = preg_replace($pattern, $value, $template);
+  }
+
+  // {% endraw %}
+  //
+
+  return $template;
+}
+
+function editSiteConfFile($siteConfFile)
+{
+  // Define the file path
+  $filePath = $siteConfFile;
+
+  // Define the start and end comment markers
+  $startMarker = '/* START EDITABLE SECTION */';
+  $endMarker = '/* END EDITABLE SECTION */';
+
+  // Read the file content
+  $fileContent = file_get_contents($filePath);
+
+  // Find the start and end positions of the editable section
+  $startPosition = strpos($fileContent, $startMarker);
+  $endPosition = strpos($fileContent, $endMarker);
+
+  // Check if the markers are found
+  if ($startPosition !== false && $endPosition !== false) {
+    // Extract the editable section
+    $editableSection = substr($fileContent, $startPosition + strlen($startMarker), $endPosition - $startPosition - strlen($startMarker));
+
+    // Modify the editable section as needed
+    // For example, let's add some text at the beginning and end of the editable section
+    $editableSection = "; New content at the beginning.\n$editableSection\n; New content at the end.";
+
+    // Update the file content with the modified section
+    $fileContent = substr_replace($fileContent, $startMarker . $editableSection . $endMarker, $startPosition, $endPosition - $startPosition + strlen($endMarker) + 1);
+
+    // Write the changes back to the file
+    // Comment out. We don't want to write file in this function
+    // file_put_contents($filePath, $fileContent);
+
+  }
+
+  return $fileContent;
+}
+
+function poolData($site, $tmpl)
+{
+  global $validTmpl, $webuser, $webgroup;
+
+  $type = $validTmpl[$tmpl];
+
+  switch ($tmpl) {
+    case 1:
+      $max_children = 5;
+      $start_servers = 1;
+      $min_spare_servers = 1;
+      $max_spare_servers = 4;
+      $max_requests = 100;
+      break;
+    case 2:
+      $max_children = 10;
+      $start_servers = 3;
+      $min_spare_servers = 2;
+      $max_spare_servers = 9;
+      $max_requests = 100;
+      break;
+    case 3:
+      $max_children = 30;
+      $start_servers = 7;
+      $min_spare_servers = 4;
+      $max_spare_servers = 10;
+      $max_requests = 100;
+      break;
+    case 4:
+      $max_children = 50;
+      $start_servers = 10;
+      $min_spare_servers = 7;
+      $max_spare_servers = 10;
+      $max_requests = 150;
+      break;
+  }
+
+  $tune = <<<"TUNE"
+	; Type selected $type
+	pm = dynamic
+	pm.max_children = $max_children
+	pm.start_servers = $start_servers
+	pm.min_spare_servers = $min_spare_servers
+	pm.max_spare_servers = $max_spare_servers
+	pm.max_requests = $max_requests
+	TUNE;
+
+  $data = array(
+    'webuser' => $webuser,
+    'webgroup' => $webgroup,
+    'pool_name' => $site . '_pool',
+    'tune' => $tune,
+  );
+  return $data;
+}
+
+function validateSite($site)
+{
+  global $sites_dir;
+
+  return is_dir($sites_dir . '/' . $site . '/' . 'wordpress');
+}
+
+function check_valid() {
+  if (posix_getuid() === 0) {
+    return true;
+  } else {
+    $errorMessage = "Error: Must run as root";
+    echo $errorMessage . PHP_EOL;
+    exit(1);
+  }
+}
+
+function reloadPHP($version) {
+  if (defined("RELOAD")) {
+    echo "Reloading php{$version}-fpm.service" . PHP_EOL;
+    shell_exec("php-fpm{$version} -t && systemctl reload php{$version}-fpm.service");
+    return true;
+  }
+
+  while (true) {
+    echo "Reload php{$version}-fpm.service (y/n): ";
+    $input = trim(fgets(STDIN));
+    if (strcasecmp($input, 'n') == 0) {
+      echo "You need to reload php{$version}-fpm.service to enable new config" . PHP_EOL;
+      return false;
+    } elseif (strcasecmp($input, 'y') == 0) {
+      echo "Reloading php{$version}-fpm.service" . PHP_EOL;
+      shell_exec("php-fpm{$version} -t && systemctl reload php{$version}-fpm.service");
+      return true;
+    } else {
+      echo "You must type (y/n)" . PHP_EOL;
+    }
+  }
+}

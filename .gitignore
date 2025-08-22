@@ -1,8 +1,6 @@
+/group_vars
+/host_vars
+/config
+playbooks/group_vars
+playbooks/host_vars
 *.swp
-*.retry
-.DS_Store
-.idea/
-hosts
-host_vars
-group_vars
-config/

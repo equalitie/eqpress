@@ -1,97 +1,174 @@
 ---
-# roles/ssh-config/tasks/main.yml
-
-- name: Ensure the hostname entry for master is available for the client.
-  lineinfile:
-    dest: /etc/hosts
-    regexp: "{{ mysql_repl_master }}"
-    line: "{{ hostvars[mysql_repl_master].public_ipv4_address + ' ' + mysql_repl_master }}"
-    state: present
-  when: mysql_repl_role is defined and
-        mysql_repl_role == 'slave' and
-        mysql_repl_master is defined
-  tags:
-    - mysql
-    - repl
-
-- name: Ensure the hostname entry for the slave is entered into hosts file
-  lineinfile:
-    dest: /etc/hosts
-    regexp: "{{ mysql_repl_slave }}"
-    line: "{{ hostvars[mysql_repl_slave].public_ipv4_address + ' ' + mysql_repl_slave }}"
-    state: present
-  when: mysql_repl_role is defined and
-        mysql_repl_role == 'master' and
-        mysql_repl_slave is defined
-  tags:
-    - mysql
-    - repl
-
-- name: Generating RSA key for root
-  user:
-    name: root
+# TODO: set and test ssh_key_type
+- name: Generating RSA key for users 
+  become: yes
+  ansible.builtin.user:
+    name: "{{ item }}"
     generate_ssh_key: yes
+    ssh_key_type: 'rsa'
+  loop:
+    - root 
+    - "{{ ansible_user_id }}"
   tags:
-    - ssh_config
-    - ssh_pub_key
+    - ssh
 
 - name: Downloading generated SSH public keys
-  fetch:
-    src: /root/.ssh/id_rsa.pub
-    dest: "/tmp/id_rsa_{{ inventory_hostname }}.pub"
+  become: yes
+  ansible.builtin.fetch:
+    src: "{{ item.path }}/.ssh/id_rsa.pub"
+    dest: "../config/ssh/id_rsa_{{ item.user }}_{{ inventory_hostname }}.pub"
     flat: yes
+  loop:
+    - { path: "/root", user: "root" }
+    - { path: "{{ ansible_user_dir }}", user: "{{ ansible_user_id }}" }
   tags:
-    - ssh_config
-    - ssh_pub_key
+    - ssh
 
 - name: Copying slave's ssh key to master
-  authorized_key:
-    user: root
+  become: yes
+  ansible.builtin.authorized_key:
+    user: "{{ item.user1 }}"
     state: present
-    key: "{{ lookup('file', '/tmp/id_rsa_' + mysql_repl_slave + '.pub') }}"
-  when: mysql_repl_role is defined and
-        mysql_repl_role == 'master' and
-        mysql_repl_slave is defined
+    key: "{{ lookup('file', '../config/ssh/id_rsa_' + item.user2 + '_' + mysql_repl_slave + '.pub') }}"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'master'
+    - mysql_repl_slave is defined
+  loop:
+    - { user1: "root", user2: "root" }
+    - { user1: "root", user2: "{{ ansible_user_id }}" }
+    - { user1: "{{ ansible_user_id }}", user2: "{{ ansible_user_id }}" }
+    - { user1: "{{ ansible_user_id }}", user2: "root" }
   tags:
-    - ssh_config
-    - ssh_pub_key
+    - ssh
 
 - name: Copying master's ssh key to slave
-  authorized_key:
-    user: root
+  become: yes
+  ansible.builtin.authorized_key:
+    user: "{{ item.user1 }}"
     state: present
-    key: "{{ lookup('file', '/tmp/id_rsa_' + mysql_repl_master + '.pub') }}"
-  when: mysql_repl_role is defined and
-        mysql_repl_role == 'slave' and
-        mysql_repl_master is defined
-  tags:
-    - ssh_config
-    - ssh_pub_key
-
-- name: Make sure the known hosts file exists
-  file:
-    path: "{{ ssh_known_hosts_file }}"
-    state: touch
-  tags:
-    - ssh_config
-    - ssh_known_hosts
-
-- name: Scan the public key slave
-  shell: "{{ ssh_known_hosts_command }} {{ mysql_repl_master }} >> {{ ssh_known_hosts_file }}"
-  when: mysql_repl_role is defined and
-        mysql_repl_role == 'slave' and
-        mysql_repl_master is defined
-  tags:
-    - ssh_config
-    - ssh_known_hosts
-
-- name: Scan the public key master
-  shell: "{{ ssh_known_hosts_command }} {{ item }} >> {{ ssh_known_hosts_file }}"
+    key: "{{ lookup('file', '../config/ssh/id_rsa_' + item.user2 + '_' + mysql_repl_master + '.pub') }}"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'slave'
+    - mysql_repl_master is defined
   loop:
-    - "{{mysql_repl_slave}}"
-  when: mysql_repl_role is defined and
-        mysql_repl_role == 'master' and
-        mysql_repl_slave is defined
+    - { user1: "root", user2: "root" }
+    - { user1: "root", user2: "{{ ansible_user_id }}" }
+    - { user1: "{{ ansible_user_id }}", user2: "{{ ansible_user_id }}" }
+    - { user1: "{{ ansible_user_id }}", user2: "root" }
   tags:
-    - ssh_config
-    - ssh_known_hosts
+    - ssh
+
+- name: known_hosts file on slave
+  become: yes
+  ansible.builtin.known_hosts:
+    path: "{{ item }}/{{ ssh_known_hosts_file }}"
+    name: "{{ mysql_repl_master }}"
+    state: present
+    key: "{{ lookup('pipe', 'ssh-keyscan ' + mysql_repl_master + '') }}"
+    hash_host: false
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'slave'
+    - mysql_repl_master is defined
+  loop:
+    - "/root"
+    - "{{ ansible_user_dir }}"
+  tags:
+    - ssh
+    - known_hosts
+
+- name: known_hosts file on master
+  become: yes
+  ansible.builtin.known_hosts:
+    path: "{{ item }}/{{ ssh_known_hosts_file }}"
+    name: "{{ mysql_repl_slave }}"
+    state: present
+    key: "{{ lookup('pipe', 'ssh-keyscan ' + mysql_repl_slave + '') }}"
+    hash_host: false
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'master'
+    - mysql_repl_slave is defined
+  loop:
+    - "/root"
+    - "{{ ansible_user_dir }}"
+  tags:
+    - ssh
+    - known_hosts
+
+- name: Fix .ssh/ owner
+  become: yes
+  ansible.builtin.file:
+    path: "{{ item.home }}/.ssh"
+    owner: "{{ item.owner }}"
+    recurse: yes
+  loop:
+    - { home: '/root', owner: 'root' }
+    - { home: "{{ ansible_user_dir }}", owner: "{{ ansible_user_id }}" }
+  tags:
+    - ssh
+    - known_hosts
+
+# NOTE: auto_provision_nodes_items is set in common role
+- name: update master nodes for provision
+  block:
+    - name: get var for ssh_hosts
+      ansible.builtin.set_fact:
+        ssh_hosts: "{{ auto_provision_nodes_items | map(attribute='value.hostname') | list }}"
+        ssh_host_ip: "{{ auto_provision_nodes_items | map(attribute='value.ip') | list }}"
+
+    - name: known_hosts file for provision hosts
+      become: yes
+      ansible.builtin.known_hosts:
+        path: "{{ item.0.path }}/{{ ssh_known_hosts_file }}"
+        name: "{{ item.1 }}"
+        state: present
+        key: "{{ lookup('pipe', 'ssh-keyscan ' + item.1 + '') }}"
+        hash_host: false
+      loop: "{{ ssh_paths | product(ssh_hosts) }}"
+      loop_control:
+        loop_var: item
+      vars:
+        ssh_paths:
+          - { path: "/root" }
+          - { path: "{{ ansible_user_dir }}" }
+
+    - name: known_hosts file for provision ip
+      become: yes
+      ansible.builtin.known_hosts:
+        path: "{{ item.0.path }}/{{ ssh_known_hosts_file }}"
+        name: "{{ item.1 }}"
+        state: present
+        key: "{{ lookup('pipe', 'ssh-keyscan ' + item.1 + '') }}"
+        hash_host: false
+      loop: "{{ ssh_paths | product(ssh_host_ip) }}"
+      loop_control:
+        loop_var: item
+      vars:
+        ssh_paths:
+          - { path: "/root" }
+          - { path: "{{ ansible_user_dir }}" }
+
+    - name: Copying provision's ssh key to master
+      become: yes
+      delegate_to: "{{ item.1 }}"
+      ansible.builtin.authorized_key:
+        user: "{{ item.0.user1 }}"
+        state: present
+        key: "{{ lookup('file', '../config/ssh/id_rsa_' + item.0.user2 + '_' + inventory_hostname + '.pub') }}"
+      loop: "{{ ssh_users | product(ssh_hosts) }}"
+      loop_control:
+        loop_var: item
+      vars:
+        ssh_users:
+          - { user1: "root", user2: "root" }
+          - { user1: "root", user2: "{{ ansible_user_id }}" }
+          - { user1: "{{ ansible_user_id }}", user2: "{{ ansible_user_id }}" }
+          - { user1: "{{ ansible_user_id }}", user2: "root" }
+
+  when: auto_provision_host | default(false) | bool
+  tags:
+    - ssh
+    - known_hosts

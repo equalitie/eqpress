@@ -1,0 +1,135 @@
+#!/bin/bash
+# {{ ansible_managed }}
+
+{% raw %}
+#
+# Telegraf input plugin to get summary cpu/mem/io usage for
+# a tree of processes. Identify top process(es) by
+# pid file, pgrep pattern or owner.
+#
+# Note: it requires root to be able to read 'smaps'.
+# Note: pattern match (-p) can catch the plugins itself
+#
+# Output fields:
+# cpu_user [ticks] - sum(utime)/100 (see 'man 5 proc' for /proc/<pid>/stat)
+# cpu_system [ticks] - sum(stime)/100 (see 'man 5 proc' for /proc/<pid>/stat)
+# nprocess [count] - number of processes (including all children)
+# mem_pss/rss [B] - sum(pss)*1024 (see 'man 5 proc' for /proc/<pid>/smaps)
+# io_read/write [B] - sum(read/write_bytes) (see 'man 5 proc' for /proc/<pid>/io)
+# io_syscr/syscw [count] - sum(syscr/syscw) (see 'man 5 proc' for /proc/<pid>/io)
+# fd_count [count] - file-descriptor count
+#
+
+function usage() {
+    echo "usage: `basename $0` <options>"
+    echo "  -f PIDFILE  get pids from PIDFILE"
+    echo "  -p PATTERN  get pids from pgrep PATTERN"
+    echo "  -u USER     get pids owned by USER"
+    echo "  -h          this help screen"
+}
+
+function descendants() {
+    # return all process descendants from a given list of pids
+    # (including pids from input)
+
+    declare -a pidlist=($*)
+    for ((i=0; i<${#pidlist[@]}; i++)) {
+        p=${pidlist[$i]}
+        [ -z "$p" -o "$p" -eq "$$" ] && continue
+        # append all direct children of $p
+        pidlist+=(`pgrep -P "$p" 2>/dev/null`)
+    }
+    echo ${pidlist[@]} | tr ' ' '\n' | sort -u
+}
+
+function cpustat() {
+    for p in $*; do
+        cat "/proc/$p/stat" 2>/dev/null
+    done | awk '
+BEGIN { utime = stime = count = 0 }
+{ utime += $14; stime += $15; count++ }
+END { printf "%.2f %.2f %d\n", utime/100, stime/100, count }'
+}
+
+function memstat() {
+    for p in $*; do
+        cat "/proc/$p/smaps" 2>/dev/null
+    done | awk '
+BEGIN { pss = rss = cache = 0 }
+$1 ~ /^[0-9a-f]/ {
+    if ($4 ~ /ca:/ ) {
+        cache = 1
+    } else {
+        cache = 0
+    }
+}
+$1 == "Pss:" && !cache { pss += $2 }
+$1 == "Rss:" && !cache { rss += $2 }
+END { printf "%.0f %.0f\n", pss * 1024, rss * 1024 }'
+}
+
+function iostat() {
+    for p in $*; do
+        cat "/proc/$p/io" 2>/dev/null
+    done | awk '
+BEGIN { read_bytes = write_bytes = syscr = syscw = 0 }
+$1 == "read_bytes:"  { read_bytes  += $2 }
+$1 == "write_bytes:" { write_bytes += $2 }
+$1 == "syscr:"       { syscr       += $2 }
+$1 == "syscw:"       { syscw       += $2 }
+END { printf "%d %d %d %d\n", read_bytes, write_bytes, syscr, syscw }'
+}
+
+function fdstat() {
+    for p in $*; do
+        ls -1 "/proc/$p/fd" 2>/dev/null
+    done | wc -l
+}
+
+pidfile=
+pattern=
+user=
+while getopts "f:p:u:h" opt; do
+    case $opt in
+        f) pidfile=$OPTARG ;;
+        p) pattern=$OPTARG ;;
+        u) user=$OPTARG ;;
+        h) usage; exit 0 ;;
+        *) exit 2 ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+pidlist=
+if [ -n "$pidfile" ]; then
+    pidlist=$(cat "$pidfile" 2>/dev/null)
+elif [ -n "$pattern" ]; then
+    #pidlist=$(pgrep -f "$pattern")
+    pidlist=$(ps -eo pid,cmd | grep -v bash | grep -v grep | grep "$pattern" | awk '{print $1}')
+elif [ -n "$user" ]; then
+    pidlist=$(pgrep -U "$user")
+else
+    echo "Specify either <pidfile>, <pattern> or <user>" 1>&2
+    usage
+    exit -1
+fi
+
+if [ -z "$pidlist" ]; then
+    # no match
+    exit 0
+fi
+
+pidlist2=$(descendants "$pidlist")
+
+declare -a cpu=(`cpustat $pidlist2`)
+declare -a mem=(`memstat $pidlist2`)
+declare -a io=(`iostat $pidlist2`)
+fd_count=`fdstat $pidlist2`
+echo -n "sumproc,pattern=$pattern cpu_user=${cpu[0]},cpu_system=${cpu[1]},nprocess=${cpu[2]}i,"
+echo -n "mem_pss=${mem[0]}i,mem_rss=${mem[1]}i,"
+echo -n "io_read=${io[0]}i,io_write=${io[1]}i,io_syscr=${io[2]}i,io_syscw=${io[3]}i,"
+echo -n "fd_count=${fd_count}i"
+echo " $(($(date +%s%N)))"
+
+exit 0
+{% endraw %}

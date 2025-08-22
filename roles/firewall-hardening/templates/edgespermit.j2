@@ -1,0 +1,407 @@
+#!/usr/bin/php
+<?php
+// {{ ansible_managed }}
+// Used to update firewall allow list
+// use -h to see options
+//
+
+$startTime = microtime(true);
+
+$tag = 'DeflectEdge';
+$api_key = '{{ edgespermit_key }}';
+$min_new_ip_count = {{ edgespermit_min_edges }};
+$allowPorts = '80,443'; // Comma separated with no spaces
+$api_url="https://dashboard.deflect.ca/api/edges?key=$api_key";
+
+$options = getopt("rhdwn");
+
+if (count($options)) {
+	getoptParse($options);
+}
+
+// check if root
+check_valid();
+
+// check if we can shell_exec
+check_shell();
+
+// Lock this script. Also open syslog here
+scriptLock();
+
+// define some empty arrays
+$current = array();
+$new = array();
+$ipList = array();
+
+// Get current ip list and new ip list
+$current = getCurrent($tag,$allowPorts);
+if (defined('REMOVE') && REMOVE === 1) {
+	$min_new_ip_count=-1;
+} else {
+	$new = getNew($api_url);
+}
+
+// Make sure our new IPaddr list is greater than our $min_new_ip_count
+if (count($new) <= $min_new_ip_count) {
+	$errorMessage = "Error: new IPaddr list is less than or equal to $min_new_ip_count";
+	syslog(LOG_ERR, $errorMessage);
+	echo $errorMessage . PHP_EOL;
+	exit(1);
+}
+
+// compare the 2 IPaddr lists
+// If they are different, sync them "add"/"remove"
+if (!compareLists($new,$current) ) {
+	syslog(LOG_INFO, "Info: update is needed");
+	$ipList = syncList($new,$current);
+	deployNew($ipList,$tag,$allowPorts);
+} else {
+	syslog(LOG_INFO, "Info: No update needed");
+}
+
+if (defined('CHECK_ISSUES') && CHECK_ISSUES === 1) {
+	$issuesArray = checkIssues($tag,$allowPorts);
+	if (count($issuesArray)) {
+
+		echo <<<END
+
+			There are possible issues found with your ufw firewall. These rules affect
+			the the ports $allowPorts that you allow with this script.
+		END;
+		echo PHP_EOL . PHP_EOL;
+		foreach ($issuesArray as $issue) {
+			echo "\t$issue" . PHP_EOL;
+		}
+	}
+}
+
+if (defined('NGINX_REAL_IP') && NGINX_REAL_IP === 1) {
+	if (deployNginxRealIP($new) > 0) {
+		shell_exec('/usr/sbin/nginx -t && /usr/sbin/nginx -s reload');
+	}
+}
+
+// Functions
+//
+//
+
+function help() {
+	echo <<<END
+		This tool, by default, will update "allow" firewall rules of IPaddresses
+		returned from the API "edges" endpoint using ufw.
+
+		Note: sudo ufw status can show you all the rules applied with ufw.
+
+		-d	Returns some debugging information and does not update.
+		-w	Look for possible issues with the firewall based on the allowed ports.
+		-r	Removes the rules add by this tool.
+		-n	Also write conf file for nginx set_real_ip_from.
+		-h	This screen and exits
+
+	END;
+	exit(0);
+}
+
+function check_shell() {
+	if (is_callable('shell_exec') && false === stripos(ini_get('disable_functions'), 'shell_exec')) {
+		return true;
+	} else {
+		$errorMessage = "Error: shell_exec is disabled";
+		syslog(LOG_ERR, $errorMessage);
+		echo $errorMessage . PHP_EOL;
+		exit(1);
+	}
+}
+
+function getoptParse($opts) {
+	foreach($opts as $opt => $value) {
+		switch($opt) {
+			case 'h';
+				help();
+				exit(0); // The help function already exits
+			case 'd';
+				echo "Warning: In debug mode" . PHP_EOL;
+				define('DEBUG', 1);
+				break;
+			case 'w';
+				define('CHECK_ISSUES', 1);
+				break;
+			case 'n';
+				define('NGINX_REAL_IP', 1);
+				break;
+			case 'r';
+				echo "Warning: asked to remove rules" . PHP_EOL;
+				define('REMOVE', 1);
+				break;
+			default;
+				echo "TODO: \"$opt\" is not defined yet" . PHP_EOL;
+				exit(0);
+		}
+	}
+}
+
+
+function check_valid() {
+	if (posix_getuid() === 0) {
+		return true;
+	} else {
+		$errorMessage = "Error: Must run as root";
+		syslog(LOG_ERR, $errorMessage);
+		echo $errorMessage . PHP_EOL;
+		exit(1);
+	}
+}
+
+function getNew($api_url) {
+	$options = array(
+		'http'=>array(
+			'method'=>"GET",
+			'user_agent'=>"edgepermit/1.0",
+			'timeout'=>60,
+			'ignore_errors'=>true,
+			'header'=>"Accept: application/json\r\n"
+			)
+		);
+	$context = stream_context_create($options);
+	$str = file_get_contents($api_url, false, $context);
+	$arr = json_decode($str);
+	return $arr->list;
+}
+
+function ufw_checkEnabled($statusList) {
+	return strpos($statusList, ' active') !== false;
+}
+
+function ufw_returnIP($in) {
+	// Regular expression pattern to match IP address
+	// $pattern = '/\b(?:\d{1,3}\.){3}\d{1,3}\b/'; // ipaddr only
+	$pattern = '/\b(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?\b/'; // ipaddr with or without CIDR
+	preg_match($pattern, $in, $matches);
+	if (!empty($matches)) {
+		return $matches[0];
+	}
+	return null;
+}
+
+function issuesValidation($item,$port) {
+	$portArray = explode(',', $port);
+
+	foreach ($portArray as $p) {
+		$itemParts = explode(' ', $item);
+		$portParts = explode('/', $itemParts[0]);
+		if ($p === explode(',', $portParts[0])[0]) {
+			return true;
+		}
+
+	}
+	return false;
+}
+
+
+
+function checkIssues($tag,$port) {
+	$statusList = cleanStatusList($tag,$port);
+
+	$arr = array();
+	foreach ($statusList as $item) {
+		if ((!empty($item[0])) && (strpos($item, "$tag Port:$port") == false) && issuesValidation($item,$port) !== false) {
+			array_push($arr, $item);
+		}
+	}
+	return $arr;
+}
+
+function cleanStatusList($tag,$port) {
+	$statusList = array();
+	$raw = shell_exec('ufw status');
+	$statusList = preg_split("/\R/", $raw);
+	if (!ufw_checkEnabled($statusList[0])) {
+		$errorMessage = "Error: ufw is not active";
+		syslog(LOG_ERR, $errorMessage);
+		echo $errorMessage . PHP_EOL;
+		exit(1);
+	}
+	unset($statusList[0]);
+	unset($statusList[1]);
+	unset($statusList[2]);
+	unset($statusList[3]);
+
+	return $statusList;
+}
+
+
+function getCurrent($tag,$port) {
+	$statusList = cleanStatusList($tag,$port);
+
+	$arr = array();
+	foreach ($statusList as $item) {
+		if ((!empty($item[0])) && (strpos($item, "$tag Port:$port") !== false)) {
+			array_push($arr, $item);
+		}
+	}
+	$ipAddr = array();
+	foreach ($arr as $item) {
+		$ip = ufw_returnIP($item);
+		if ($ip !== null) {
+			array_push($ipAddr, $ip);
+		}
+	}
+	return $ipAddr;
+}
+
+function compareIPs($ip1, $ip2) {
+	// If either IP is in CIDR notation, just compare them as strings
+	if (strpos($ip1, '/') !== false || strpos($ip2, '/') !== false) {
+		return strcmp($ip1, $ip2);
+	} else {
+		// Otherwise, convert them to long integers for comparison
+		$ip1_long = ip2long($ip1);
+		$ip2_long = ip2long($ip2);
+		if ($ip1_long == $ip2_long) {
+			return 0;
+		}
+		return ($ip1_long < $ip2_long) ? -1 : 1;
+	}
+}
+
+function compareLists($new,$current) {
+	if (count($current) !== count($new)) {
+		return false;
+	}
+
+	sort($new);
+	sort($current);
+
+	$difference = array_udiff($current, $new, 'compareIPs');
+	return empty($difference);
+}
+
+function syncList($new,$current) {
+	$toAdd = array_diff($new, $current);
+	$toRemove = array_diff($current, $new);
+	$arr = array();
+	foreach ($toAdd as $ip) {
+		$arr[$ip] = "add";
+	}
+	foreach ($toRemove as $ip) {
+		$arr[$ip] = "remove";
+	}
+	return $arr;
+}
+
+function deployNew($ipList,$tag,$port) {
+	foreach($ipList as $ip => $action) {
+		$ufwCommand = ($action == "add") ? "allow" : "delete allow";
+		$command = "ufw $ufwCommand proto tcp from $ip to any port $port comment \"$tag Port:$port\"";
+		if (defined('DEBUG') && DEBUG === 1) {
+			echo "DEBUG: $command" . PHP_EOL;
+		} else {
+			$out = shell_exec($command); 
+			if ($out === false) {
+				$errorMessage = "Error: Failed to deploy new ip allow list";
+				syslog(LOG_ERR, $errorMessage);
+				echo $errorMessage . PHP_EOL;
+				exit(1);
+			}
+		}
+		syslog(LOG_INFO, "Info: $ufwCommand $ip to any port $port");
+	}
+}
+
+function deployNginxRealIP($List) {
+	$nginx_real_ip_conf = '/etc/nginx/conf.d/set_real_ip.conf';
+	$tmpconf = tmpfile();
+	$ret = 0;
+
+	if($tmpconf) {
+		fwrite($tmpconf, '# This is autogenerated by edgespermit with -n option' . PHP_EOL);
+		foreach($List as $ip) {
+			fwrite($tmpconf, 'set_real_ip_from ' . $ip .';' . PHP_EOL);
+		}
+
+		fwrite($tmpconf, 'real_ip_header X-Forwarded-For;');
+		$metaData = stream_get_meta_data($tmpconf);
+		$tempFilePath = $metaData['uri'];
+		if (file_exists($nginx_real_ip_conf)) {
+			$comparedFileContent = file_get_contents($nginx_real_ip_conf);
+		} else {
+			$comparedFileContent = '';
+		}
+
+		$tempFileContent = file_get_contents($tempFilePath);
+
+		if ($tempFileContent !== $comparedFileContent) {
+			if (defined('DEBUG') && DEBUG === 1) {
+				echo "Info: $nginx_real_ip_conf would be updated" . PHP_EOL;
+			} elseif (file_put_contents($nginx_real_ip_conf, $tempFileContent) !== false) {
+				$ret = 2;
+				$message = "Info: $nginx_real_ip_conf updated";
+				syslog(LOG_INFO, $message);
+				echo $message . PHP_EOL;
+			} else {
+				$message = "Error: Failed to write $nginx_real_ip_conf";
+				syslog(LOG_ERR, $message);
+				echo $message . PHP_EOL;
+			}
+		} else {
+			$message = "Info: no changes to $nginx_real_ip_conf needed";
+			syslog(LOG_INFO, $message);
+			echo $message . PHP_EOL;
+		}
+
+		fclose($tmpconf);
+	} else {
+		$errorMessage = "Error: Failed to open temparary file for nginx set real ip conf";
+		syslog(LOG_ERR, $errorMessage);
+		echo $errorMessage . PHP_EOL;
+		exit(1);
+	}
+
+	return $ret;
+}
+
+function scriptLock() {
+	$scriptName = basename($GLOBALS['argv'][0]);
+	openlog($scriptName, LOG_PID | LOG_CONS, LOG_LOCAL0);
+	$lockFile = "/var/run/{$scriptName}.lock";
+	$lockHandle = fopen($lockFile, "w");
+	if ($lockHandle === false || !flock($lockHandle, LOCK_EX | LOCK_NB)) {
+		$errorMessage = "Error: Failed to acquire lock for script '{$scriptName}'";
+		syslog(LOG_ERR, $errorMessage);
+		echo $errorMessage . PHP_EOL; 
+		exit(1);
+	}
+	register_shutdown_function(function () use ($lockHandle, $lockFile) {
+		flock($lockHandle, LOCK_UN);
+		fclose($lockHandle);
+		unlink($lockFile);
+	});
+	return $lockHandle;
+}
+
+function getStatsCounts($stats) {
+	$addCount = 0;
+	$removeCount = 0;
+
+	foreach ($stats as $ip => $action) {
+		if ($action === 'add') {
+			$addCount++;
+		} elseif ($action === 'remove') {
+			$removeCount++;
+		}
+	}
+
+	return array('add' => $addCount, 'remove' => $removeCount);
+}
+
+
+// End functions
+
+// End script
+$endTime = microtime(true);
+$elapsedTime = $endTime - $startTime;
+$elapsedTimeFormatted = sprintf("%.2f", $elapsedTime);
+$counts = getStatsCounts($ipList);
+syslog(LOG_INFO, "Info: time: {$elapsedTimeFormatted}s, added: {$counts['add']}, removed: {$counts['remove']}");
+
+exit(0);

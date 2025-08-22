@@ -1,0 +1,21 @@
+###############################################################################
+## Global section
+###############################################################################
+set daemon 10
+set expectbuffer 20 kb
+set logfile /var/log/monit.log
+set statefile /var/run/monit-10.state
+set pidfile /var/run/monit-10.pid
+set idfile /var/run/monit-10.id
+set mailserver localhost
+set alert {{ monitoring_email }} with mail-format { subject: monit-10 $SERVICE $EVENT }
+#
+# WordPress provision testing system
+#
+#check program provision-testing with path /usr/local/sbin/monit_provision_testing.sh
+#        if status != 0 then alert
+#
+# WordPress provision system
+#
+check program provision with path /usr/local/sbin/monit_provision.sh
+        if status != 0 then alert

@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+[Unit]
+Description={{ item.generic_script_description }}
+
+[Service]
+Type=simple
+ExecStart={{ item.generic_script }}
+StandardOutput=null
+StandardError=journal
+LogLevelMax={{ item.generic_script_loglevel | default("notice") }}

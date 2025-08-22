@@ -1,9 +1,0 @@
----
-
-mysql_port: 3306
-mysql_bind_address: "0.0.0.0"
-mysql_innodb_log_file_size: "128M"
-mysql_innodb_buffer_pool_size: "24G"
-mysql_standalone_server: "true"
-
-mysql_percona_version: "5.7"

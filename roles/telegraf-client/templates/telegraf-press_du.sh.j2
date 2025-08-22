@@ -1,0 +1,43 @@
+#!/bin/bash
+# {{ ansible_managed }}
+
+{% raw %}
+
+# Get disk usage for multiple directories
+#[[inputs.exec]]
+#  commands = [ "/bin/cat /etc/telegraf/eqpress_du.json" ]
+#  timeout = "20s"
+#  name_override = "du"
+#  name_suffix = ""
+#  data_format = "json"
+#  tag_keys = [ "path" ]
+#  interval = "5m"
+
+# /etc/cron.d/eqpress_du
+#
+# */5 * * * *    root   /bin/bash /usr/local/sbin/telegraf/eqpress_du.sh > /etc/telegraf/eqpress_du.json
+#
+
+if [ "`id -u`" -ne 0 ]; then
+       	echo "Please run me as root!" >>/dev/stderr
+	exit 1
+else
+
+        echo "["
+#du -ks "$@" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
+#du -ks "/var/www/" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
+        du -ks "/root" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
+        echo ","
+        du -ks "/var/lib/mysql" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
+        echo ","
+        du -ks "/home" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
+        echo ","
+        du -ks "/var/log" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
+        echo ","
+        find /var/www -maxdepth 1 -type d -exec du -sk {} \; | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
+        echo
+        echo "]"
+
+        exit 0
+fi
+{% endraw %}

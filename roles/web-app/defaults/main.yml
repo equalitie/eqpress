@@ -1,8 +1,0 @@
-php_version: "7.3"
-nginx_etag: "etag on;"
-phpfpm_max_children: 40
-phpfpm_start_servers: 10
-phpfpm_min_spare: 10
-phpfpm_max_spare: 20
-phpfpm_max_requests: 64 
-php_opcache_memory_size: "2048"

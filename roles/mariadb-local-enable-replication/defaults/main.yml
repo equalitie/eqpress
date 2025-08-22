@@ -1,0 +1,4 @@
+---
+mariadb_datadir: /var/lib/mysql
+mariadb_unix_socket: /run/mysqld/mysqld.sock
+ansible_rename_replica_ident: "2.11"

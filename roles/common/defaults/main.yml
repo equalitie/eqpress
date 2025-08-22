@@ -1,11 +1,18 @@
 ---
-# defaults file for timezone
+# defaults file for common
 timezone: "Etc/UTC"
-reboot_after_install: "no"
-locale_lang: "en_CA.UTF-8"
-bashrc_proxy_ftp: ""
+locale_lang: "en_US.UTF-8"
+locale_all: ""
+locale_language: "en_US.UTF-8"
+locale_numeric: "en_US.UTF-8"
+locale_time: "en_US.UTF-8"
+locale_monetary: "en_US.UTF-8"
+locale_paper: "en_US.UTF-8"
+locale_identification: "en_US.UTF-8"
+locale_name: "en_US.UTF-8"
+locale_address: "en_US.UTF-8"
+locale_telephone: "en_US.UTF-8"
+locale_measurement: "en_US.UTF-8"
+
 bashrc_proxy_http: ""
-mail_service: 'mandrill'
-email_domain: 'example.co'
-email_relay_port_local: '587'
-email_relay_name_local: ''
+bashrc_proxy_ftp: ""

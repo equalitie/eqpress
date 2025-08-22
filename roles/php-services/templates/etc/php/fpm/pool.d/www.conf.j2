@@ -1,0 +1,29 @@
+[www]
+
+user = {{ web_user }}
+group = {{ web_groupname }}
+listen = /run/php/php{{ php_version }}-fpm.sock
+
+listen.owner = {{ web_user }}
+listen.group = {{ web_groupname }} 
+listen.mode = 0660
+
+pm = dynamic
+pm.max_children = {{ phpfpm_max_children }}
+pm.start_servers = {{ phpfpm_start_servers }}
+pm.min_spare_servers = {{ phpfpm_min_spare }}
+pm.max_spare_servers = {{ phpfpm_max_spare }}
+pm.max_requests = {{ phpfpm_max_requests }}
+
+pm.status_path = /phpfpmstatus
+
+slowlog = /var/log/$pool.slow.log
+
+request_slowlog_timeout = 20
+
+chdir = /
+
+php_admin_value[memory_limit] = 256M
+env[TMP] = /var/tmp
+env[TMPDIR] = /var/tmp
+env[TEMP] = /var/tmp

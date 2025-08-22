@@ -1,0 +1,90 @@
+#!/usr/bin/php
+<?php
+# {{ ansible_managed }}
+
+$main_conf_file = '{{ telegraf_main_conf }}';
+$ping_output_file = '{{ telegraf_ping_output_file }}';
+$edge_ip_file = '{{ telegraf_edge_ip_file }}';
+$staging_file = '{{ telegraf_buildconf_staging_file }}';
+$main_conf = '/etc/telegraf/telegraf.conf';
+
+if ($ping_output = get_ping($edge_ip_file)) {
+  file_put_contents($ping_output_file, $ping_output);
+  chmod($ping_output_file, 0640);
+} else {
+  echo "inputs.ping not ready or not used. Create blank file.";
+  file_put_contents($ping_output_file, "#[[inputs.ping]] not inserted");
+  chmod($ping_output_file, 0640);
+}
+
+if ($final_output = include_ping($main_conf_file, $ping_output_file)) {
+  file_put_contents($staging_file, $final_output);
+  chmod($staging_file, 0640);
+} else {
+  fwrite(STDERR, "ERROR: telegraf-buildconf could not build conf file. Exiting\n");
+  exit(1);
+}
+
+if (hash_file('sha256', $staging_file) != hash_file('sha256', $main_conf)) {
+  copy($staging_file, $main_conf);
+  chmod($main_conf, 0640);  
+  chown($main_conf, 'root');
+  chgrp($main_conf, 'telegraf');
+  restart_telegraf();
+}
+
+// TODO: Should we check it telegraf is running here?
+
+exit(0);
+
+// ################## FUNCTIONS
+
+function restart_telegraf() {
+  $output = shell_exec("systemctl restart telegraf.service");
+  if ($output === null) {
+    echo "telegraf restarted";
+  } else {
+    echo "Failed to restart telegraf" . $output;
+  }
+}
+
+
+function get_ping($edge_ip_file) {
+  $ip_addresses = [];
+  $static_ips = {{ telegraf_ping_extra_ip }};
+  $output = FALSE;
+
+  if (file_exists($edge_ip_file)) {
+    $file_content = file_get_contents($edge_ip_file);
+    preg_match_all('/set_real_ip_from\s+([\d.]+)/', $file_content, $matches);
+    if (!empty($matches[1])) {
+      $ip_addresses = $matches[1];
+    }
+  }
+
+  $all_ips = array_merge($ip_addresses, $static_ips);
+
+  if (!empty($all_ips)) {
+    $output = "[[inputs.ping]]\n  urls = ";
+    $output .= "[\n  \"" . implode("\",\n  \"", $all_ips) . "\"\n  ]\n";
+    $output .= "  ping_interval = 2.0\n";
+  }
+  return $output;
+}
+
+function include_ping($main_conf_file, $ping_output_file) {
+  if (file_exists($main_conf_file)) {
+    $main_content = file_get_contents($main_conf_file);
+  } else {
+    return FALSE;
+  }
+
+  if (file_exists($ping_output_file)) {
+    $ping_content = file_get_contents($ping_output_file); 
+  } else {
+    return FALSE;
+  }
+
+  return str_replace('{{ telegraf_inputs_ping_placeholder }}', $ping_content, $main_content);
+}
+

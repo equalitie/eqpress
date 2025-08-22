@@ -1,0 +1,98 @@
+server {
+	listen 80;
+	server_name {{ inventory_hostname }};
+	root {{ eqpress_root_dir }};
+	access_log /var/log/nginx/{{ inventory_hostname }}.access.log press_default;
+	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
+
+        location /nginx_status {
+                stub_status on;
+                access_log off;
+                allow 127.0.0.1;
+                allow {{ public_ipv4_address }};
+                deny all;
+        }
+
+        location ~ ^/(phpfpmstatus|phpfpmping)$ {
+                include fastcgi_params;
+                #fastcgi_pass php{{ php_version }}-fpm-unix-sock;
+                fastcgi_pass $sock;
+                fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
+                allow 127.0.0.1;
+                deny all;
+        }
+
+	location ~* /webstats/.* {
+		deny all;
+	}
+
+	location ~* /console/.* {
+		deny all;
+	}
+
+	location ~* /perf/.* {
+		deny all;
+	}
+
+	location ~* /shared/.* {
+		deny all;
+	}
+
+	location / {
+		try_files $uri $uri/ /index.php?$args /catchall/index.html;
+	}
+
+        location ~ \.php$ {
+		include /etc/nginx/eqpress-common/common_fastcgi.conf;
+	}
+
+}
+
+server {
+	listen 443 ssl;
+        http2 on;
+	server_name {{ inventory_hostname }};
+	access_log /var/log/nginx/{{ inventory_hostname }}.access.log press_default;
+	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
+	root {{ eqpress_root_dir }};
+
+## FIXME
+# 	auth_basic "Restricted";
+#	auth_basic_user_file "/etc/nginx/restricted_pages.htpasswd";
+
+	include /etc/nginx/eqpress-common/common_eqpress_ssl.conf;
+	include /etc/nginx/eqpress-common/common_location_ep.conf;
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	location ~ \.php$ {
+		include /etc/nginx/eqpress-common/common_fastcgi.conf;
+	}
+ 
+	include /etc/nginx/eqpress-common/common_adminer.conf;
+}
+
+##
+# eqpress customer console
+##
+server {
+	listen 127.0.0.1:80;
+	server_name console.localdomain;
+	access_log /var/log/nginx/console.localdomain.access.log;
+	error_log /var/log/nginx/console.localdomain.error.log;
+	root {{ eqpress_root_dir }}/console;
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	location ~ \.php$ {
+		include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_index index.php;
+		fastcgi_pass php{{ php_version }}-fpm-admin-sock;
+	}
+}

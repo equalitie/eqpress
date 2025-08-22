@@ -1,0 +1,118 @@
+---
+- name: Only install telegraf is enabled
+  block:
+    - name: install repo for influxdata
+      ansible.builtin.deb822_repository:
+        name: influxdata
+        types: deb
+        uris: "{{ telegraf_influxdata_uris }}"
+        suites: stable
+        components:
+          - main
+        signed_by: "{{ telegraf_influxdata_repo_gpg }}"
+
+    - name: install telegraf
+      ansible.builtin.apt:
+        name: 
+          - telegraf
+        state: present
+        update_cache: yes
+
+    - name: create telegraf config directories
+      ansible.builtin.file:
+        path: "/etc/telegraf/{{ item.path }}"
+        mode: "{{ item.mode | default('0755') }}"
+        owner: "{{ item.owner | default('root') }}" 
+        group: "{{ item.group | default('root') }}" 
+        state: directory
+      loop:
+        - { path: "" }
+        - { path: "buildconf.d" }
+        - { path: "telegraf.d" }
+        - { path: ".cache", owner: "telegraf", group: "telegraf" }
+        - { path: "data" }
+      notify:
+        - restart_telegraf
+
+    - name: make sure telegraf.conf is readable by telegraf user
+      ansible.builtin.file:
+        path: /etc/telegraf/telegraf.conf
+        mode: '0640'
+        owner: root
+        group: telegraf
+      notify:
+        - restart_telegraf
+
+    - name: install custom scripts used for telegraf
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/usr/local/sbin/{{ item }}"
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - telegraf-sumproc.sh
+        - telegraf-press_du.sh
+        - telegraf-buildconf
+
+    - name: add cron to run telegraf-sumproc.sh
+      ansible.builtin.cron:
+        name: "telegraf-sumproc"
+        minute: "*/1"
+        user: root
+        job: "/bin/bash -c 'cat /dev/null > /etc/telegraf/data/sumproc.influx ; for p in mariadb php-fpm nginx ; do /usr/local/sbin/telegraf-sumproc.sh -p $p >> /etc/telegraf/data/sumproc.influx ; done'"
+        cron_file: "telegraf-sumproc"
+
+    - name: add cron to run telegraf-press_du.sh
+      ansible.builtin.cron:
+        name: "telegraf-press_du"
+        minute: "*/5"
+        user: root
+        job: "/bin/bash -c '/usr/local/sbin/telegraf-press_du.sh > /etc/telegraf/data/press_du.json'"
+        cron_file: "telegraf-press_du"
+
+    - name: add telegraf user to web group
+      ansible.builtin.user:
+        name: telegraf
+        groups: "{{ web_groupname }}"
+        append: yes
+      notify:
+        - restart_telegraf
+
+    - name: add telegraf user to docker group
+      ansible.builtin.user:
+        name: telegraf
+        groups: "{{ docker_group }}"
+        append: yes
+      when:
+        - web_server_docker is defined
+        - web_server_docker
+      notify:
+        - restart_telegraf
+
+    - name: install telegraf-main.conf in buildconf.d
+      ansible.builtin.template:
+        src: buildconf.d/telegraf-main.conf.j2
+        dest: "{{ telegraf_main_conf }}"
+        owner: root
+        group: root
+        mode: '0640'
+
+    - name: install telegraf-buildconf service and timer
+      ansible.builtin.template:
+        src: "telegraf-buildconf.{{ item }}.j2"
+        dest: "/etc/systemd/system/telegraf-buildconf.{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - timer
+        - service
+      notify:
+        - systemd_daemon_reload
+        - enable_timer_telegraf-buildconf
+
+  when: enable_telegraf | default(false)
+  become: yes
+  tags:
+    - telegraf

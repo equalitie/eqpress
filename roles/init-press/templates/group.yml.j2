@@ -1,0 +1,54 @@
+---
+# nginx
+press_server_id: "{{ org_name }}"
+nginx_worker_processes: "{{ nginx_worker_processes }}"
+web_user: "www-data"
+web_uid: "33"
+web_groupname: "www-data"
+web_gid: "33"
+web_user_shell: "/usr/sbin/nologin"
+web_user_home: "/var/www"
+web_user_comment: "www-data"
+
+# php-fpm
+php_version: "8.3"
+phpfpm_max_children: "{{ phpfpm_max_children }}"
+phpfpm_start_servers: "{{ phpfpm_start_servers }}"
+phpfpm_min_spare: "{{ phpfpm_min_spare }}"
+phpfpm_max_spare: "{{ phpfpm_max_spare }}"
+phpfpm_max_requests: "{{ phpfpm_max_requests }}"
+php_opcache_memory_size: "{{ php_opcache_memory_size }}"
+
+# mysql
+mysql_root_db_pass: '{{ rand_result.results[0].stdout }}'
+mysql_innodb_buffer_pool_size: "{{ mysql_innodb_buffer_pool_size }}"
+mysql_innodb_log_file_size: "{{ mysql_innodb_log_file_size }}"
+mysql_repl_creds:
+  username: "{{ mysql_repl_creds_user }}"
+  password: '{{ rand_result.results[1].stdout }}'
+mysql_admin_user:
+    username: "{{ mysql_admin_user_name }}"
+    password: '{{ rand_result.results[2].stdout }}'
+mysql_webstats:
+    db: "{{ mysql_webstats_db }}"
+    username: "{{ mysql_webstats_user }}"
+    password: '{{ rand_result.results[3].stdout }}'
+
+# eqpress servers
+eqpress_base_dir: "{{ eqpress_base_dir }}"
+eqpress_root_dir: "{{ eqpress_base_dir }}/public"
+min_distribution_version: "{{ min_distribution_version }}"
+eq_remote_user: "{{ eq_remote_user }}"
+cdn_real_ips: [ {{ cdn_real_ips }} ]
+web_server_docker: true
+
+#enable_telegraf: yes
+#mysql_telegraf_user:
+#    username: "telegraf"
+#    password: ""
+#telegraf_influxdb:
+#    username: "telegraf"
+#    password: ""
+#    database: "telegraf"
+#    domain: ""
+#    port: "8086"

@@ -1,0 +1,7 @@
+---
+
+ssh_known_hosts_command: '/usr/bin/ssh-keyscan -H -T 10'
+ssh_known_hosts_file: '.ssh/known_hosts'
+
+root_cert_common_name: "{{ org_name }} Root Certificate" 
+root_cert_org_unit: "{{ org_name }} Certification Services"

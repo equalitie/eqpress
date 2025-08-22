@@ -1,0 +1,6 @@
+---
+- name: "restart postfix"
+  become: yes
+  ansible.builtin.systemd:
+    name: postfix
+    state: restarted

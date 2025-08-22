@@ -1,0 +1,101 @@
+---
+- name: stat the serial.txt file
+  local_action:
+    module: stat
+    path: "../config/ssl/serial.txt"
+  register: local_ssl_serial 
+  run_once: yes
+
+- name: stat the index.txt file
+  local_action:
+    module: stat
+    path: "../config/ssl/index.txt"
+  register: local_ssl_index
+  run_once: yes
+
+- name: touch the serial file
+  local_action:
+    module: copy
+    dest: "../config/ssl/serial.txt"
+    content: "01"
+  when: not local_ssl_serial.stat.exists 
+  run_once: yes
+
+- name: touch the index file
+  local_action:
+    module: file
+    dest: "../config/ssl/index.txt"
+    state: touch
+  when: not local_ssl_index.stat.exists
+  run_once: yes
+
+- name: Generate openssl configuration.
+  local_action:
+    module: template
+    src: genRootCA.conf.j2
+    dest: ../config/ssl/genRootCA.conf
+    mode: 0640
+  run_once: yes
+
+- name: copy genRootCA.sh
+  local_action:
+    module: template
+    src: genRootCA.sh.j2
+    dest: ../config/ssl/genRootCA.sh
+    mode: 0750
+  run_once: yes
+
+- name: Generate root certificate.
+  local_action:
+    module: command
+    cmd: ./genRootCA.sh
+    chdir: ../config/ssl
+    creates: root_CA.key
+  run_once: yes
+
+- name: Generate SSL CSR and key for secure replication connection.
+  local_action:
+    module: command
+    chdir: "../config/ssl"
+    creates: "{{ inventory_hostname }}.key"
+    cmd: "openssl req -new -newkey rsa:2048 -nodes -out {{ inventory_hostname }}.csr -keyout {{ inventory_hostname }}.key -subj \"/C={{ root_cert_country }}/ST={{ root_cert_state }}/L={{ root_cert_city }}/O={{ org_name }}/CN={{ inventory_hostname }}\""
+
+- name: create sign_webserver.* to our ssl_dir
+  local_action:
+    module: template
+    src: "{{ item.file }}.j2"
+    dest: "../config/ssl/{{ item.file }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { file: "sign_webserver.sh", mode: "0750" }
+    - { file: "sign_webserver.conf", mode: "0644" }
+  run_once: yes
+
+- name: Sign the new CSR
+  local_action:
+    module: command
+    chdir: "../config/ssl"
+    creates: "{{ inventory_hostname }}.pem"
+    cmd: "./sign_webserver.sh {{ inventory_hostname }}"
+
+- name: create remote {{ ssl_key_directory }} directory
+  become: yes
+  ansible.builtin.file:
+    path: "{{ ssl_key_directory }}"
+    state: directory
+    owner: root
+    group: ssl-cert
+    mode: 0750
+
+- name: Copy SSL keys and certs.
+  become: yes
+  ansible.builtin.copy:
+    src: "../config/ssl/{{ item.name }}"
+    dest: "{{ ssl_key_directory }}"
+    owner: root
+    group: ssl-cert
+    mode: "{{ item.perms }}"
+  loop:
+    - { name: "{{ inventory_hostname }}.pem", perms: "0444" }
+    - { name: "{{ inventory_hostname }}.key", perms: "0440" }
+    - { name: "root_CA.pem", perms: "0444" }

@@ -1,0 +1,47 @@
+<?php
+/**
+ * Test the database is working.
+ *
+ */
+
+$now=time();
+$dbh = new mysqli( 'localhost', '{{ mysql_webstats.username }}', '{{ mysql_webstats.password }}', '{{ mysql_webstats.db }}' );
+if ( $dbh->connect_error ) {
+	printf( "Connect failed: %s: %s\n", $dbh->connect_errno, $dbh->connect_error );
+	error_log( "Connect failed: " . $dbh->connect_errno . ": " . $dbh->connect_error );
+	exit();
+}
+$q_select_id = "SELECT ID FROM domains WHERE domain LIKE 'monitor_mysql'";
+$result = $dbh->query( $q_select_id );
+if ( $result == false ) {
+	send_error("select ID failed");
+}
+$domain_id = $result->fetch_all();
+if ( empty( $domain_id ) ) {
+	$q_insert_domain = "INSERT INTO domains (`ID`, `domain`) VALUES (NULL, 'monitor_mysql')";
+	$result = $dbh->query( $q_insert_domain );
+	if ( $result != false ) {
+		send_ok();
+	}
+}
+
+$d_id = $domain_id[0][0];
+$q_insert_date = "INSERT INTO map_domain_customer (`domain_id`, `customer_id`) VALUES ($d_id, 30000 )";
+if ( $result = $dbh->query( $q_insert_date ) ) {
+	send_ok();
+} else {
+	send_error();
+}
+
+$dbh->close();
+
+function send_ok() {
+	echo "<html>fantastic</html>\n";
+	exit();
+}
+
+function send_error( $msg ) {
+	echo "<html>$dbh->error</html>\n";
+	exit();
+}
+?>

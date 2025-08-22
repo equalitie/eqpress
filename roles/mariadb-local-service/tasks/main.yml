@@ -1,0 +1,301 @@
+---
+- name: install packages
+  become: yes
+  ansible.builtin.apt:
+    name:
+      - mariadb-server
+      - mariadb-backup
+      - python3-pymysql
+    state: present
+  tags:
+    - mysql
+
+- name: add ssl-cert groups
+  become: yes
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: ssl-cert
+    append: yes
+    create_home: false
+  loop:
+    - mysql
+    - "{{ ansible_user_id }}"
+  tags:
+    - mysql
+
+- name: global MariaDB configuration
+  become: yes
+  ansible.builtin.template:
+    src: etc/mysql/mariadb.cnf.j2
+    dest: "{{ mariadb_config_file }}"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify:
+    - "restart mariadb"
+  tags:
+    - mysql
+    - mysql_cnf
+
+- name: Create datadir if it does not exist
+  become: yes
+  ansible.builtin.file:
+    path: "{{ mariadb_datadir }}"
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: 0755
+  tags:
+    - mysql
+
+- name: Create log if it does not exist
+  become: yes
+  ansible.builtin.file:
+    path: "{{ mariadb_logdir }}"
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: 0755
+  tags:
+    - mysql
+
+- name: make sure is started and enabled on boot
+  become: yes
+  ansible.builtin.systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+  tags:
+    - mysql
+
+- name: add override mariadb systemd directory
+  become: yes
+  ansible.builtin.file:
+    path: "{{ mariadb_systemd_override_dir }}"
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+  notify:
+    - systemd_daemon_reload
+    - "restart mariadb"
+  tags:
+    - mysql
+
+- name: mariadb systemd overrides
+  become: yes
+  ansible.builtin.template:
+    src: "etc/systemd/system/mariadb.service.d/{{ item }}.j2"
+    dest: "{{ mariadb_systemd_override_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: no
+  loop:
+    - limits.conf
+    - execstartpost.conf
+  notify:
+    - systemd_daemon_reload
+    - "restart mariadb"
+  tags:
+    - mysql
+
+- name: restart MariaDB if needed
+  ansible.builtin.meta: flush_handlers
+  tags:
+    - mysql
+
+- name: check if root .my.cnf exists
+  become: yes
+  ansible.builtin.stat:
+    path: /root/.my.cnf
+  register: my_cnf
+  tags:
+    - mysql
+
+- name: Update mysql root password when no .my.cnf
+  block:
+
+    - name: Update mysql root password for all existing hosts no .my.cnf
+      become: yes
+      community.mysql.mysql_user:
+        login_user: root
+        name: root
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+        host_all: true
+        check_implicit_admin: true
+      no_log: yes
+
+    - name: Update mysql root password for all root accounts no .my.cnf
+      become: yes
+      community.mysql.mysql_user:
+        login_user: root
+        login_password: "{{ mysql_root_db_pass }}"
+        name: root
+        host: "{{ item }}"
+        password: "{{ mysql_root_db_pass }}"
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+        state: present
+      loop:
+        - "{{ ansible_hostname }}"
+        - "{{ inventory_hostname }}"
+        - 127.0.0.1
+        - ::1
+        - localhost
+      no_log: yes
+
+  when: not my_cnf.stat.exists
+  tags:
+    - mysql
+
+- name: Update mysql root password when yes .my.cnf
+  block:
+
+    - name: Update mysql root password for all root accounts yes .my.cnf when localhost no
+      become: yes
+      community.mysql.mysql_user:
+        name: root
+        host: "{{ item }}"
+        password: "{{ mysql_root_db_pass }}"
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+        state: present
+      loop:
+        - "{{ inventory_hostname }}"
+        - 127.0.0.1
+        - ::1
+        - "{{ ansible_hostname }}"
+        - localhost
+      when: ansible_hostname != "localhost"
+      no_log: yes
+
+    - name: Update mysql root password for all root accounts yes .my.cnf when localhost yes
+      become: yes
+      community.mysql.mysql_user:
+        name: root
+        host: "{{ item }}"
+        password: "{{ mysql_root_db_pass }}"
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+        state: present
+      loop:
+        - "{{ inventory_hostname }}"
+        - 127.0.0.1
+        - ::1
+        - localhost
+      when: ansible_hostname == "localhost"
+      no_log: yes
+
+  when: my_cnf.stat.exists
+  tags:
+    - mysql
+
+- name: .my.cnf to users home
+  become: yes
+  ansible.builtin.template:
+    src: users/.my.cnf.j2
+    dest: "{{ item.dir }}/.my.cnf"
+    mode: 0600
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+  loop:
+    - { dir: '/root', owner: 'root', group: 'root' }
+    - { dir: '{{ ansible_user_dir }}', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
+  tags:
+    - mysql
+
+- name: ensure anonymous users are not in the database
+  become: yes
+  community.mysql.mysql_user:
+    name: ''
+    host: "{{ item }}"
+    state: absent
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  loop:
+    - localhost
+    - "{{ inventory_hostname }}"
+  tags:
+    - mysql
+
+- name: remove the test database
+  become: yes
+  community.mysql.mysql_db:
+    name: test
+    state: absent
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  tags:
+    - mysql
+
+- name: Copy webstats DB table structure to server
+  become: yes
+  ansible.builtin.copy:
+    src: etc/mysql/webstats.sql
+    dest: /tmp/webstats.sql
+  when:
+   - mysql_repl_role is defined
+   - mysql_repl_role == 'master'
+  tags:
+    - mysql
+
+- name: Create webstats user
+  become: yes
+  community.mysql.mysql_user:
+    name: "{{ mysql_webstats.username }}"
+    host: localhost
+    password: "{{ mysql_webstats.password }}"
+    priv: "*.*:ALL"
+    state: present
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'master'
+  no_log: no
+  tags:
+    - mysql
+
+- name: Create webstats DB
+  become: yes
+  community.mysql.mysql_db:
+    name: "{{ mysql_webstats.db }}"
+    state: present
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'master'
+  register: web_stats_db
+  tags:
+    - mysql
+
+- name: Create webstats tables
+  become: yes
+  community.mysql.mysql_db:
+    name: "{{ mysql_webstats.db }}"
+    state: import
+    target: /tmp/webstats.sql
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  when:
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'master'
+    - web_stats_db is defined
+    - web_stats_db.changed
+  tags:
+    - mysql
+
+- name: Create the mysql monitoring for telegraf
+  become: yes
+  community.mysql.mysql_user:
+    name: "{{ mysql_telegraf_user.username }}"
+    host: "{{ item }}"
+    password: "{{ mysql_telegraf_user.password }}"
+    priv: "*.*:ALL,GRANT"
+    column_case_sensitive: yes
+    state: present
+    login_unix_socket: "{{ mariadb_unix_socket }}"
+  loop:
+    - localhost
+  when:
+    - (mysql_repl_role is defined and mysql_repl_role == 'master') or (auto_provision_host is defined and auto_provision_host)
+    - enable_telegraf is defined and enable_telegraf
+    - mysql_telegraf_user is defined
+  tags:
+    - mysql
+    - telegraf

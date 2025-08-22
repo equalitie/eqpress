@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# backup_from_master.sh
+#
+#
+
+master={{ mysql_repl_master }}
+rsyncuser={{ eq_remote_user }}
+
+export PATH=/bin:/usr/bin
+if ping -c 1 ${master} > /dev/null 2>&1; then
+    rsync -ave "ssh -i /home/${rsyncuser}/.ssh/id_rsa" --rsync-path='/usr/bin/sudo /usr/bin/rsync' \
+            --delete \
+	    --exclude '*.zip' \
+	    --exclude '*.tar.gz' \
+	    --exclude '*.tgz' \
+	    --exclude '.git*' \
+	    --exclude '*.log' \
+	    --exclude '*.mp4' \
+	    --exclude '.sessions/' \
+	    ${rsyncuser}@${master}:/var/www /var
+    rsync -ave "ssh -i /home/${rsyncuser}/.ssh/id_rsa" --rsync-path='/usr/bin/sudo /usr/bin/rsync' \
+            --delete ${rsyncuser}@${master}:/etc/nginx /etc
+    rsync -ave "ssh -i /home/${rsyncuser}/.ssh/id_rsa" --rsync-path='/usr/bin/sudo /usr/bin/rsync' \
+            ${rsyncuser}@${master}:/etc/ssl /etc
+else
+    echo "backup_to_${master}.sh: error, cant reach ${master}."
+fi

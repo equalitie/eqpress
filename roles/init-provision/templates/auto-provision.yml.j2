@@ -1,0 +1,71 @@
+---
+
+auto_provision_host: true
+auto_provision_nodes: '{"{{ auto_provision_node_location }}":{"hostname":"{{ auto_provision_node_hostname }}","ip":"{{ dns_ip_master }}"}}'
+auto_provision_node_hostname: "{{ auto_provision_node_hostname }}"
+auto_provision_db_host: "{{ auto_provision_db_host }}"
+eqpress_base_dir: "{{ eqpress_base_dir }}"
+eqpress_root_dir: "{{ eqpress_base_dir }}/public"
+auto_provision_tmp_directory: "{{ auto_provision_tmp_directory }}"
+auto_provision_log_file: "{{ auto_provision_log_file }}"
+#auto_provision_web_server_name: ""
+auto_provision_db_charset: "{{ auto_provision_db_charset }}"
+auto_provision_db_collate: "{{ auto_provision_db_collate }}"
+auto_provision_dev_rand: "{{ auto_provision_dev_rand }}"
+mustache_version: "{{ mustache_version }}"
+auto_provision_gpg_id: "{{ auto_provision_gpg_id }}"
+eq_remote_user: "{{ eq_remote_user }}"
+min_distribution_version: "{{ min_distribution_version }}"
+
+# FIXME: remove when converted to rampass .. pwpush
+# Password Pusher
+auto_provision_pwpusher_version: "{{ auto_provision_pwpusher_version }}"
+eq_pwpusher_db: "{{ eq_pwpusher_db }}"
+eq_pwpusher_user: "{{ eq_pwpusher_user }}"
+eq_pwpusher_pw: "{{ rand_result.results[1].stdout }}"
+eq_pwpusher_key: "{{ rand_result.results[2].stdout }}"
+eq_pwpusher_salt: "{{ rand_result.results[3].stdout }}"
+
+# RAMPASS
+# FIXME:
+
+# nginx
+press_server_id: "{{ org_name }}"
+nginx_worker_processes: "auto"
+cdn_real_ips: [ {{ cdn_real_ips }} ]
+web_user: "www-data"
+web_uid: "33"
+web_groupname: "www-data"
+web_gid: "33"
+web_user_shell: "/usr/sbin/nologin"
+web_user_home: "/var/www"
+web_user_comment: "www-data"
+web_server_docker: true
+# {{ provision_api_key }}
+provision_api_key_hash: "{{ provision_api_key | ansible.builtin.password_hash('bcrypt', rounds=12) }}"
+
+# php-fpm
+php_version: "8.3"
+phpfpm_max_children: "48"
+phpfpm_start_servers: "16"
+phpfpm_min_spare: "16"
+phpfpm_max_spare: "16"
+phpfpm_max_requests: "32"
+php_opcache_memory_size: "128"
+
+# mysql
+mysql_bind_address: "{{ mysql_bind_address }}"
+mysql_root_db_pass: "{{ rand_result.results[0].stdout }}"
+mysql_innodb_buffer_pool_size: "256M"
+mysql_innodb_log_file_size: "32M"
+
+#enable_telegraf: yes
+#mysql_telegraf_user:
+#    username: "telegraf"
+#    password: ""
+#telegraf_influxdb:
+#    username: "telegraf"
+#    password: ""
+#    database: "telegraf"
+#    domain: ""
+#    port: "8086"

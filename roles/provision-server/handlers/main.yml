@@ -1,0 +1,17 @@
+---
+- name: restart_nginx
+  become: yes
+  ansible.builtin.systemd:
+    state: restarted
+    name: nginx
+  register: restart_nginx
+  when:
+    - web_server_docker is not defined or web_server_docker|bool == false
+
+
+- name: reload_nginx
+  become: yes
+  ansible.builtin.systemd:
+    state: reloaded
+    name: nginx
+  when: restart_nginx is not defined

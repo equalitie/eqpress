@@ -1,0 +1,178 @@
+#!/bin/bash
+# {{ ansible_managed }}
+
+export PATH=/usr/bin:/bin:/usr/local/sbin:/usr/local/bin
+
+# Some globals
+GIT_COMMIT_NAME="{{ org_name }}"
+GIT_COMMIT_EMAIL="{{ monitoring_email }}"
+SITES="{{ web_user_home }}"
+DATEFORMAT="+%F-%H%M%S%Z"
+SFTPGROUP="sftponly"
+
+function check_do_git
+{
+  local my_dir=$1
+  if [ -f $my_dir/.dosnapshot ]; then
+    return 0;
+  else
+    return 1;
+  fi
+}
+
+function check_is_wordpress
+{
+  local my_dir=$1
+  local my_wp=$my_dir/wordpress
+  # This is basic, but should be enough 
+  if [ -d $my_wp ] && [ -d $my_wp/wp-admin ] && [ -d $my_wp/wp-content ] && [ -f $my_wp/wp-config.php ]; then 
+    # return true
+    return 0
+  else
+    # return false
+    return 1
+  fi
+}
+
+function get_db_name
+{
+  local my_dir=$1
+  local my_wp=$my_dir/wordpress
+  local dbinfo=($(grep DB_NAME $my_wp/wp-config.php | tr "'" '\n'))
+  echo ${dbinfo[3]}
+}
+
+function backup_wp_db
+{
+  local my_dir=$1
+  local my_wp=$my_dir/wordpress
+  cd $my_wp
+  command -v wp --allow-root >/dev/null 2>&1 || return 1
+
+  wp --allow-root db export --path=$my_wp --quiet $my_wp/$DBNAME.sql
+  return 0
+
+  # use mysqldump
+  # mysqldump --add-drop-table -h localhost -u we_need_this -p $my_wp/$DBNAME.sql
+  # may need to add --no-tablespaces because of mysql changes
+}
+ 
+function git_snapshot
+{
+  # FIXME: This is the block that needs lots of work
+  # We need to check if a add is needed?
+  # We need to check a little better if valid git repo in 'snapshot' dir 
+  # Maybe need to check if tag is already, but prob will never happen
+  # Probably should return true or false and maybe no echos in the function
+
+  # Note: A commit will always be needed because a database dump is always
+  #       done and the dump has a time stamp that will always diff
+
+  local this_tag=$(date "$DATEFORMAT")
+  local my_dir=$1
+  local my_wp=$my_dir/wordpress
+  local my_snap=$my_dir/snapshot
+  if [ -d $my_snap ]; then
+    git --git-dir=$my_snap --work-tree=$my_wp add .
+    git --git-dir=$my_snap --work-tree=$my_wp -c user.name="$GIT_COMMIT_NAME" -c user.email="$GIT_COMMIT_EMAIL" commit -q -m "Automated Commit"
+    git --git-dir=$my_snap tag "$this_tag"
+    chmod 750 $my_snap
+    echo "Snapshot tag $this_tag commited"
+  else
+    echo "Snapshot first time for tag $this_tag"
+    git --git-dir=$my_snap init -q
+    git --git-dir=$my_snap --work-tree=$my_wp add .
+    git --git-dir=$my_snap --work-tree=$my_wp -c user.name="$GIT_COMMIT_NAME" -c user.email="$GIT_COMMIT_EMAIL" commit -q -m "$this_tag Snapshot"
+    git --git-dir=$my_snap tag "$this_tag"
+    chmod 750 $my_snap
+  fi
+}
+
+function lock_site
+{
+  if [ -z ${1+x} ]; then
+    return 1
+  else
+    local site=$1
+    if [ -f $site/.lock ]; then
+      return 1
+    else
+      touch $site/.lock
+    fi
+  fi
+return 0
+}
+
+function unlock_site
+{
+  if [ -z ${1+x} ]; then
+    return 1
+  else
+    local site=$1
+    if [ -f $site/.lock ]; then
+      rm $site/.lock
+    else
+      echo "Site was not locked"
+      return 1
+    fi
+  fi
+return 0
+}
+    
+
+function do_snapshot
+{
+  if [ -z ${1+x} ]; then 
+    return 1
+  else
+    local site=$1
+    if check_is_wordpress $site; then
+      echo "Snapshot for $site"
+      DBNAME=$(get_db_name $site)
+      if lock_site $site; then
+        if backup_wp_db $site; then
+          echo "$DBNAME data exported"
+        else
+          echo "$DBNAME data export failed"
+        fi
+	# Only do git snapshot when .dosnapshot file found
+	if check_do_git $site; then
+          git_snapshot $site
+	fi
+	# Save one day back of database dump
+	cd $site
+	mv $DBNAME.sql.gz $DBNAME.sql.1.gz 2>/dev/null && chown root:$SFTPGROUP $DBNAME.sql.1.gz && chmod 0640 $DBNAME.sql.1.gz
+        cd $site/wordpress
+        gzip $DBNAME.sql
+        mv $DBNAME.sql.gz ../
+        chown root:$SFTPGROUP ../$DBNAME.sql.gz
+	chmod 0640 ../$DBNAME.sql.gz
+        unlock_site $site
+      else
+        echo "Site already locked"
+      fi
+      echo
+    fi
+  fi
+}
+
+# FIXME: We should loop over all site but also
+# have ability to input one site. ie;
+# site_snapshot.sh -s site.org
+
+if [[ $EUID -ne 0 ]]; then
+  echo "You must be a root user" 2>&1
+  exit 1
+fi
+
+if [ $# -eq 0 ]; then
+  for site in $SITES/*; do
+    if do_snapshot $site; then
+      continue
+    else
+      echo "Error" 
+    fi
+  done
+else
+  echo "FIXME: Do more"
+fi

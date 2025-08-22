@@ -1,0 +1,12 @@
+#!/bin/bash
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+for site in `ls -1d /var/www/*`; do
+    if [ -d "$site/wordpress" ]; then
+	    mu_dir=${site}/wordpress/wp-content/mu-plugins
+	    if [ ! -d ${mu_dir} ]; then
+		    mkdir ${mu_dir}
+	    fi
+        rsync -av {{ eqpress_root_dir }}/bruteprotect/* ${site}/wordpress/wp-content/mu-plugins
+	fi
+done
