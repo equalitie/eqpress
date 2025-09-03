@@ -92,8 +92,8 @@ function archive_site($webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $db
   });
 
   action("Dumping MySQL database", function () use ($dbName, $archiveRoot) {
-    $dumpFile = "$archiveRoot/db.sql";
-    system("mysqldump -u root {$dbName} > {$dumpFile}");
+    $dumpFile = "$archiveRoot/db.sql.gz";
+    system("mysqldump -u root {$dbName} | gzip -9 > {$dumpFile}");
   });
 
   action("Creating site archive", function () use ($webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $archiveFile) {
