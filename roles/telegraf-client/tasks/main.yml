@@ -33,6 +33,8 @@
         - { path: "data" }
       notify:
         - restart_telegraf
+      tags:
+        - telegraf_config
 
     - name: make sure telegraf.conf is readable by telegraf user
       ansible.builtin.file:
@@ -42,6 +44,8 @@
         group: telegraf
       notify:
         - restart_telegraf
+      tags:
+        - telegraf_config
 
     - name: install custom scripts used for telegraf
       ansible.builtin.template:
@@ -97,6 +101,8 @@
         owner: root
         group: root
         mode: '0640'
+      tags:
+        - telegraf_config
 
     - name: install telegraf-buildconf service and timer
       ansible.builtin.template:
@@ -111,6 +117,8 @@
       notify:
         - systemd_daemon_reload
         - enable_timer_telegraf-buildconf
+      tags:
+        - telegraf_config
 
   when: enable_telegraf | default(false)
   become: yes
