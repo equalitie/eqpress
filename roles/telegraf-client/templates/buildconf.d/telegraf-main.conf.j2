@@ -100,11 +100,11 @@
 {% if web_server_docker is defined and web_server_docker %}
 [[inputs.docker]]
   endpoint = "unix:///var/run/docker.sock"
-  perdevice = false
+  #perdevice = false
   perdevice_include = ["cpu", "blkio", "network"]
   gather_services = false
   timeout = "5s"
-  total = false
+  #total = false
 {% endif %}
 [[inputs.kernel_vmstat]]
 [[inputs.mdstat]]
