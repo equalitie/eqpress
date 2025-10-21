@@ -133,6 +133,7 @@
     - eq_get_sftp_user.sh
     - eq_plugin_blacklist.php
     - eq_purge_site.sh
+    - purge_site
     - eq_purge_cache.sh
     - eq_security_scan.sh
     - eq_setup_replication.sh

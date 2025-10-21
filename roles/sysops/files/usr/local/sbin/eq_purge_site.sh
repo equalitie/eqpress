@@ -4,6 +4,10 @@
 #
 # remove all the parts of a provisioned website
 #
+
+echo "[INFO] This script is depreciated. Use purge_site."
+echo
+exit 1
 export PATH=/bin:/usr/bin:/usr/local/sbin:/usr/sbin
 
 purge() {
