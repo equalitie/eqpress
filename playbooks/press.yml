@@ -34,6 +34,22 @@
   vars:
     is_local: no
 
+# NOTE: added for Ubuntu 25.10 using sudo-rs by default and ansible not able to parse this yet.
+  tasks:
+    - name: Detect sudo implementation
+      command: sudo --version
+      register: sudo_ver
+      changed_when: false
+      become: false
+
+    - name: Use sudo.ws when sudo-rs is detected
+      set_fact:
+        become_exe: /usr/bin/sudo.ws
+        ansible_become_method: sudo
+      when:
+        - "'sudo-rs' in sudo_ver.stdout"
+        - ansible_facts.files.stat('/usr/bin/sudo.ws').stat.exists
+
   roles:
     - prerequisites 
     - common
@@ -51,6 +67,10 @@
     - telegraf-client
     - timed-jobs
     - cleanups
+
+- hosts: all
+  any_errors_fatal: yes
+  gather_facts: no
 
   tasks:
     - name: create TOOLS_FAQ
