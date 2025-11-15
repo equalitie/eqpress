@@ -61,8 +61,8 @@
     - docker
     - php-services
     - nginx-web-services
-    - mariadb-local-service
-    - mariadb-local-enable-replication
+    - mariadb-local-service-v2
+    - mariadb-local-enable-replication-v2
     - postfix-email-service
     - telegraf-client
     - timed-jobs
