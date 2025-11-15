@@ -265,8 +265,8 @@
         master_user: "{{ mysql_repl_creds.username }}"
         master_password: "{{ mysql_repl_creds.password }}"
         login_unix_socket: "{{ mariadb_unix_socket }}"
-        master_log_file: "{{ mysql_binlog_file.stdout }}"
-        master_log_pos: "{{ mysql_binlog_position.stdout }}"
+        master_log_file: "{{ mysql_binlog_file.stdout | trim }}"
+        master_log_pos: "{{ mysql_binlog_position.stdout | trim | int }}"
         master_ssl: yes
         master_ssl_ca: /etc/ssl/eqpress/root_CA.pem
         master_ssl_cert: "/etc/ssl/eqpress/{{ inventory_hostname }}.pem"
