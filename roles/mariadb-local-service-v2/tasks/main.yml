@@ -112,7 +112,7 @@
     - mysql
 
 - name: publish MariaDB version facts
-  ansible.builtin.set_fact:
+  set_fact:
     mariadb_version_full: "{{ mariadb_version_info.version.full }}"
     mariadb_version_major: "{{ mariadb_version_info.version.major | default(omit) }}"
     mariadb_version_minor: "{{ mariadb_version_info.version.minor | default(omit) }}"
@@ -130,7 +130,7 @@
     - mysql
 
 - name: build mysql root host list
-  ansible.builtin.set_fact:
+  set_fact:
     mysql_root_hosts: >-
       {{ ([inventory_hostname, ansible_hostname, '127.0.0.1', '::1', 'localhost'] +
           (mysql_root_extra_hosts | default([])))
