@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+[Service]
+ExecStartPost={{ mariadb_execstartpost_override|default() }}

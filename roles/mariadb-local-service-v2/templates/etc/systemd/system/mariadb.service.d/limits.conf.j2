@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+[Service]
+LimitNOFILE={{ mariadb_systemd_override_nofile }}
+LimitMEMLOCK={{ mariadb_systemd_override_memlock }}
