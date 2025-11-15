@@ -103,7 +103,6 @@
   community.mysql.mysql_info:
     login_user: root
     login_unix_socket: "{{ mariadb_unix_socket }}"
-    check_implicit_admin: true
     filter:
       - version
   register: mariadb_version_info
