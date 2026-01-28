@@ -118,6 +118,11 @@
       default: ""
       private: no
 
+    - name: "api_url"
+      prompt: "edgepermit API url"
+      deafault: "https://apt.example.co/apt/edges"
+      private: no
+
   roles:
    - init-local
    #- common
