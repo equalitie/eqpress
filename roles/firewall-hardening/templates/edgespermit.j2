@@ -8,10 +8,20 @@
 $startTime = microtime(true);
 
 $tag = 'DeflectEdge';
+// Defaults to using bearer auth
+$nobearer = {{ nobearer | default('false') }};
 $api_key = '{{ edgespermit_key }}';
 $min_new_ip_count = {{ edgespermit_min_edges }};
 $allowPorts = '80,443'; // Comma separated with no spaces
-$api_url="https://dashboard.deflect.ca/api/edges?key=$api_key";
+// Old versions in ansible did not set this. Making sure
+$api_url = "{{ api_url | default('not_set') }}";
+if ($api_url == 'not_set') {
+	echo "fix your api_url\n";
+	exit(1);
+}
+if ($nobearer === true) {
+	$api_url=$api_url . "?key=" . $api_key;
+}
 
 $options = getopt("rhdwn");
 
@@ -38,7 +48,10 @@ $current = getCurrent($tag,$allowPorts);
 if (defined('REMOVE') && REMOVE === 1) {
 	$min_new_ip_count=-1;
 } else {
-	$new = getNew($api_url);
+	if ($nobearer === true)
+		$new = getNew($api_url, $nobearer);
+	else
+		$new = getNew($api_url, $nobearer, $api_key);
 }
 
 // Make sure our new IPaddr list is greater than our $min_new_ip_count
@@ -152,19 +165,29 @@ function check_valid() {
 	}
 }
 
-function getNew($api_url) {
+function getNew($api_url, $nobearer, $token = 'null') {
 	$options = array(
 		'http'=>array(
 			'method'=>"GET",
-			'user_agent'=>"edgepermit/1.0",
+			'user_agent'=>"edgepermit/2.0",
 			'timeout'=>60,
 			'ignore_errors'=>true,
 			'header'=>"Accept: application/json\r\n"
 			)
 		);
+
+	if ($nobearer === false) {
+		$options['http']['header'] .= "Authorization: Bearer {$token}\r\n";
+		$options['http']['header'] .= "Content-Type: application/json";
+	}
+
 	$context = stream_context_create($options);
 	$str = file_get_contents($api_url, false, $context);
 	$arr = json_decode($str);
+	if (defined('DEBUG')) {
+		echo "json output\n";
+		echo $str;
+	}
 	return $arr->list;
 }
 
