@@ -122,7 +122,6 @@
   ansible.builtin.systemd:
     name: nginx
     enabled: true
-    state: started
   tags:
     - nginx
     - nginx_docker_systemd
