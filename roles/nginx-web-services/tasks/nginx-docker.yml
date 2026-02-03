@@ -107,11 +107,22 @@
     - nginx_docker_systemd
     - nginx_docker
 
+- name: remove any nginx overrides
+  become: yes
+  ansible.builtin.file:
+    path: /etc/systemd/system/nginx.service.d
+    state: absent
+  register: nginx_docker_systemd_overrides
+  tags:
+    - nginx
+    - nginx_docker_systemd
+    - nginx_docker
+
 - name: systemd daemon reload
   become: yes
   ansible.builtin.systemd:
     daemon_reload: yes
-  when: nginx_docker_systemd_template.changed|bool
+  when: nginx_docker_systemd_template.changed|bool or nginx_docker_systemd_overrides.changed|bool
   tags:
     - nginx
     - nginx_docker_systemd
