@@ -13,5 +13,5 @@ ExecStartPre=/usr/sbin/nginx -v
 ExecStart=/bin/true
 ExecReload=/usr/sbin/nginx -s reload
 ExecStop=/bin/true
-ExecStopPost=/bin/sh -c 'echo use docker to stop'
+ExecStopPost=/bin/sh -c "echo use docker to stop"
 RemainAfterExit=yes
