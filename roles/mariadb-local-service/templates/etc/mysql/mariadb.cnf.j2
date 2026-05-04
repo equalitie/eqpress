@@ -41,7 +41,6 @@ max_connect_errors             = 100000
 
 # BINARY LOGGING #
 log_bin                        = {{ mariadb_datadir }}/mysql_bin
-expire_logs_days               = 4
 sync_binlog                    = 0
 binlog_format                  = MIXED
 binlog_expire_logs_seconds     = {{ mysql_expire_logs_seconds | default('14400') }}
@@ -50,7 +49,7 @@ binlog_expire_logs_seconds     = {{ mysql_expire_logs_seconds | default('14400')
 read_only                      = {{ mysql_is_read_only | default(0) }}
 log_slave_updates              = 1
 relay_log                      = {{ mariadb_datadir }}/relay_bin
-slave_net_timeout              = 60
+slave_net_timeout              = {{ mysql_slave_net_timeout | default('180') }}
 
 # CACHES AND LIMITS #
 tmp_table_size                 = {{ mariadb_tmp_table_size | default('512M') }}
