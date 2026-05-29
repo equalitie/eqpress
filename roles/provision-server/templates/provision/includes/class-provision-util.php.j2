@@ -712,18 +712,18 @@ EOT;
   #  become: true
   #  command: chdir=/var/www/$domain/wordpress /usr/local/sbin/wp --allow-root plugin install wordpress-mu-domain-mapping --activate-network
 
-  - stat: path=/var/www/$domain/wordpress/wp-content/sunrise.php
-    become: true
-    register: sunrise_file
+  #- stat: path=/var/www/$domain/wordpress/wp-content/sunrise.php
+  #  become: true
+  #  register: sunrise_file
 
-  - name: move sunrise file into wp-content directory
-    become: true
-    command: /bin/mv /var/www/$domain/wordpress/wp-content/plugins/wordpress-mu-domain-mapping/sunrise.php /var/www/$domain/wordpress/wp-content
-    when: sunrise_file.stat.exists == False
+  #- name: move sunrise file into wp-content directory
+  #  become: true
+  #  command: /bin/mv /var/www/$domain/wordpress/wp-content/plugins/wordpress-mu-domain-mapping/sunrise.php /var/www/$domain/wordpress/wp-content
+  #  when: sunrise_file.stat.exists == False
 
-  - name: add surise constant to wp-config.php
-    become: true
-    lineinfile: dest=/var/www/$domain/wordpress/wp-config.php state=present insertafter=EP_CACHE_OPTIONS line="define('SUNRISE', 'on');"
+  #- name: add surise constant to wp-config.php
+  #  become: true
+  #  lineinfile: dest=/var/www/$domain/wordpress/wp-config.php state=present insertafter=EP_CACHE_OPTIONS line="define('SUNRISE', 'on');"
 
 EOT;
     } // end of multisite config
