@@ -707,9 +707,10 @@ EOT;
 
       // install multisite domain mapping plugin
       $multisite_config .= <<<EOT
-  - name: Install domain mapping plugin
-    become: true
-    command: chdir=/var/www/$domain/wordpress /usr/local/sbin/wp --allow-root plugin install wordpress-mu-domain-mapping --activate-network
+  # removed 2026-05-29
+  #- name: Install domain mapping plugin
+  #  become: true
+  #  command: chdir=/var/www/$domain/wordpress /usr/local/sbin/wp --allow-root plugin install wordpress-mu-domain-mapping --activate-network
 
   - stat: path=/var/www/$domain/wordpress/wp-content/sunrise.php
     become: true
