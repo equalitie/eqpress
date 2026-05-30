@@ -35,12 +35,21 @@ if (!preg_match('/^[a-z0-9.-]+\.[a-z]{2,}$/', $domain)) {
   exit(1);
 }
 
-$options = getopt('', ['simulate', 'verbose', 'force-db', 'no-backup', 'yes', 'dry-run', 'php:']);
-$simulate = isset($options['simulate']) || isset($options['dry-run']);
-$verbose  = isset($options['verbose']);
-$forceDB  = isset($options['force-db']);
-$noBackup = isset($options['no-backup']);
-$autoYes  = isset($options['yes']);
+// NOTE: getopt() stops parsing at the first non-option argument. Because the
+// domain is positional (argv[1]) and comes before the flags, getopt() would
+// discard everything after it (e.g. --simulate). Parse the flags manually.
+$flags = array_slice($argv, 1);
+$simulate = in_array('--simulate', $flags, true) || in_array('--dry-run', $flags, true);
+$verbose  = in_array('--verbose', $flags, true);
+$forceDB  = in_array('--force-db', $flags, true);
+$noBackup = in_array('--no-backup', $flags, true);
+$autoYes  = in_array('--yes', $flags, true);
+$phpOverride = null;
+foreach ($flags as $flag) {
+  if (str_starts_with($flag, '--php=')) {
+    $phpOverride = substr($flag, strlen('--php='));
+  }
+}
 
 $webRoot = "/var/www/{$domain}";
 $nginxAvailable = "/etc/nginx/sites-available/{$domain}";
@@ -48,7 +57,7 @@ $nginxEnabled = "/etc/nginx/sites-enabled/{$domain}";
 $timestamp = date('Ymd_His');
 $archiveRoot = "/var/www/archive/{$domain}";
 $archiveFile = "{$archiveRoot}/{$domain}-{$timestamp}.tar.gz";
-$phpVersion = $options['php'] ?? trim(shell_exec("php -r 'echo PHP_MAJOR_VERSION . \".\" . PHP_MINOR_VERSION;'"));
+$phpVersion = $phpOverride ?? trim(shell_exec("php -r 'echo PHP_MAJOR_VERSION . \".\" . PHP_MINOR_VERSION;'"));
 $phpFpmPool = "/etc/php/{$phpVersion}/fpm/pool.d/{$domain}_pool.conf";
 
 purge_site($domain);
