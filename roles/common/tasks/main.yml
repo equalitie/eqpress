@@ -36,6 +36,7 @@
     upgrade: dist
   tags:
     - common
+    - apt_upgrade
 
 - name: common packages not local
   become: yes
