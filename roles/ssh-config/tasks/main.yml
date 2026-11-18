@@ -106,6 +106,22 @@
     - ssh
     - known_hosts
 
+# The provision server is a separate play and cannot read press node facts,
+# so keep each node's verified host key on the controller for it to use.
+- name: Save verified host key on controller
+  become: false
+  delegate_to: localhost
+  ansible.builtin.copy:
+    content: "{{ ansible_facts['ssh_host_key_ed25519_public_keytype'] }} {{ ansible_facts['ssh_host_key_ed25519_public'] }}\n"
+    dest: "{{ playbook_dir }}/../config/ssh/host_ed25519_{{ inventory_hostname }}.pub"
+    mode: "0644"
+  when:
+    - mysql_repl_role | default('') in ['master', 'slave']
+    - ansible_facts['ssh_host_key_ed25519_public'] is defined
+  tags:
+    - ssh
+    - known_hosts
+
 - name: Set .ssh ownership
   become: true
   ansible.builtin.file:
@@ -123,38 +139,43 @@
 # NOTE: auto_provision_nodes_items is set in common role
 - name: Trust cluster masters from provision server
   block:
-    - name: Build master hostname and IP lists
+    - name: Build master hostname list
       ansible.builtin.set_fact:
         ssh_hosts: "{{ auto_provision_nodes_items | map(attribute='value.hostname') | list }}"
-        ssh_host_ip: "{{ auto_provision_nodes_items | map(attribute='value.ip') | list }}"
 
-    - name: Add masters to known_hosts by hostname
+    # Use the host key press.yml saved from verified facts. Only fall back to
+    # ssh-keyscan (unverified) if press.yml has not been run for that master.
+    - name: Add masters to known_hosts by hostname and IP
       become: true
       ansible.builtin.known_hosts:
-        path: "{{ item.0.path }}/{{ ssh_known_hosts_file }}"
-        name: "{{ item.1 }}"
+        path: "{{ item.0 }}/{{ ssh_known_hosts_file }}"
+        name: "{{ ssh_kh_name }}"
         state: present
-        key: "{{ lookup('pipe', 'ssh-keyscan ' + item.1 + '') }}"
+        key: >-
+          {{ ssh_kh_name ~ ' ' ~ ssh_saved_key
+             if ssh_saved_key | length > 0
+             else lookup('pipe', 'ssh-keyscan -t ed25519 ' ~ (ssh_kh_name | quote)) }}
         hash_host: false
-      loop: "{{ ssh_paths | product(ssh_hosts) }}"
+      loop: "{{ ['/root', ansible_facts['user_dir']] | product(auto_provision_nodes_items, ['hostname', 'ip']) | list }}"
+      loop_control:
+        label: "{{ item.0 }} {{ item.1.value[item.2] }}"
       vars:
-        ssh_paths:
-          - { path: "/root" }
-          - { path: "{{ ansible_facts['user_dir'] }}" }
+        ssh_kh_name: "{{ item.1.value[item.2] }}"
+        ssh_saved_key: "{{ lookup('ansible.builtin.file', playbook_dir ~ '/../config/ssh/host_ed25519_' ~ item.1.value.hostname ~ '.pub', errors='ignore') | default('', true) | trim }}"
 
-    - name: Add masters to known_hosts by IP
-      become: true
-      ansible.builtin.known_hosts:
-        path: "{{ item.0.path }}/{{ ssh_known_hosts_file }}"
-        name: "{{ item.1 }}"
-        state: present
-        key: "{{ lookup('pipe', 'ssh-keyscan ' + item.1 + '') }}"
-        hash_host: false
-      loop: "{{ ssh_paths | product(ssh_host_ip) }}"
+    - name: Report masters trusted without a verified host key
+      ansible.builtin.debug:
+        msg: >-
+          UNVERIFIED host key (ssh-keyscan) used for: {{ ssh_unverified | join(', ') }}.
+          Run press.yml for these clusters, then re-run provision.yml -t known_hosts.
       vars:
-        ssh_paths:
-          - { path: "/root" }
-          - { path: "{{ ansible_facts['user_dir'] }}" }
+        ssh_saved_hosts: >-
+          {{ query('ansible.builtin.fileglob', playbook_dir ~ '/../config/ssh/host_ed25519_*.pub')
+             | map('basename')
+             | map('regex_replace', '^host_ed25519_(.*)\.pub$', '\1')
+             | list }}
+        ssh_unverified: "{{ ssh_hosts | reject('in', ssh_saved_hosts) | list }}"
+      when: ssh_unverified | length > 0
 
     - name: Authorize provision keys on masters
       become: true
