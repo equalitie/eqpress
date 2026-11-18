@@ -124,7 +124,6 @@
       - zip
       - bzip2
       - locales
-      - software-properties-common
     state: present
   tags:
     - common
@@ -145,22 +144,6 @@
   tags:
     - common
 
-- name: set /etc/localtime
-  become: yes
-  ansible.builtin.file:
-    src: "/usr/share/zoneinfo/{{ timezone }}"
-    dest: "/etc/localtime"
-    state: link
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - tzone
-    - timezone
-    - common
-  notify:
-    - "update tzdata"
-
 - name: set timezone
   become: yes
   ansible.builtin.timezone:
@@ -169,8 +152,6 @@
     - tzone
     - timezone
     - common
-  notify:
-    - "update tzdata"
 
 - name: Ensure the hostname entry for master is available for the client.
   become: yes

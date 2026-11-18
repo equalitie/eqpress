@@ -1,9 +1,0 @@
----
-- name: update tzdata
-  become: yes
-  ansible.builtin.command:
-    argv:
-      - /usr/sbin/dpkg-reconfigure
-      - --frontend
-      - noninteractive
-      - tzdata
