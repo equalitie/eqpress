@@ -6,19 +6,22 @@
       - ufw
     state: present
 
-- name: disable ufw until configured
-  become: yes
-  ansible.builtin.ufw:
-    state: disabled
+# ufw stays enabled during the run. Rules apply live, so SSH must be
+# allowed before the default incoming policy is set to deny.
+- name: Find the SSH port Ansible is connected on
+  ansible.builtin.set_fact:
+    ufw_ssh_ports: >-
+      {{ ([ssh_port | default('22') | string]
+          + ((ansible_facts['env']['SSH_CONNECTION'] | default('')).split()[3:4]))
+         | unique }}
 
-- name: Configure ufw rules
+- name: Allow SSH
   become: yes
   ansible.builtin.ufw:
-    rule: "{{ item.rule }}"
-    port: "{{ item.port }}"
-    proto: "{{ item.proto }}"
-  loop:
-    - { rule: 'allow', port: '{{ ssh_port | default("22") }}', proto: 'tcp' }
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ ufw_ssh_ports }}"
 
 - name: use edgespermit script
   become: yes
@@ -76,6 +79,14 @@
     owner: root
     group: root
     mode: 0644
+  register: ufw_sysctl
+
+# Previously the disable/enable cycle applied sysctl changes on every run.
+- name: Reload ufw to apply sysctl changes
+  become: yes
+  ansible.builtin.ufw:
+    state: reloaded
+  when: ufw_sysctl is changed
 
 - name: enable ufw
   become: yes
