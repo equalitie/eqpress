@@ -30,6 +30,8 @@
     user: "{{ item.user1 }}"
     state: present
     key: "{{ lookup('file', '../config/ssh/id_rsa_' + item.user2 + '_' + mysql_repl_slave + '.pub') }}"
+    # Key only works when the connection comes from the slave itself
+    key_options: 'from="{{ hostvars[mysql_repl_slave].public_ipv4_address }}"'
   when:
     - mysql_repl_role is defined
     - mysql_repl_role == 'master'
@@ -48,6 +50,8 @@
     user: "{{ item.user1 }}"
     state: present
     key: "{{ lookup('file', '../config/ssh/id_rsa_' + item.user2 + '_' + mysql_repl_master + '.pub') }}"
+    # Key only works when the connection comes from the master itself
+    key_options: 'from="{{ hostvars[mysql_repl_master].public_ipv4_address }}"'
   when:
     - mysql_repl_role is defined
     - mysql_repl_role == 'slave'
@@ -158,6 +162,8 @@
         user: "{{ item.0.user1 }}"
         state: present
         key: "{{ lookup('file', '../config/ssh/id_rsa_' + item.0.user2 + '_' + inventory_hostname + '.pub') }}"
+        # Key only works when the connection comes from this provision server
+        key_options: 'from="{{ hostvars[inventory_hostname].public_ipv4_address }}"'
       loop: "{{ ssh_users | product(ssh_hosts) }}"
       loop_control:
         loop_var: item
