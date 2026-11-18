@@ -6,8 +6,7 @@ default_keyfile                 = ./root_CA.key
 default_md                      = sha256
 distinguished_name              = req_distinguished_name
 x509_extensions                 = v3_ca
-string_mask                     = nombstr
-req_extensions                  = v3_req
+string_mask                     = utf8only
 prompt                          = no
 
 [ req_distinguished_name ]
@@ -26,10 +25,6 @@ private_key                     = ./root_CA.key
 [ v3_ca ]
 basicConstraints                = critical,CA:true
 keyUsage                        = cRLSign,keyCertSign
-nsCertType                      = objCA
 #nsCaPolicyUrl                   = http://example.com/ca-policy/
 subjectKeyIdentifier            = hash
-
-[ v3_req ]
-nsCertType                      = emailCA,sslCA,objCA,objsign
 

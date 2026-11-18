@@ -9,7 +9,6 @@
 #
 BITS=2048
 DAYSVALID=7300
-RANDDEV=/dev/urandom
 CNF=./genRootCA.conf
 DER=./root_CA.der
 PEM=./root_CA.pem
@@ -25,10 +24,8 @@ KEY=./root_CA.key
 openssl req -new -x509 -nodes \
     -config $CNF \
     -newkey rsa:$BITS \
-    -rand $RANDDEV \
     -days $DAYSVALID \
     -set_serial 0 \
-    -keyform DER \
     -outform DER \
     -out $DER
 
