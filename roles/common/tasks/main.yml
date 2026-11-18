@@ -38,6 +38,34 @@
     - common
     - apt_upgrade
 
+- name: Check if a reboot is required
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+  tags:
+    - common
+    - apt_upgrade
+
+- name: Read packages that require a reboot
+  ansible.builtin.slurp:
+    src: /var/run/reboot-required.pkgs
+  register: reboot_required_pkgs
+  failed_when: false
+  when: reboot_required.stat.exists
+  tags:
+    - common
+    - apt_upgrade
+
+- name: Report reboot required
+  ansible.builtin.debug:
+    msg: >-
+      REBOOT REQUIRED on {{ inventory_hostname }}:
+      {{ (reboot_required_pkgs.content | default('') | b64decode).split() | unique | join(', ') | default('reason unknown', true) }}
+  when: reboot_required.stat.exists
+  tags:
+    - common
+    - apt_upgrade
+
 - name: common packages not local
   become: yes
   ansible.builtin.apt:
