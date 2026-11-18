@@ -176,7 +176,7 @@
   become: yes
   ansible.builtin.lineinfile:
     dest: /etc/hosts
-    regexp: "{{ mysql_repl_master }}"
+    regexp: '\s{{ mysql_repl_master | regex_escape }}(\s|$)'
     line: "{{ hostvars[mysql_repl_master].public_ipv4_address + ' ' + mysql_repl_master }}"
     state: present
   when:
@@ -190,7 +190,7 @@
   become: yes
   ansible.builtin.lineinfile:
     dest: /etc/hosts
-    regexp: "{{ mysql_repl_slave }}"
+    regexp: '\s{{ mysql_repl_slave | regex_escape }}(\s|$)'
     line: "{{ hostvars[mysql_repl_slave].public_ipv4_address + ' ' + mysql_repl_slave }}"
     state: present
   when:
@@ -213,7 +213,7 @@
   become: yes
   ansible.builtin.lineinfile:
     dest: /etc/hosts
-    regexp: "{{ item['value'].hostname }}"
+    regexp: '\s{{ item["value"].hostname | regex_escape }}(\s|$)'
     line: "{{ item['value'].ip + ' ' + item['value'].hostname + ' # ' + item['key'] + ' cluster' }}"
     state: present
   when: auto_provision_host | default(false) | bool
