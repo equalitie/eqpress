@@ -103,6 +103,9 @@
   loop:
     - { direction: 'incoming', policy: 'deny' }
     - { direction: 'outgoing', policy: 'allow' }
+    # Never route traffic through this host. Docker adds its own rules for
+    # its networks; everything else forwarded is dropped.
+    - { direction: 'routed', policy: 'deny' }
 
 - name: copy ufw override sysctl.conf
   become: yes
