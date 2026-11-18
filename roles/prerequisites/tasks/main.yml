@@ -1,6 +1,11 @@
 ---
-- debug:
-    msg: "{{ ansible_version }}"
+- name: Check controller Ansible is {{ min_ansible_version }} or newer
+  ansible.builtin.assert:
+    that:
+      - ansible_version.full is version(min_ansible_version, '>=')
+    fail_msg: "FAILED - found Ansible {{ ansible_version.full }}, requires {{ min_ansible_version }} or newer"
+    success_msg: "Ansible {{ ansible_version.full }}"
+  run_once: true
 
 - name: Check host is Ubuntu {{ min_distribution_version }} or newer
   ansible.builtin.fail:

@@ -1,3 +1,5 @@
 ---
 # Fallback when the inventory does not define it. group_vars still take precedence.
 min_distribution_version: "24.04"
+# Minimum ansible-core version on the controller (see README).
+min_ansible_version: "2.15"
