@@ -81,6 +81,28 @@
     cmd: "./sign_webserver.sh {{ inventory_hostname }}"
   throttle: 1
 
+# The CA key and host keys have no passphrase; keep them readable only by
+# the controller user that runs Ansible.
+- name: Find private keys on controller
+  delegate_to: localhost
+  become: false
+  ansible.builtin.find:
+    paths: "{{ playbook_dir }}/../config/ssl"
+    patterns: "*.key"
+  register: local_ssl_keys
+  run_once: true
+
+- name: Restrict private keys on controller to owner only
+  delegate_to: localhost
+  become: false
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: "0600"
+  loop: "{{ local_ssl_keys.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  run_once: true
+
 - name: create remote {{ ssl_key_directory }} directory
   become: yes
   ansible.builtin.file:
