@@ -1,23 +1,23 @@
 ---
-- name: .bashrc for user
+- name: Deploy .bashrc for admin user
   ansible.builtin.template:
     src: etc/skel/.bashrc.j2
     dest: ~/.bashrc
-    mode: 0600
+    mode: "0600"
   tags:
     - common
 
-- name: .bashrc for root user
-  become: yes
+- name: Deploy .bashrc for root
+  become: true
   ansible.builtin.template:
     src: etc/skel/.bashrc.j2
     dest: /root/.bashrc
-    mode: 0600
+    mode: "0600"
   tags:
     - common
 
 - name: Set hostname
-  become: yes
+  become: true
   ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
     use: systemd
@@ -34,7 +34,7 @@
     - common
 
 - name: Stop cloud-init from resetting hostname at boot
-  become: yes
+  become: true
   ansible.builtin.copy:
     dest: /etc/cloud/cloud.cfg.d/99-eqpress-hostname.cfg
     content: |
@@ -49,10 +49,10 @@
   tags:
     - common
 
-- name: apt cache and dist
-  become: yes
+- name: Update apt cache and run dist-upgrade
+  become: true
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
     cache_valid_time: 3600
     upgrade: dist
   tags:
@@ -87,8 +87,8 @@
     - common
     - apt_upgrade
 
-- name: common packages not local
-  become: yes
+- name: Install server-only packages
+  become: true
   ansible.builtin.apt:
     name:
       - bc
@@ -102,8 +102,8 @@
   tags:
     - common
 
-- name: common packages
-  become: yes
+- name: Install common packages
+  become: true
   ansible.builtin.apt:
     name:
       - bash-completion
@@ -128,8 +128,8 @@
   tags:
     - common
 
-- name: Setup locale
-  become: yes
+- name: Configure /etc/default/locale
+  become: true
   ansible.builtin.template:
     src: etc/default/locale.j2
     dest: /etc/default/locale
@@ -139,16 +139,16 @@
   tags:
     - common
 
-- name: set locale.gen file
-  become: yes
+- name: Generate locale
+  become: true
   ansible.builtin.locale_gen:
     name: "{{ locale_lang }}"
     state: present
   tags:
     - common
 
-- name: set timezone
-  become: yes
+- name: Set timezone
+  become: true
   ansible.builtin.timezone:
     name: "{{ timezone }}"
   tags:
@@ -156,8 +156,8 @@
     - timezone
     - common
 
-- name: Ensure the hostname entry for master is available for the client.
-  become: yes
+- name: Add master to /etc/hosts on slave
+  become: true
   ansible.builtin.lineinfile:
     dest: /etc/hosts
     regexp: '\s{{ mysql_repl_master | regex_escape }}(\s|$)'
@@ -170,8 +170,8 @@
   tags:
     - common
 
-- name: Ensure the hostname entry for the slave is entered into hosts file
-  become: yes
+- name: Add slave to /etc/hosts on master
+  become: true
   ansible.builtin.lineinfile:
     dest: /etc/hosts
     regexp: '\s{{ mysql_repl_slave | regex_escape }}(\s|$)'
@@ -184,7 +184,7 @@
   tags:
     - common
 
-- name: get some varibles set from json string of nodes
+- name: Parse provision node list
   ansible.builtin.set_fact:
     auto_provision_nodes_items: "{{ auto_provision_nodes | from_json | dict2items }}"
   when: auto_provision_host | default(false) | bool
@@ -193,8 +193,8 @@
     - known_hosts
     - common
 
-- name: Ensure the hostname entry of node(s) are available on provision server.
-  become: yes
+- name: Add cluster nodes to /etc/hosts on provision server
+  become: true
   ansible.builtin.lineinfile:
     dest: /etc/hosts
     regexp: '\s{{ item["value"].hostname | regex_escape }}(\s|$)'
