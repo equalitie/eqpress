@@ -182,13 +182,60 @@ function getNew($api_url, $nobearer, $token = 'null') {
 	}
 
 	$context = stream_context_create($options);
-	$str = file_get_contents($api_url, false, $context);
-	$arr = json_decode($str);
+	$str = @file_get_contents($api_url, false, $context);
 	if (defined('DEBUG')) {
 		echo "json output\n";
 		echo $str;
 	}
-	return $arr->list;
+	if ($str === false) {
+		fatal("Error: API request failed");
+	}
+
+	// $http_response_header is set by file_get_contents; first line is the status
+	$status = $http_response_header[0] ?? '';
+	if (!preg_match('#^HTTP/\S+\s+200\b#', $status)) {
+		fatal("Error: API returned '" . substr($status, 0, 100) . "'");
+	}
+
+	$arr = json_decode($str);
+	if (!is_object($arr) || !isset($arr->list) || !is_array($arr->list)) {
+		fatal("Error: API response has no 'list' array");
+	}
+
+	return validateList($arr->list);
+}
+
+// Every entry must be an IPv4 address or IPv4 CIDR (/1 to /32), since each
+// one ends up in a root shell command and in nginx config. Any bad entry
+// rejects the whole list so the current rules are left unchanged.
+function validateList($list) {
+	$valid = array();
+	foreach ($list as $entry) {
+		if (!is_string($entry) || !isValidIPv4OrCidr($entry)) {
+			$shown = is_string($entry) ? substr($entry, 0, 60) : gettype($entry);
+			fatal("Error: API returned invalid entry '" . addcslashes($shown, "\0..\37") . "'");
+		}
+		$valid[] = $entry;
+	}
+	return array_values(array_unique($valid));
+}
+
+function isValidIPv4OrCidr($entry) {
+	$parts = explode('/', $entry, 2);
+	if (filter_var($parts[0], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+		return false;
+	}
+	if (count($parts) === 1) {
+		return true;
+	}
+	// Reject /0, which would allow everyone
+	return preg_match('/^(?:[1-9]|[12][0-9]|3[0-2])$/', $parts[1]) === 1;
+}
+
+function fatal($errorMessage) {
+	syslog(LOG_ERR, $errorMessage);
+	echo $errorMessage . PHP_EOL;
+	exit(1);
 }
 
 function ufw_checkEnabled($statusList) {
@@ -315,7 +362,9 @@ function syncList($new,$current) {
 function deployNew($ipList,$tag,$port) {
 	foreach($ipList as $ip => $action) {
 		$ufwCommand = ($action == "add") ? "allow" : "delete allow";
-		$command = "ufw $ufwCommand proto tcp from $ip to any port $port comment \"$tag Port:$port\"";
+		$command = "ufw $ufwCommand proto tcp from " . escapeshellarg($ip)
+			. " to any port " . escapeshellarg($port)
+			. " comment " . escapeshellarg("$tag Port:$port");
 		if (defined('DEBUG') && DEBUG === 1) {
 			echo "DEBUG: $command" . PHP_EOL;
 		} else {
