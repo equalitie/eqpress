@@ -64,18 +64,26 @@
   tags:
     - ssh
 
-- name: known_hosts file on slave
+# Prefer the partner's host key from gathered facts: Ansible read it over its
+# own host-key-verified SSH connection. Fall back to ssh-keyscan (run on the
+# controller, unverified) only when the partner is not in this play.
+- name: Add replication partner to known_hosts
   become: yes
   ansible.builtin.known_hosts:
     path: "{{ item }}/{{ ssh_known_hosts_file }}"
-    name: "{{ mysql_repl_master }}"
+    name: "{{ ssh_partner }}"
     state: present
-    key: "{{ lookup('pipe', 'ssh-keyscan ' + mysql_repl_master + '') }}"
+    key: >-
+      {{ ssh_partner ~ ' ' ~ ssh_partner_facts['ssh_host_key_ed25519_public_keytype'] ~ ' ' ~ ssh_partner_facts['ssh_host_key_ed25519_public']
+         if ssh_partner_facts['ssh_host_key_ed25519_public'] is defined
+         else lookup('pipe', 'ssh-keyscan -t ed25519 ' ~ (ssh_partner | quote)) }}
     hash_host: false
+  vars:
+    ssh_partner: "{{ mysql_repl_slave if mysql_repl_role == 'master' else mysql_repl_master }}"
+    ssh_partner_facts: "{{ hostvars[ssh_partner]['ansible_facts'] | default({}) }}"
   when:
-    - mysql_repl_role is defined
-    - mysql_repl_role == 'slave'
-    - mysql_repl_master is defined
+    - mysql_repl_role | default('') in ['master', 'slave']
+    - (mysql_repl_slave if mysql_repl_role == 'master' else mysql_repl_master) is defined
   loop:
     - "/root"
     - "{{ ansible_user_dir }}"
@@ -83,21 +91,16 @@
     - ssh
     - known_hosts
 
-- name: known_hosts file on master
-  become: yes
-  ansible.builtin.known_hosts:
-    path: "{{ item }}/{{ ssh_known_hosts_file }}"
-    name: "{{ mysql_repl_slave }}"
-    state: present
-    key: "{{ lookup('pipe', 'ssh-keyscan ' + mysql_repl_slave + '') }}"
-    hash_host: false
+- name: Report replication partner host key source
+  ansible.builtin.debug:
+    msg: >-
+      {{ inventory_hostname }}: partner {{ ssh_partner }} host key
+      {{ 'from verified facts' if hostvars[ssh_partner]['ansible_facts']['ssh_host_key_ed25519_public'] is defined
+         else 'from ssh-keyscan (UNVERIFIED, partner not in play)' }}
+  vars:
+    ssh_partner: "{{ mysql_repl_slave if mysql_repl_role == 'master' else mysql_repl_master }}"
   when:
-    - mysql_repl_role is defined
-    - mysql_repl_role == 'master'
-    - mysql_repl_slave is defined
-  loop:
-    - "/root"
-    - "{{ ansible_user_dir }}"
+    - mysql_repl_role | default('') in ['master', 'slave']
   tags:
     - ssh
     - known_hosts
