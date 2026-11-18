@@ -3,7 +3,8 @@
 timezone: "Etc/UTC"
 locale_lang: "en_US.UTF-8"
 locale_all: ""
-locale_language: "en_US.UTF-8"
+# LANGUAGE is a colon-separated priority list, not a locale name.
+locale_language: "en_US:en"
 locale_numeric: "en_US.UTF-8"
 locale_time: "en_US.UTF-8"
 locale_monetary: "en_US.UTF-8"

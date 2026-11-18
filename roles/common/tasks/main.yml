@@ -133,6 +133,9 @@
   ansible.builtin.template:
     src: etc/default/locale.j2
     dest: /etc/default/locale
+    owner: root
+    group: root
+    mode: "0644"
   tags:
     - common
 
