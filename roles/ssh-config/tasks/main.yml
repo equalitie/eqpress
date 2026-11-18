@@ -1,31 +1,32 @@
 ---
-# TODO: set and test ssh_key_type
-- name: Generating RSA key for users 
-  become: yes
+# RSA is kept on purpose: backup_from_master.sh and the fetched key
+# filenames expect id_rsa. Moving to ed25519 needs a planned migration.
+- name: Generate SSH key for root and admin user
+  become: true
   ansible.builtin.user:
     name: "{{ item }}"
-    generate_ssh_key: yes
+    generate_ssh_key: true
     ssh_key_type: 'rsa'
   loop:
-    - root 
+    - root
     - "{{ ansible_facts['user_id'] }}"
   tags:
     - ssh
 
-- name: Downloading generated SSH public keys
-  become: yes
+- name: Fetch public keys to controller
+  become: true
   ansible.builtin.fetch:
     src: "{{ item.path }}/.ssh/id_rsa.pub"
     dest: "../config/ssh/id_rsa_{{ item.user }}_{{ inventory_hostname }}.pub"
-    flat: yes
+    flat: true
   loop:
     - { path: "/root", user: "root" }
     - { path: "{{ ansible_facts['user_dir'] }}", user: "{{ ansible_facts['user_id'] }}" }
   tags:
     - ssh
 
-- name: Copying slave's ssh key to master
-  become: yes
+- name: Authorize slave keys on master
+  become: true
   ansible.builtin.authorized_key:
     user: "{{ item.user1 }}"
     state: present
@@ -44,8 +45,8 @@
   tags:
     - ssh
 
-- name: Copying master's ssh key to slave
-  become: yes
+- name: Authorize master keys on slave
+  become: true
   ansible.builtin.authorized_key:
     user: "{{ item.user1 }}"
     state: present
@@ -68,7 +69,7 @@
 # own host-key-verified SSH connection. Fall back to ssh-keyscan (run on the
 # controller, unverified) only when the partner is not in this play.
 - name: Add replication partner to known_hosts
-  become: yes
+  become: true
   ansible.builtin.known_hosts:
     path: "{{ item }}/{{ ssh_known_hosts_file }}"
     name: "{{ ssh_partner }}"
@@ -105,29 +106,30 @@
     - ssh
     - known_hosts
 
-- name: Fix .ssh/ owner
-  become: yes
+- name: Set .ssh ownership
+  become: true
   ansible.builtin.file:
     path: "{{ item.home }}/.ssh"
     owner: "{{ item.owner }}"
-    recurse: yes
+    group: "{{ item.group }}"
+    recurse: true
   loop:
-    - { home: '/root', owner: 'root' }
-    - { home: "{{ ansible_facts['user_dir'] }}", owner: "{{ ansible_facts['user_id'] }}" }
+    - { home: '/root', owner: 'root', group: 'root' }
+    - { home: "{{ ansible_facts['user_dir'] }}", owner: "{{ ansible_facts['user_id'] }}", group: "{{ ansible_facts['user_gid'] }}" }
   tags:
     - ssh
     - known_hosts
 
 # NOTE: auto_provision_nodes_items is set in common role
-- name: update master nodes for provision
+- name: Trust cluster masters from provision server
   block:
-    - name: get var for ssh_hosts
+    - name: Build master hostname and IP lists
       ansible.builtin.set_fact:
         ssh_hosts: "{{ auto_provision_nodes_items | map(attribute='value.hostname') | list }}"
         ssh_host_ip: "{{ auto_provision_nodes_items | map(attribute='value.ip') | list }}"
 
-    - name: known_hosts file for provision hosts
-      become: yes
+    - name: Add masters to known_hosts by hostname
+      become: true
       ansible.builtin.known_hosts:
         path: "{{ item.0.path }}/{{ ssh_known_hosts_file }}"
         name: "{{ item.1 }}"
@@ -135,15 +137,13 @@
         key: "{{ lookup('pipe', 'ssh-keyscan ' + item.1 + '') }}"
         hash_host: false
       loop: "{{ ssh_paths | product(ssh_hosts) }}"
-      loop_control:
-        loop_var: item
       vars:
         ssh_paths:
           - { path: "/root" }
           - { path: "{{ ansible_facts['user_dir'] }}" }
 
-    - name: known_hosts file for provision ip
-      become: yes
+    - name: Add masters to known_hosts by IP
+      become: true
       ansible.builtin.known_hosts:
         path: "{{ item.0.path }}/{{ ssh_known_hosts_file }}"
         name: "{{ item.1 }}"
@@ -151,15 +151,13 @@
         key: "{{ lookup('pipe', 'ssh-keyscan ' + item.1 + '') }}"
         hash_host: false
       loop: "{{ ssh_paths | product(ssh_host_ip) }}"
-      loop_control:
-        loop_var: item
       vars:
         ssh_paths:
           - { path: "/root" }
           - { path: "{{ ansible_facts['user_dir'] }}" }
 
-    - name: Copying provision's ssh key to master
-      become: yes
+    - name: Authorize provision keys on masters
+      become: true
       delegate_to: "{{ item.1 }}"
       ansible.builtin.authorized_key:
         user: "{{ item.0.user1 }}"
@@ -168,8 +166,6 @@
         # Key only works when the connection comes from this provision server
         key_options: 'from="{{ hostvars[inventory_hostname].public_ipv4_address }}"'
       loop: "{{ ssh_users | product(ssh_hosts) }}"
-      loop_control:
-        loop_var: item
       vars:
         ssh_users:
           - { user1: "root", user2: "root" }
