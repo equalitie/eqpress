@@ -8,14 +8,16 @@
   run_once: true
 
 - name: Check host is Ubuntu {{ min_distribution_version }} or newer
-  ansible.builtin.fail:
-    msg: "FAILED - found '{{ ansible_distribution }}' version '{{ ansible_distribution_version }}', requires Ubuntu {{ min_distribution_version }} or newer"
-  when:
-    - ansible_distribution_version is version(min_distribution_version,'<') or ansible_distribution != 'Ubuntu'
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == 'Ubuntu'
+      - ansible_distribution_version is version(min_distribution_version, '>=')
+    fail_msg: "FAILED - found '{{ ansible_distribution }}' version '{{ ansible_distribution_version }}', requires Ubuntu {{ min_distribution_version }} or newer"
+    success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
 
-- name: check that play set variables are set
-  ansible.builtin.fail:
-    msg: "FAILED - '{{ item }}' variable not set"
-  when: "item is not defined" 
-  loop:
-    - is_local
+- name: Check play-set variables are defined
+  ansible.builtin.assert:
+    that:
+      - is_local is defined
+    fail_msg: "FAILED - 'is_local' variable not set by the playbook"
+    quiet: true
