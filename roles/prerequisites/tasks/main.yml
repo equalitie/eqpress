@@ -2,9 +2,9 @@
 - debug:
     msg: "{{ ansible_version }}"
 
-- name: check if Ubuntu and is version greater than {{ min_distribution_version }}
+- name: Check host is Ubuntu {{ min_distribution_version }} or newer
   ansible.builtin.fail:
-    msg: "FAILED - '{{ ansible_distribution }}' version '{{ ansible_distribution_major_version }}'"
+    msg: "FAILED - found '{{ ansible_distribution }}' version '{{ ansible_distribution_version }}', requires Ubuntu {{ min_distribution_version }} or newer"
   when:
     - ansible_distribution_version is version(min_distribution_version,'<') or ansible_distribution != 'Ubuntu'
 
