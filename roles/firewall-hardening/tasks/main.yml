@@ -52,15 +52,48 @@
   ansible.builtin.ufw:
     logging: "on"
 
-- name: enable mysql port 
+# Only the replication partner needs MySQL over the network: the slave
+# replicates from the master and runs check_mysql_replication_status.sh
+# against it. Both directions are allowed so a promoted slave still works.
+# Local connections (sites, telegraf, provision playbooks) use the socket or lo.
+- name: Allow MySQL from replication partner
   become: yes
   ansible.builtin.ufw:
     rule: allow
     port: "3306"
     proto: tcp
-    from_ip: "{{ hostvars[ item ][ 'public_ipv4_address' ] }}/32"
-  when: not auto_provision_host | default(false) | bool
-  loop: "{{ play_hosts }}"
+    from_ip: "{{ hostvars[mysql_repl_partner]['public_ipv4_address'] }}/32"
+  vars:
+    mysql_repl_partner: "{{ mysql_repl_slave if mysql_repl_role == 'master' else mysql_repl_master }}"
+  when:
+    - not auto_provision_host | default(false) | bool
+    - mysql_repl_role | default('') in ['master', 'slave']
+
+- name: List MySQL firewall rules
+  become: yes
+  ansible.builtin.command: ufw status
+  register: ufw_status_mysql
+  changed_when: false
+  check_mode: false
+  when:
+    - not auto_provision_host | default(false) | bool
+    - mysql_repl_role | default('') in ['master', 'slave']
+
+- name: Report MySQL rules not from replication partner
+  ansible.builtin.debug:
+    msg: "Extra MySQL rules on {{ inventory_hostname }} (not removed, check by hand): {{ mysql_extra_rules }}"
+  vars:
+    mysql_repl_partner: "{{ mysql_repl_slave if mysql_repl_role == 'master' else mysql_repl_master }}"
+    mysql_partner_ip: "{{ hostvars[mysql_repl_partner]['public_ipv4_address'] }}"
+    mysql_extra_rules: >-
+      {{ ufw_status_mysql.stdout_lines
+         | select('match', '^3306/tcp\s')
+         | reject('search', '\s' ~ (mysql_partner_ip | regex_escape) ~ '(/32)?(\s|$)')
+         | map('regex_replace', '\s+', ' ')
+         | list }}
+  when:
+    - ufw_status_mysql is not skipped
+    - mysql_extra_rules | length > 0
 
 - name: Configure ufw defaults
   become: yes
