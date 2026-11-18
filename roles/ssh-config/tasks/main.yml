@@ -8,7 +8,7 @@
     ssh_key_type: 'rsa'
   loop:
     - root 
-    - "{{ ansible_user_id }}"
+    - "{{ ansible_facts['user_id'] }}"
   tags:
     - ssh
 
@@ -20,7 +20,7 @@
     flat: yes
   loop:
     - { path: "/root", user: "root" }
-    - { path: "{{ ansible_user_dir }}", user: "{{ ansible_user_id }}" }
+    - { path: "{{ ansible_facts['user_dir'] }}", user: "{{ ansible_facts['user_id'] }}" }
   tags:
     - ssh
 
@@ -38,9 +38,9 @@
     - mysql_repl_slave is defined
   loop:
     - { user1: "root", user2: "root" }
-    - { user1: "root", user2: "{{ ansible_user_id }}" }
-    - { user1: "{{ ansible_user_id }}", user2: "{{ ansible_user_id }}" }
-    - { user1: "{{ ansible_user_id }}", user2: "root" }
+    - { user1: "root", user2: "{{ ansible_facts['user_id'] }}" }
+    - { user1: "{{ ansible_facts['user_id'] }}", user2: "{{ ansible_facts['user_id'] }}" }
+    - { user1: "{{ ansible_facts['user_id'] }}", user2: "root" }
   tags:
     - ssh
 
@@ -58,9 +58,9 @@
     - mysql_repl_master is defined
   loop:
     - { user1: "root", user2: "root" }
-    - { user1: "root", user2: "{{ ansible_user_id }}" }
-    - { user1: "{{ ansible_user_id }}", user2: "{{ ansible_user_id }}" }
-    - { user1: "{{ ansible_user_id }}", user2: "root" }
+    - { user1: "root", user2: "{{ ansible_facts['user_id'] }}" }
+    - { user1: "{{ ansible_facts['user_id'] }}", user2: "{{ ansible_facts['user_id'] }}" }
+    - { user1: "{{ ansible_facts['user_id'] }}", user2: "root" }
   tags:
     - ssh
 
@@ -86,7 +86,7 @@
     - (mysql_repl_slave if mysql_repl_role == 'master' else mysql_repl_master) is defined
   loop:
     - "/root"
-    - "{{ ansible_user_dir }}"
+    - "{{ ansible_facts['user_dir'] }}"
   tags:
     - ssh
     - known_hosts
@@ -113,7 +113,7 @@
     recurse: yes
   loop:
     - { home: '/root', owner: 'root' }
-    - { home: "{{ ansible_user_dir }}", owner: "{{ ansible_user_id }}" }
+    - { home: "{{ ansible_facts['user_dir'] }}", owner: "{{ ansible_facts['user_id'] }}" }
   tags:
     - ssh
     - known_hosts
@@ -140,7 +140,7 @@
       vars:
         ssh_paths:
           - { path: "/root" }
-          - { path: "{{ ansible_user_dir }}" }
+          - { path: "{{ ansible_facts['user_dir'] }}" }
 
     - name: known_hosts file for provision ip
       become: yes
@@ -156,7 +156,7 @@
       vars:
         ssh_paths:
           - { path: "/root" }
-          - { path: "{{ ansible_user_dir }}" }
+          - { path: "{{ ansible_facts['user_dir'] }}" }
 
     - name: Copying provision's ssh key to master
       become: yes
@@ -173,9 +173,9 @@
       vars:
         ssh_users:
           - { user1: "root", user2: "root" }
-          - { user1: "root", user2: "{{ ansible_user_id }}" }
-          - { user1: "{{ ansible_user_id }}", user2: "{{ ansible_user_id }}" }
-          - { user1: "{{ ansible_user_id }}", user2: "root" }
+          - { user1: "root", user2: "{{ ansible_facts['user_id'] }}" }
+          - { user1: "{{ ansible_facts['user_id'] }}", user2: "{{ ansible_facts['user_id'] }}" }
+          - { user1: "{{ ansible_facts['user_id'] }}", user2: "root" }
 
   when: auto_provision_host | default(false) | bool
   tags:
