@@ -108,19 +108,19 @@
       default: "sysops@equalit.ie"
       private: no
 
-    - name: "edgespermit_min_edge"
+    - name: "edgespermit_min_edges"
       prompt: "Min number of edges for edgespermit script"
       default: "20"
       private: no
 
     - name: "edgespermit_key"
-      prompt: "edgepermit API key. Leave blank id not used"
+      prompt: "edgepermit API key. Leave blank if not used"
       default: ""
       private: no
 
     - name: "api_url"
       prompt: "edgepermit API url"
-      deafault: "https://apt.example.co/apt/edges"
+      default: "https://apt.example.co/apt/edges"
       private: no
 
   roles:

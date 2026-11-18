@@ -1,10 +1,12 @@
 ---
-- name: install software
-  become: yes
+- name: Install ufw
+  become: true
   ansible.builtin.apt:
     name:
       - ufw
     state: present
+  tags:
+    - firewall
 
 # ufw stays enabled during the run. Rules apply live, so SSH must be
 # allowed before the default incoming policy is set to deny.
@@ -14,30 +16,35 @@
       {{ ([ssh_port | default('22') | string]
           + ((ansible_facts['env']['SSH_CONNECTION'] | default('')).split()[3:4]))
          | unique }}
+  tags:
+    - firewall
 
 - name: Allow SSH
-  become: yes
+  become: true
   ansible.builtin.ufw:
     rule: allow
     port: "{{ item }}"
     proto: tcp
   loop: "{{ ufw_ssh_ports }}"
+  tags:
+    - firewall
 
-- name: use edgespermit script
-  become: yes
+- name: Install edgespermit script
+  become: true
   ansible.builtin.template:
     src: edgespermit.j2
     dest: /usr/local/sbin/edgespermit
     owner: root
     group: root
-    mode: '0750'
+    mode: "0750"
   when: method_allowedges
   tags:
+    - firewall
     - nginx
     - edgespermit
 
-- name: allow web port to all if not using edgepermit script
-  become: yes
+- name: Allow web ports from anywhere when edgespermit is off
+  become: true
   ansible.builtin.ufw:
     rule: "{{ item.rule }}"
     port: "{{ item.port }}"
@@ -46,18 +53,22 @@
     - { rule: 'allow', port: '80', proto: 'tcp' }
     - { rule: 'allow', port: '443', proto: 'tcp' }
   when: not method_allowedges
+  tags:
+    - firewall
 
 - name: Enable ufw logging
-  become: yes
+  become: true
   ansible.builtin.ufw:
     logging: "on"
+  tags:
+    - firewall
 
 # Only the replication partner needs MySQL over the network: the slave
 # replicates from the master and runs check_mysql_replication_status.sh
 # against it. Both directions are allowed so a promoted slave still works.
 # Local connections (sites, telegraf, provision playbooks) use the socket or lo.
 - name: Allow MySQL from replication partner
-  become: yes
+  become: true
   ansible.builtin.ufw:
     rule: allow
     port: "3306"
@@ -68,9 +79,11 @@
   when:
     - not auto_provision_host | default(false) | bool
     - mysql_repl_role | default('') in ['master', 'slave']
+  tags:
+    - firewall
 
 - name: List MySQL firewall rules
-  become: yes
+  become: true
   ansible.builtin.command: ufw status
   register: ufw_status_mysql
   changed_when: false
@@ -78,6 +91,8 @@
   when:
     - not auto_provision_host | default(false) | bool
     - mysql_repl_role | default('') in ['master', 'slave']
+  tags:
+    - firewall
 
 - name: Report MySQL rules not from replication partner
   ansible.builtin.debug:
@@ -94,9 +109,11 @@
   when:
     - ufw_status_mysql is not skipped
     - mysql_extra_rules | length > 0
+  tags:
+    - firewall
 
-- name: Configure ufw defaults
-  become: yes
+- name: Set ufw default policies
+  become: true
   ansible.builtin.ufw:
     direction: "{{ item.direction }}"
     policy: "{{ item.policy }}"
@@ -106,25 +123,33 @@
     # Never route traffic through this host. Docker adds its own rules for
     # its networks; everything else forwarded is dropped.
     - { direction: 'routed', policy: 'deny' }
+  tags:
+    - firewall
 
-- name: copy ufw override sysctl.conf
-  become: yes
+- name: Install ufw sysctl overrides
+  become: true
   ansible.builtin.copy:
     src: sysctl.conf
     dest: /etc/ufw/sysctl.conf
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   register: ufw_sysctl
+  tags:
+    - firewall
 
 # Previously the disable/enable cycle applied sysctl changes on every run.
 - name: Reload ufw to apply sysctl changes
-  become: yes
+  become: true
   ansible.builtin.ufw:
     state: reloaded
   when: ufw_sysctl is changed
+  tags:
+    - firewall
 
-- name: enable ufw
-  become: yes
+- name: Enable ufw
+  become: true
   ansible.builtin.ufw:
     state: enabled
+  tags:
+    - firewall
