@@ -1,4 +1,6 @@
 ---
 ssl_key_directory: "/etc/ssl/eqpress"
+# Private CA and per-host keys/certs on the controller.
+ssl_local_dir: "{{ playbook_dir }}/../config/ssl"
 # Warn when a host or root CA certificate expires within this many days.
 ssl_cert_expiry_warn_days: 90

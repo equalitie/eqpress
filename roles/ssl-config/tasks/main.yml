@@ -1,85 +1,118 @@
 ---
-- name: stat the serial.txt file
-  local_action:
-    module: stat
-    path: "../config/ssl/serial.txt"
-  register: local_ssl_serial 
-  run_once: yes
+# The private CA lives on the controller in config/ssl (ssl_local_dir).
+# Controller-side tasks run as the local user, never with sudo.
 
-- name: stat the index.txt file
-  local_action:
-    module: stat
-    path: "../config/ssl/index.txt"
+- name: Check for CA serial file
+  delegate_to: localhost
+  become: false
+  ansible.builtin.stat:
+    path: "{{ ssl_local_dir }}/serial.txt"
+  register: local_ssl_serial
+  run_once: true
+  tags:
+    - ssl
+
+- name: Check for CA index file
+  delegate_to: localhost
+  become: false
+  ansible.builtin.stat:
+    path: "{{ ssl_local_dir }}/index.txt"
   register: local_ssl_index
-  run_once: yes
+  run_once: true
+  tags:
+    - ssl
 
-- name: touch the serial file
-  local_action:
-    module: copy
-    dest: "../config/ssl/serial.txt"
+- name: Create CA serial file
+  delegate_to: localhost
+  become: false
+  ansible.builtin.copy:
+    dest: "{{ ssl_local_dir }}/serial.txt"
     content: "01"
-  when: not local_ssl_serial.stat.exists 
-  run_once: yes
+  when: not local_ssl_serial.stat.exists
+  run_once: true
+  tags:
+    - ssl
 
-- name: touch the index file
-  local_action:
-    module: file
-    dest: "../config/ssl/index.txt"
+- name: Create CA index file
+  delegate_to: localhost
+  become: false
+  ansible.builtin.file:
+    dest: "{{ ssl_local_dir }}/index.txt"
     state: touch
   when: not local_ssl_index.stat.exists
-  run_once: yes
+  run_once: true
+  tags:
+    - ssl
 
-- name: Generate openssl configuration.
-  local_action:
-    module: template
+- name: Write root CA openssl config
+  delegate_to: localhost
+  become: false
+  ansible.builtin.template:
     src: genRootCA.conf.j2
-    dest: ../config/ssl/genRootCA.conf
-    mode: 0640
-  run_once: yes
+    dest: "{{ ssl_local_dir }}/genRootCA.conf"
+    mode: "0640"
+  run_once: true
+  tags:
+    - ssl
 
-- name: copy genRootCA.sh
-  local_action:
-    module: template
+- name: Write root CA script
+  delegate_to: localhost
+  become: false
+  ansible.builtin.template:
     src: genRootCA.sh.j2
-    dest: ../config/ssl/genRootCA.sh
-    mode: 0750
-  run_once: yes
+    dest: "{{ ssl_local_dir }}/genRootCA.sh"
+    mode: "0750"
+  run_once: true
+  tags:
+    - ssl
 
-- name: Generate root certificate.
-  local_action:
-    module: command
+- name: Create root CA
+  delegate_to: localhost
+  become: false
+  ansible.builtin.command:
     cmd: ./genRootCA.sh
-    chdir: ../config/ssl
+    chdir: "{{ ssl_local_dir }}"
     creates: root_CA.key
-  run_once: yes
+  run_once: true
+  tags:
+    - ssl
 
-- name: Generate SSL CSR and key for secure replication connection.
-  local_action:
-    module: command
-    chdir: "../config/ssl"
+- name: Create host key and CSR
+  delegate_to: localhost
+  become: false
+  ansible.builtin.command:
+    chdir: "{{ ssl_local_dir }}"
     creates: "{{ inventory_hostname }}.key"
     cmd: "openssl req -new -newkey rsa:2048 -nodes -out {{ inventory_hostname }}.csr -keyout {{ inventory_hostname }}.key -subj \"/C={{ root_cert_country }}/ST={{ root_cert_state }}/L={{ root_cert_city }}/O={{ org_name }}/CN={{ inventory_hostname }}\""
+  tags:
+    - ssl
 
-- name: create sign_webserver.* to our ssl_dir
-  local_action:
-    module: template
+- name: Write host signing script and config
+  delegate_to: localhost
+  become: false
+  ansible.builtin.template:
     src: "{{ item.file }}.j2"
-    dest: "../config/ssl/{{ item.file }}"
+    dest: "{{ ssl_local_dir }}/{{ item.file }}"
     mode: "{{ item.mode }}"
   loop:
     - { file: "sign_webserver.sh", mode: "0750" }
     - { file: "sign_webserver.conf", mode: "0644" }
-  run_once: yes
+  run_once: true
+  tags:
+    - ssl
 
 # openssl ca updates serial.txt and index.txt; signing two hosts at once
 # can give duplicate serials or a corrupt index, so sign one at a time.
-- name: Sign the new CSR
-  local_action:
-    module: command
-    chdir: "../config/ssl"
+- name: Sign host certificate
+  delegate_to: localhost
+  become: false
+  ansible.builtin.command:
+    chdir: "{{ ssl_local_dir }}"
     creates: "{{ inventory_hostname }}.pem"
     cmd: "./sign_webserver.sh {{ inventory_hostname }}"
   throttle: 1
+  tags:
+    - ssl
 
 # The CA key and host keys have no passphrase; keep them readable only by
 # the controller user that runs Ansible.
@@ -87,10 +120,12 @@
   delegate_to: localhost
   become: false
   ansible.builtin.find:
-    paths: "{{ playbook_dir }}/../config/ssl"
+    paths: "{{ ssl_local_dir }}"
     patterns: "*.key"
   register: local_ssl_keys
   run_once: true
+  tags:
+    - ssl
 
 - name: Restrict private keys on controller to owner only
   delegate_to: localhost
@@ -102,6 +137,8 @@
   loop_control:
     label: "{{ item.path | basename }}"
   run_once: true
+  tags:
+    - ssl
 
 # Read-only reminder; nothing renews certificates automatically.
 # openssl -checkend: rc 0 = still valid past the window, rc 1 = expires within it.
@@ -117,15 +154,17 @@
       - -checkend
       - "{{ ssl_cert_expiry_warn_days | int * 86400 }}"
       - -in
-      - "{{ playbook_dir }}/../config/ssl/{{ item }}.pem"
+      - "{{ ssl_local_dir }}/{{ item }}.pem"
   loop: "{{ ansible_play_hosts + ['root_CA'] }}"
   # Skip certs not created yet (e.g. a new host in --check mode)
-  when: (playbook_dir ~ '/../config/ssl/' ~ item ~ '.pem') is file
+  when: (ssl_local_dir ~ '/' ~ item ~ '.pem') is file
   register: ssl_cert_expiry
   changed_when: false
   failed_when: ssl_cert_expiry.rc > 1 or 'notAfter=' not in ssl_cert_expiry.stdout
   check_mode: false
   run_once: true
+  tags:
+    - ssl
 
 - name: Warn about certificates expiring soon
   ansible.builtin.debug:
@@ -141,20 +180,24 @@
          | selectattr('rc', 'equalto', 1) | list }}
   when: ssl_expiring | length > 0
   run_once: true
+  tags:
+    - ssl
 
-- name: create remote {{ ssl_key_directory }} directory
-  become: yes
+- name: Create {{ ssl_key_directory }} on server
+  become: true
   ansible.builtin.file:
     path: "{{ ssl_key_directory }}"
     state: directory
     owner: root
     group: ssl-cert
-    mode: 0750
+    mode: "0750"
+  tags:
+    - ssl
 
-- name: Copy SSL keys and certs.
-  become: yes
+- name: Copy host key, host cert and CA cert to server
+  become: true
   ansible.builtin.copy:
-    src: "../config/ssl/{{ item.name }}"
+    src: "{{ ssl_local_dir }}/{{ item.name }}"
     dest: "{{ ssl_key_directory }}"
     owner: root
     group: ssl-cert
@@ -163,3 +206,5 @@
     - { name: "{{ inventory_hostname }}.pem", perms: "0444" }
     - { name: "{{ inventory_hostname }}.key", perms: "0440" }
     - { name: "root_CA.pem", perms: "0444" }
+  tags:
+    - ssl
