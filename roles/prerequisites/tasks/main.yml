@@ -10,10 +10,10 @@
 - name: Check host is Ubuntu {{ min_distribution_version }} or newer
   ansible.builtin.assert:
     that:
-      - ansible_distribution == 'Ubuntu'
-      - ansible_distribution_version is version(min_distribution_version, '>=')
-    fail_msg: "FAILED - found '{{ ansible_distribution }}' version '{{ ansible_distribution_version }}', requires Ubuntu {{ min_distribution_version }} or newer"
-    success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+      - ansible_facts['distribution'] == 'Ubuntu'
+      - ansible_facts['distribution_version'] is version(min_distribution_version, '>=')
+    fail_msg: "FAILED - found '{{ ansible_facts['distribution'] }}' version '{{ ansible_facts['distribution_version'] }}', requires Ubuntu {{ min_distribution_version }} or newer"
+    success_msg: "{{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
 
 - name: Check play-set variables are defined
   ansible.builtin.assert:
