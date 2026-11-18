@@ -71,12 +71,15 @@
     - { file: "sign_webserver.conf", mode: "0644" }
   run_once: yes
 
+# openssl ca updates serial.txt and index.txt; signing two hosts at once
+# can give duplicate serials or a corrupt index, so sign one at a time.
 - name: Sign the new CSR
   local_action:
     module: command
     chdir: "../config/ssl"
     creates: "{{ inventory_hostname }}.pem"
     cmd: "./sign_webserver.sh {{ inventory_hostname }}"
+  throttle: 1
 
 - name: create remote {{ ssl_key_directory }} directory
   become: yes
