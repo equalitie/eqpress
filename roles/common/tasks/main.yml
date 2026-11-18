@@ -16,15 +16,36 @@
   tags:
     - common
 
-- name: hostname file
+- name: Set hostname
   become: yes
-  ansible.builtin.template:
-    src: etc/hostname.j2
-    dest: /etc/hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+    use: systemd
+  when: not is_local
+  tags:
+    - common
+
+- name: Check for cloud-init config directory
+  ansible.builtin.stat:
+    path: /etc/cloud/cloud.cfg.d
+  register: cloud_cfg_d
+  when: not is_local
+  tags:
+    - common
+
+- name: Stop cloud-init from resetting hostname at boot
+  become: yes
+  ansible.builtin.copy:
+    dest: /etc/cloud/cloud.cfg.d/99-eqpress-hostname.cfg
+    content: |
+      # {{ ansible_managed }}
+      preserve_hostname: true
     owner: root
     group: root
-    mode: 0644
-  when: not is_local
+    mode: "0644"
+  when:
+    - not is_local
+    - cloud_cfg_d.stat.exists | default(false)
   tags:
     - common
 
