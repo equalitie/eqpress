@@ -1,2 +1,4 @@
 ---
 ssl_key_directory: "/etc/ssl/eqpress"
+# Warn when a host or root CA certificate expires within this many days.
+ssl_cert_expiry_warn_days: 90

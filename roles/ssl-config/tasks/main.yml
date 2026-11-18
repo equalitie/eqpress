@@ -103,6 +103,45 @@
     label: "{{ item.path | basename }}"
   run_once: true
 
+# Read-only reminder; nothing renews certificates automatically.
+# openssl -checkend: rc 0 = still valid past the window, rc 1 = expires within it.
+- name: Check certificate expiry on controller
+  delegate_to: localhost
+  become: false
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - x509
+      - -noout
+      - -enddate
+      - -checkend
+      - "{{ ssl_cert_expiry_warn_days | int * 86400 }}"
+      - -in
+      - "{{ playbook_dir }}/../config/ssl/{{ item }}.pem"
+  loop: "{{ ansible_play_hosts + ['root_CA'] }}"
+  # Skip certs not created yet (e.g. a new host in --check mode)
+  when: (playbook_dir ~ '/../config/ssl/' ~ item ~ '.pem') is file
+  register: ssl_cert_expiry
+  changed_when: false
+  failed_when: ssl_cert_expiry.rc > 1 or 'notAfter=' not in ssl_cert_expiry.stdout
+  check_mode: false
+  run_once: true
+
+- name: Warn about certificates expiring soon
+  ansible.builtin.debug:
+    msg: >-
+      CERTIFICATE EXPIRING within {{ ssl_cert_expiry_warn_days }} days:
+      {{ ssl_expiring | map(attribute='item')
+         | zip(ssl_expiring | map(attribute='stdout_lines') | map('first'))
+         | map('join', ' ') | join('; ') }}
+  vars:
+    # skipped results (no cert yet) have no rc
+    ssl_expiring: >-
+      {{ ssl_cert_expiry.results | rejectattr('skipped', 'defined')
+         | selectattr('rc', 'equalto', 1) | list }}
+  when: ssl_expiring | length > 0
+  run_once: true
+
 - name: create remote {{ ssl_key_directory }} directory
   become: yes
   ansible.builtin.file:
