@@ -80,6 +80,8 @@
     owner: root
     group: root
     mode: 0644
+    # Refuse to install a config sshd cannot parse (would block new logins)
+    validate: /usr/sbin/sshd -t -f %s
   when:
     - mysql_repl_role is defined
   notify:
@@ -102,6 +104,8 @@
     owner: root
     group: root
     mode: 0440
+    # Refuse to install a sudoers file with errors (would break sudo/Ansible)
+    validate: /usr/sbin/visudo -cf %s
 
 - name: set permissions on sbin directory including setuid bit
   become: yes
