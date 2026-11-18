@@ -62,8 +62,8 @@ if [ -x /usr/bin/dircolors ]; then
     #alias vdir='vdir --color=auto'
 
     alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
+    alias fgrep='grep -F --color=auto'
+    alias egrep='grep -E --color=auto'
 fi
 
 # colored GCC warnings and errors
@@ -106,11 +106,11 @@ alias um='u && top_ram_procs.sh && resident-ram'
 alias gh='wp option get home'
 alias sr='wp search-replace'
 alias tl='tail_logs'
-alias ls='ls $LS_OPTIONS -AF'
+alias ls='ls --color=auto -AF'
 alias u='uptime'
-alias ns='netstat -an|egrep ":80|:443"|grep tcp|grep ESTAB|wc -l'
-alias nsn='netstat -an|egrep ":80|:443"|grep tcp|grep ESTAB'
-alias nst='netstat -tan|awk "{print $6}"|sort|uniq -c'
+alias ns="ss -Htn state established '( sport = :80 or sport = :443 or dport = :80 or dport = :443 )'|wc -l"
+alias nsn="ss -tn state established '( sport = :80 or sport = :443 or dport = :80 or dport = :443 )'"
+alias nst="ss -Htan|awk '{print \$1}'|sort|uniq -c"
 alias lnt='ls -lrtch /var/log/nginx/|tail -30'
 alias lns='ls -lrSh /var/log/nginx/|tail -30'
 alias wp='sudo -u www-data wp'
