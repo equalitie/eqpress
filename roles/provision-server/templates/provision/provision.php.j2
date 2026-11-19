@@ -66,11 +66,18 @@ switch($step) {
         define( 'EP_PROV_DIR', '{{ eqpress_root_dir}}/provision' . '/' );
         define( 'EP_PEND_DIR', EP_PROV_DIR . 'pending/' );
 
-        // Log the incoming request.
+        // Log the incoming request, without the credentials
+        $logged_post = $_POST;
+        foreach ( array( 'api_key', 'password' ) as $secret ) {
+            if ( isset( $logged_post[ $secret ] ) ) {
+                $logged_post[ $secret ] = 'sanitized';
+            }
+        }
         file_put_contents( EP_PROV_DIR . '{{ auto_provision_log_file }}',
             "\n" . date( DATE_RFC850 ) .
             ' (request ' . $params['request_id'] . ' received): ' .
-            serialize( $_POST ) . "\n", FILE_APPEND | LOCK_EX );
+            serialize( $logged_post ) . "\n", FILE_APPEND | LOCK_EX );
+        unset( $logged_post );
 
         // Validate and sanitize the request
         $util->validate_post_parameters();
