@@ -28,8 +28,18 @@ class EP_Provision_Util
       $params['status']['messages'][] = 'Email address is missing';
     }
 
-    if (isset($_POST['location']) && !empty($_POST['location'])) {
+    // Must be one of the configured nodes; it picks the server the
+    // playbook runs on.
+    if (
+      isset($_POST['location']) &&
+      is_string($_POST['location']) &&
+      is_array($params['nodes']) &&
+      array_key_exists($_POST['location'], $params['nodes'])
+    ) {
       $params['location'] = $_POST['location'];
+    } else {
+      $params['status']['errors']++;
+      $params['status']['messages'][] = 'Location is missing or unknown';
     }
 
     if (isset($_POST['domain']) && !empty($_POST['domain'])) {
@@ -71,12 +81,16 @@ class EP_Provision_Util
       $params['multisite'] = false;
     }
 
-    if (isset($_POST['db_charset'])) {
-      $params['db_charset'] = $_POST['db_charset'];
-    }
-
-    if (isset($_POST['db_collate'])) {
-      $params['db_collate'] = $_POST['db_collate'];
+    // Written into wp-config.php and provision.yml: plain names only
+    foreach (['db_charset', 'db_collate'] as $field) {
+      if (isset($_POST[$field]) && $_POST[$field] !== '') {
+        if ($this->is_valid_db_name_value($_POST[$field])) {
+          $params[$field] = $_POST[$field];
+        } else {
+          $params['status']['errors']++;
+          $params['status']['messages'][] = "Invalid $field";
+        }
+      }
     }
 
     if (isset($_POST['rpdns_user']) && !empty($_POST['rpdns_user'])) {
@@ -208,11 +222,24 @@ class EP_Provision_Util
    */
   public function is_valid_email_address($email)
   {
-    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-      return true;
-    } else {
-      return false;
-    }
+    // The address ends up in provision.yml (YAML, a wp command line and
+    // Ansible templating), so only allow plain addresses: no quotes, braces,
+    // pipes or other characters that FILTER_VALIDATE_EMAIL would accept.
+    return is_string($email) &&
+      strlen($email) <= 254 &&
+      preg_match('/^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/', $email) === 1 &&
+      filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+  }
+
+  /**
+   * Validate a database charset or collation name (e.g. utf8mb4_general_ci).
+   *
+   * @param string $value
+   * @return boolean
+   */
+  public function is_valid_db_name_value($value)
+  {
+    return is_string($value) && preg_match('/^[A-Za-z0-9_]{1,64}$/', $value) === 1;
   }
 
   /**
