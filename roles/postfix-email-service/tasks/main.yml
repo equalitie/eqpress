@@ -1,4 +1,13 @@
 ---
+- name: Check mail_service names an existing Postfix config
+  ansible.builtin.assert:
+    that:
+      - mail_service in ['eqpress', 'mandrill', 'sendgrid']
+    fail_msg: "mail_service is '{{ mail_service | default('') }}'; it must be eqpress, mandrill or sendgrid (main.cf would point at a missing file)."
+    quiet: true
+  tags:
+    - postfix
+
 - name: Install common packages
   become: yes
   ansible.builtin.apt:
