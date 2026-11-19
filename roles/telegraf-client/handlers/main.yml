@@ -1,19 +1,22 @@
 ---
+# ignore_errors on purpose: press.yml uses any_errors_fatal, and a failed
+# monitoring agent restart should not abort the deploy on every node.
+# telegraf-buildconf checks the config and alerts if telegraf does not run.
 - name: restart_telegraf
-  become: yes
+  become: true
   ansible.builtin.systemd_service:
     state: restarted
     name: telegraf
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: systemd_daemon_reload
-  become: yes
-  ansible.builtin.systemd:
-    daemon_reload: yes
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
 
 - name: enable_timer_telegraf-buildconf
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: telegraf-buildconf.timer
-    enabled: yes
+    enabled: true
     state: restarted

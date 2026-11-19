@@ -2,6 +2,11 @@
 docker_group: "docker"
 telegraf_influxdata_uris: "https://repos.influxdata.com/ubuntu"
 telegraf_influxdata_repo_gpg: "https://repos.influxdata.com/influxdata-archive.key"
+# InfluxData's published package signing key fingerprint
+# (https://www.influxdata.com/downloads/). The downloaded key is only trusted
+# if it matches. InfluxData rotates this key now and then: update it here.
+telegraf_influxdata_gpg_fingerprint: "24C975CBA61A024EE1B631787C3D57159FC2F927"
+telegraf_influxdata_keyring: "/etc/apt/keyrings/influxdata.asc"
 telegraf_main_conf: "/etc/telegraf/buildconf.d/telegraf-main.conf"
 telegraf_ping_extra_ip: ["8.8.8.8","1.1.1.1"]
 telegraf_ping_output_file: "/etc/telegraf/buildconf.d/inputs-ping.conf"

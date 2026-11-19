@@ -116,6 +116,6 @@
 [[inputs.kernel_vmstat]]
 [[inputs.mdstat]]
 [[inputs.ethtool]]
-  interface_include = ["{{ ansible_default_ipv4.alias }}"]
+  interface_include = ["{{ ansible_facts['default_ipv4']['alias'] }}"]
 [[inputs.linux_cpu]]
   metrics = ["cpufreq"]

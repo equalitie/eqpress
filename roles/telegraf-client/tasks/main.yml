@@ -1,7 +1,51 @@
 ---
-- name: Only install telegraf is enabled
+- name: Install Telegraf (only when enable_telegraf)
   block:
-    - name: install repo for influxdata
+    - name: Install gpg for key verification
+      ansible.builtin.apt:
+        name: gpg
+        state: present
+
+    # Download to a temporary file and only trust it if the fingerprint
+    # matches InfluxData's published one.
+    - name: Download InfluxData apt signing key
+      ansible.builtin.get_url:
+        url: "{{ telegraf_influxdata_repo_gpg }}"
+        dest: "{{ telegraf_influxdata_keyring }}.new"
+        mode: "0644"
+        force: true
+      changed_when: false
+
+    - name: Read InfluxData apt signing key fingerprint
+      ansible.builtin.command:
+        argv: [gpg, --show-keys, --with-colons, --fixed-list-mode, "{{ telegraf_influxdata_keyring }}.new"]
+      register: influxdata_key_info
+      changed_when: false
+      check_mode: false
+
+    - name: Check InfluxData apt signing key fingerprint
+      ansible.builtin.assert:
+        that:
+          - telegraf_influxdata_gpg_fingerprint in (influxdata_key_info.stdout_lines | select('match', '^fpr:') | map('split', ':') | map(attribute=9) | list)
+        fail_msg: "InfluxData apt key at {{ telegraf_influxdata_repo_gpg }} does not have the expected fingerprint {{ telegraf_influxdata_gpg_fingerprint }}; not installing it (InfluxData may have rotated it: check https://www.influxdata.com/downloads/)."
+        quiet: true
+
+    - name: Install verified InfluxData apt signing key
+      ansible.builtin.copy:
+        src: "{{ telegraf_influxdata_keyring }}.new"
+        dest: "{{ telegraf_influxdata_keyring }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Remove temporary InfluxData key file
+      ansible.builtin.file:
+        path: "{{ telegraf_influxdata_keyring }}.new"
+        state: absent
+      changed_when: false
+
+    - name: Install InfluxData repo
       ansible.builtin.deb822_repository:
         name: influxdata
         types: deb
@@ -9,21 +53,21 @@
         suites: stable
         components:
           - main
-        signed_by: "{{ telegraf_influxdata_repo_gpg }}"
+        signed_by: "{{ telegraf_influxdata_keyring }}"
 
-    - name: install telegraf
+    - name: Install Telegraf package
       ansible.builtin.apt:
-        name: 
+        name:
           - telegraf
         state: present
-        update_cache: yes
+        update_cache: true
 
-    - name: create telegraf config directories
+    - name: Create Telegraf config directories
       ansible.builtin.file:
         path: "/etc/telegraf/{{ item.path }}"
         mode: "{{ item.mode | default('0755') }}"
-        owner: "{{ item.owner | default('root') }}" 
-        group: "{{ item.group | default('root') }}" 
+        owner: "{{ item.owner | default('root') }}"
+        group: "{{ item.group | default('root') }}"
         state: directory
       loop:
         - { path: "" }
@@ -36,10 +80,10 @@
       tags:
         - telegraf_config
 
-    - name: make sure telegraf.conf is readable by telegraf user
+    - name: Make telegraf.conf readable by the telegraf user
       ansible.builtin.file:
         path: /etc/telegraf/telegraf.conf
-        mode: '0640'
+        mode: "0640"
         owner: root
         group: telegraf
       notify:
@@ -47,7 +91,7 @@
       tags:
         - telegraf_config
 
-    - name: install custom scripts used for telegraf
+    - name: Install Telegraf helper scripts
       ansible.builtin.template:
         src: "{{ item }}.j2"
         dest: "/usr/local/sbin/{{ item }}"
@@ -59,7 +103,7 @@
         - telegraf-press_du.sh
         - telegraf-buildconf
 
-    - name: add cron to run telegraf-sumproc.sh
+    - name: Add cron for telegraf-sumproc.sh
       ansible.builtin.cron:
         name: "telegraf-sumproc"
         minute: "*/1"
@@ -67,7 +111,7 @@
         job: "/bin/bash -c 'cat /dev/null > /etc/telegraf/data/sumproc.influx ; for p in mariadb php-fpm nginx ; do /usr/local/sbin/telegraf-sumproc.sh -p $p >> /etc/telegraf/data/sumproc.influx ; done'"
         cron_file: "telegraf-sumproc"
 
-    - name: add cron to run telegraf-press_du.sh
+    - name: Add cron for telegraf-press_du.sh
       ansible.builtin.cron:
         name: "telegraf-press_du"
         minute: "*/5"
@@ -75,42 +119,42 @@
         job: "/bin/bash -c '/usr/local/sbin/telegraf-press_du.sh > /etc/telegraf/data/press_du.json'"
         cron_file: "telegraf-press_du"
 
-    - name: add telegraf user to web group
+    - name: Add telegraf user to the web group
       ansible.builtin.user:
         name: telegraf
         groups: "{{ web_groupname }}"
-        append: yes
+        append: true
       notify:
         - restart_telegraf
 
-    - name: add telegraf user to docker group
+    - name: Add telegraf user to the docker group
       ansible.builtin.user:
         name: telegraf
         groups: "{{ docker_group }}"
-        append: yes
+        append: true
       when:
         - web_server_docker is defined
         - web_server_docker
       notify:
         - restart_telegraf
 
-    - name: install telegraf-main.conf in buildconf.d
+    - name: Install telegraf-main.conf template
       ansible.builtin.template:
         src: buildconf.d/telegraf-main.conf.j2
         dest: "{{ telegraf_main_conf }}"
         owner: root
         group: root
-        mode: '0640'
+        mode: "0640"
       tags:
         - telegraf_config
 
-    - name: install telegraf-buildconf service and timer
+    - name: Install telegraf-buildconf service and timer
       ansible.builtin.template:
         src: "telegraf-buildconf.{{ item }}.j2"
         dest: "/etc/systemd/system/telegraf-buildconf.{{ item }}"
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       loop:
         - timer
         - service
@@ -120,7 +164,7 @@
       tags:
         - telegraf_config
 
-  when: enable_telegraf | default(false)
-  become: yes
+  when: enable_telegraf | default(false) | bool
+  become: true
   tags:
     - telegraf
