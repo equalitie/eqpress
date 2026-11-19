@@ -65,6 +65,20 @@
   notify:
     - "restart cron"
 
+- name: Install per-site PHP session cleanup script
+  become: true
+  ansible.builtin.copy:
+    src: usr/local/sbin/eq_clean_site_sessions.sh
+    dest: /usr/local/sbin/eq_clean_site_sessions.sh
+    owner: root
+    group: root
+    mode: "0755"
+  when:
+    - mysql_repl_role is defined
+  tags:
+    - timers
+    - cron
+
 - name: copy cronjob to purge PHP sessions
   become: yes
   ansible.builtin.copy:

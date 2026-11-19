@@ -13,6 +13,6 @@
 # Look for and purge old sessions every 30 minutes
 09,39 *     * * *     root   [ -x /usr/lib/php/sessionclean ] && /usr/lib/php/sessionclean
 
-# eqpress php sessions
-# FIXME - a script needs to be written for this for new php7.0+ setup
-15,45 *     * * *     root   [ -x /usr/lib/php5/maxlifetime ] && find /var/www/*/wordpress/.sessions -type f -cmin +$(/usr/lib/php5/maxlifetime) -print0 2> /dev/null | xargs -n 200 -r -0 rm
+# eqpress per-site sessions (/var/www/<site>/wordpress/.sessions), idle longer
+# than session.gc_maxlifetime from the PHP-FPM php.ini
+15,45 *     * * *     root   [ -x /usr/local/sbin/eq_clean_site_sessions.sh ] && /usr/local/sbin/eq_clean_site_sessions.sh
