@@ -10,6 +10,25 @@ server {
 	include /etc/nginx/eqpress-common/common_eqpress_ssl.conf;
 	include /etc/nginx/eqpress-common/common_location_ep.conf;
 
+	# Provisioning internals hold plain-text passwords, the node inventory and
+	# the playbook/PHP sources: never serve them. ^~ wins over the regex
+	# locations above (e.g. the static file allow list that includes .gz).
+	location ^~ /ansible/ { deny all; }
+	location ^~ /provision/pending/ { deny all; }
+	location ^~ /provision/processing/ { deny all; }
+	location ^~ /provision/rejected/ { deny all; }
+	location ^~ /provision/unencrypted/ { deny all; }
+	location ^~ /provision/templates/ { deny all; }
+	location ^~ /provision/includes/ { deny all; }
+
+	# Only the gpg-encrypted archives may be downloaded from processed/
+	location ^~ /provision/processed/ {
+		location ~ \.gpg(-[0-9]+)?$ {
+			allow all;
+		}
+		deny all;
+	}
+
 	location / {
 		try_files $uri $uri/ /index.php?$args;
 	}

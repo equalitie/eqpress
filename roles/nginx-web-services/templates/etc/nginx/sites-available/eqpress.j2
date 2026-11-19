@@ -63,6 +63,11 @@ server {
 	include /etc/nginx/eqpress-common/common_eqpress_ssl.conf;
 	include /etc/nginx/eqpress-common/common_location_ep.conf;
 
+	# Console request folders (password resets, lock/unlock) must never be
+	# served; the console proxy is reached on the 127.0.0.1:80 vhost below.
+	# Same as the port 80 server. ^~ wins over the regex locations above.
+	location ^~ /console/ { deny all; }
+
 	location / {
 		try_files $uri $uri/ /index.php?$args;
 	}
@@ -70,7 +75,7 @@ server {
 	location ~ \.php$ {
 		include /etc/nginx/eqpress-common/common_fastcgi.conf;
 	}
- 
+
 	include /etc/nginx/eqpress-common/common_adminer.conf;
 }
 
