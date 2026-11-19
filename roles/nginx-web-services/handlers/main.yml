@@ -1,17 +1,17 @@
 ---
 - name: remount
-  become: yes
+  become: true
   ansible.builtin.command:
     cmd: /bin/mount -a
 
 - name: reload_nginx
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: nginx
     state: reloaded
 
 - name: restart_nginx
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: nginx
     state: restarted

@@ -8,7 +8,7 @@ After=network-online.target docker.service firewalld.service containerd.service 
 [Service]
 Type=oneshot
 User={{ ansible_user }}
-WorkingDirectory={{ ansible_user_dir }}/docker/eqpress_nginx
+WorkingDirectory={{ ansible_facts['user_dir'] }}/docker/eqpress_nginx
 ExecStartPre=/usr/sbin/nginx -v
 ExecStart=/bin/true
 ExecReload=/usr/sbin/nginx -s reload

@@ -84,7 +84,7 @@ check_config() {
 
 # Start
 
-[ "$(docker inspect -f '{{.State.Running}}' $container_name 2>/dev/null)" ] || help "no_access"
+[ "$(docker inspect -f '{{.State.Running}}' $container_name 2>/dev/null)" = "true" ] || help "no_access"
 
 case ${option} in
   -s) parse_sig "${2}"

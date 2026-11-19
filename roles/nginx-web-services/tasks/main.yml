@@ -1,25 +1,25 @@
 ---
-- name: remove /var/www/html
-  become: yes
+- name: Remove /var/www/html
+  become: true
   ansible.builtin.file:
     path: /var/www/html
     state: absent
   tags:
     - nginx
 
-- name: ensure {{ web_user_home }} exists and is owned by root
-  become: yes
+- name: Create {{ web_user_home }} owned by root
+  become: true
   ansible.builtin.file:
     path: "{{ web_user_home }}"
     state: directory
     owner: root
     group: root
-    mode: 0755
+    mode: "0755"
   tags:
     - nginx
 
-- name: install nginx related software
-  become: yes
+- name: Install nginx related packages
+  become: true
   ansible.builtin.apt:
     name:
       - nginx-extras
@@ -29,14 +29,14 @@
   tags:
     - nginx
 
-- name: create some default nginx directories
-  become: yes
+- name: Create default nginx directories
+  become: true
   ansible.builtin.file:
     path: "/etc/{{ item }}"
     state: directory
     owner: root
     group: root
-    mode: 0755
+    mode: "0755"
   loop:
     - nginx
     - nginx/sites-enabled
@@ -46,30 +46,30 @@
   tags:
     - nginx
 
-- name: create nginx eqpress common directory
-  become: yes
+- name: Create nginx eqpress-common directory
+  become: true
   ansible.builtin.file:
     path: /etc/nginx/eqpress-common
     state: directory
-    mode: 0750
+    mode: "0750"
     owner: root
     group: "{{ web_groupname }}"
   tags:
     - nginx
 
-- name: create nginx log directory
-  become: yes
+- name: Create nginx log directory
+  become: true
   ansible.builtin.file:
     path: /var/log/nginx
     state: directory
-    mode: 0750
+    mode: "0750"
     owner: root
     group: "{{ web_groupname }}"
   tags:
     - nginx
- 
-- name: remove default nginx config symlink
-  become: yes
+
+- name: Remove default nginx site link
+  become: true
   ansible.builtin.file:
     path: /etc/nginx/sites-enabled/default
     state: absent
@@ -78,19 +78,19 @@
   tags:
     - nginx
 
-- name: create directory ramdisk for nginx cache for tmpfs mount
-  become: yes
+- name: Create nginx cache directory for tmpfs
+  become: true
   ansible.builtin.file:
     path: /var/cache/nginx
     owner: "{{ web_user }}"
     group: root
     state: directory
-    mode: 0750
+    mode: "0750"
   tags:
     - nginx
 
-- name: add tmpfs mount to fstab to /var/cache/nginx
-  become: yes
+- name: Mount tmpfs on /var/cache/nginx
+  become: true
   ansible.builtin.lineinfile:
     dest: /etc/fstab
     regexp: "/var/cache/nginx"
@@ -101,25 +101,25 @@
   tags:
     - nginx
 
-- name: create nginx-ondisk directory
-  become: yes
+- name: Create nginx-ondisk cache directory
+  become: true
   ansible.builtin.file:
     path: /var/cache/nginx-ondisk
     state: directory
     owner: "{{ web_user }}"
     group: root
-    mode: 0750
+    mode: "0750"
   tags:
     - nginx
 
-- name: templates nginx common files
-  become: yes
+- name: Install templated nginx common files
+  become: true
   ansible.builtin.template:
     src: "etc/nginx/{{ item }}.j2"
     dest: "/etc/nginx/{{ item }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop:
     - nginx.conf
     - eqpress-common/common_adminer.conf
@@ -133,14 +133,14 @@
     - nginx_config
     - nginx
 
-- name: copy nginx common files
-  become: yes
+- name: Install nginx common files
+  become: true
   ansible.builtin.copy:
     src: "etc/nginx/{{ item }}"
     dest: "/etc/nginx/{{ item }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop:
     - mime.types
     - fastcgi_params
@@ -180,15 +180,15 @@
     - nginx
     - nginx_config
 
-- name: template nginx eqpress config
-  become: yes
+- name: Install eqpress nginx site
+  become: true
   ansible.builtin.template:
     src: etc/nginx/sites-available/eqpress.j2
     dest: /etc/nginx/sites-available/eqpress
     owner: root
     group: root
-    mode: 0644
-    backup: yes
+    mode: "0644"
+    backup: true
   when: not auto_provision_host | default(false) | bool
   notify:
     - reload_nginx
@@ -196,15 +196,15 @@
     - nginx
     - nginx_config
 
-- name: template nginx eqpress config provision
-  become: yes
+- name: Install eqpress-provision nginx site
+  become: true
   ansible.builtin.template:
     src: etc/nginx/sites-available/eqpress-provision.j2
     dest: /etc/nginx/sites-available/eqpress-provision
     owner: root
     group: root
-    mode: 0644
-    backup: yes
+    mode: "0644"
+    backup: true
   when: auto_provision_host | default(false) | bool
   notify:
     - reload_nginx
@@ -212,8 +212,8 @@
     - nginx
     - nginx_config
 
-- name: link eqpress nginx config provision
-  become: yes
+- name: Enable eqpress-provision nginx site
+  become: true
   ansible.builtin.file:
     src: /etc/nginx/sites-available/eqpress-provision
     dest: /etc/nginx/sites-enabled/eqpress-provision
@@ -225,8 +225,8 @@
     - nginx
     - nginx_config
 
-- name: link eqpress nginx config
-  become: yes
+- name: Enable eqpress nginx site
+  become: true
   ansible.builtin.file:
     src: /etc/nginx/sites-available/eqpress
     dest: /etc/nginx/sites-enabled/eqpress
@@ -238,25 +238,25 @@
     - nginx
     - nginx_config
 
-- name: copy custom logrotate config for nginx access logs
-  become: yes
+- name: Install nginx logrotate config
+  become: true
   ansible.builtin.copy:
     src: etc/logrotate.d/nginx
     dest: /etc/logrotate.d
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   tags:
     - nginx
 
-- name: update nginx open file limits using ulimit in default file
-  become: yes
+- name: Set nginx open file limit in /etc/default/nginx
+  become: true
   ansible.builtin.copy:
     src: etc/default/nginx
     dest: /etc/default/nginx
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   when:
     - web_server_docker is not defined or web_server_docker|bool == false
   notify:
@@ -264,16 +264,16 @@
   tags:
     - nginx
 
-- name: nginx docker when web_server_docker
+- name: Set up dockerized nginx
   ansible.builtin.include_tasks: nginx-docker.yml
   when: web_server_docker|bool == true
   tags: always
 
-- name: ensure nginx will start at boot
-  become: yes
-  ansible.builtin.systemd:
+- name: Enable nginx at boot
+  become: true
+  ansible.builtin.systemd_service:
     name: nginx
-    enabled: yes
+    enabled: true
   when:
     - web_server_docker is not defined or web_server_docker|bool == false
   tags:
