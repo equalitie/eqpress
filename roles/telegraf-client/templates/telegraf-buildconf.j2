@@ -1,18 +1,31 @@
 #!/usr/bin/php
 <?php
 # {{ ansible_managed }}
-
+#
+# telegraf-buildconf - run by the telegraf-buildconf timer every 15 minutes.
+#
+# Builds /etc/telegraf/telegraf.conf from the main template plus a ping list
+# (edge IPs from nginx set_real_ip.conf). A new config is only installed if
+# telegraf accepts it; after a restart telegraf must be running, otherwise
+# the previous config is put back. Problems are logged, make the timer fail
+# and are emailed via eqpress_alert.sh (when installed).
+#
 $main_conf_file = '{{ telegraf_main_conf }}';
 $ping_output_file = '{{ telegraf_ping_output_file }}';
 $edge_ip_file = '{{ telegraf_edge_ip_file }}';
 $staging_file = '{{ telegraf_buildconf_staging_file }}';
 $main_conf = '/etc/telegraf/telegraf.conf';
+$previous_conf = '/etc/telegraf/telegraf.conf.previous';
+$telegraf_bin = '/usr/bin/telegraf';
+$alert_bin = '/usr/local/sbin/eqpress_alert.sh';
+
+openlog('telegraf-buildconf', LOG_PID, LOG_USER);
 
 if ($ping_output = get_ping($edge_ip_file)) {
   file_put_contents($ping_output_file, $ping_output);
   chmod($ping_output_file, 0640);
 } else {
-  echo "inputs.ping not ready or not used. Create blank file.";
+  echo "inputs.ping not ready or not used. Create blank file.\n";
   file_put_contents($ping_output_file, "#[[inputs.ping]] not inserted");
   chmod($ping_output_file, 0640);
 }
@@ -21,39 +34,96 @@ if ($final_output = include_ping($main_conf_file, $ping_output_file)) {
   file_put_contents($staging_file, $final_output);
   chmod($staging_file, 0640);
 } else {
-  fwrite(STDERR, "ERROR: telegraf-buildconf could not build conf file. Exiting\n");
-  exit(1);
+  fail("could not build $staging_file from $main_conf_file");
 }
 
-if (hash_file('sha256', $staging_file) != hash_file('sha256', $main_conf)) {
-  copy($staging_file, $main_conf);
-  chmod($main_conf, 0640);  
-  chown($main_conf, 'root');
-  chgrp($main_conf, 'telegraf');
-  restart_telegraf();
+// Nothing to do when the running config is already the same
+if (file_exists($main_conf) && hash_file('sha256', $staging_file) === hash_file('sha256', $main_conf)) {
+  alert('ok', "telegraf config unchanged and valid");
+  exit(0);
 }
 
-// TODO: Should we check it telegraf is running here?
+// Let telegraf check the whole new config (syntax, plugins, options)
+// without running anything.
+exec(escapeshellarg($telegraf_bin) . ' config check --config ' . escapeshellarg($staging_file)
+  . ' 2>&1', $check_out, $check_rc);
+if ($check_rc !== 0) {
+  // telegraf's own error lines (E!), or the last lines if there are none
+  $lines = array_values(array_filter(array_map('trim', $check_out)));
+  $errors = array_values(preg_grep('/\bE! /', $lines));
+  $why = implode(' ', array_slice($errors ? $errors : $lines, -3));
+  fail("new config rejected by telegraf, keeping the running config. $why");
+}
 
-exit(0);
+// Keep the current config to roll back to, then swap in the new one atomically
+if (file_exists($main_conf)) {
+  copy($main_conf, $previous_conf);
+  set_perms($previous_conf);
+}
+$tmp = $main_conf . '.new';
+copy($staging_file, $tmp);
+set_perms($tmp);
+rename($tmp, $main_conf);
+
+if (restart_telegraf()) {
+  echo "telegraf restarted with the new config\n";
+  syslog(LOG_INFO, "telegraf restarted with the new config");
+  alert('ok', "telegraf restarted with a new config");
+  exit(0);
+}
+
+// New config was accepted by the check but telegraf does not run: roll back
+if (file_exists($previous_conf)) {
+  copy($previous_conf, $tmp);
+  set_perms($tmp);
+  rename($tmp, $main_conf);
+  $back = restart_telegraf() ? 'previous config restored, telegraf running again'
+                             : 'previous config restored, but telegraf is STILL NOT RUNNING';
+} else {
+  $back = 'no previous config to restore, telegraf is NOT RUNNING';
+}
+fail("telegraf did not start with the new config; $back");
 
 // ################## FUNCTIONS
 
-function restart_telegraf() {
-  $output = shell_exec("systemctl restart telegraf.service");
-  if ($output === null) {
-    echo "telegraf restarted";
-  } else {
-    echo "Failed to restart telegraf" . $output;
-  }
+function set_perms($file) {
+  chmod($file, 0640);
+  chown($file, 'root');
+  chgrp($file, 'telegraf');
 }
 
+// Restart and confirm telegraf is actually running afterwards
+function restart_telegraf() {
+  exec('systemctl restart telegraf.service 2>&1', $out, $rc);
+  if ($rc !== 0) {
+    return false;
+  }
+  sleep(3);
+  exec('systemctl is-active --quiet telegraf.service', $out2, $active_rc);
+  return $active_rc === 0;
+}
+
+// Report a problem: stderr, syslog, alert email, failing exit code
+function fail($message) {
+  fwrite(STDERR, "ERROR: telegraf-buildconf: $message\n");
+  syslog(LOG_ERR, $message);
+  alert('problem', $message);
+  exit(1);
+}
+
+// eqpress_alert.sh emails only when the state changes (problem/ok)
+function alert($state, $message) {
+  global $alert_bin;
+  if (is_executable($alert_bin)) {
+    exec(escapeshellarg($alert_bin) . ' telegraf-config ' . escapeshellarg($state) . ' '
+      . escapeshellarg(gethostname() . ': ' . $message) . ' 2>&1');
+  }
+}
 
 function get_ping($edge_ip_file) {
   $ip_addresses = [];
   $static_ips = {{ telegraf_ping_extra_ip }};
   $output = FALSE;
-
   if (file_exists($edge_ip_file)) {
     $file_content = file_get_contents($edge_ip_file);
     preg_match_all('/set_real_ip_from\s+([\d.]+)/', $file_content, $matches);
@@ -61,9 +131,7 @@ function get_ping($edge_ip_file) {
       $ip_addresses = $matches[1];
     }
   }
-
   $all_ips = array_merge($ip_addresses, $static_ips);
-
   if (!empty($all_ips)) {
     $output = "[[inputs.ping]]\n  urls = ";
     $output .= "[\n  \"" . implode("\",\n  \"", $all_ips) . "\"\n  ]\n";
@@ -78,13 +146,10 @@ function include_ping($main_conf_file, $ping_output_file) {
   } else {
     return FALSE;
   }
-
   if (file_exists($ping_output_file)) {
-    $ping_content = file_get_contents($ping_output_file); 
+    $ping_content = file_get_contents($ping_output_file);
   } else {
     return FALSE;
   }
-
   return str_replace('{{ telegraf_inputs_ping_placeholder }}', $ping_content, $main_content);
 }
-
