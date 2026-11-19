@@ -29,7 +29,7 @@
       private: no
     
     - name: "auto_provision_gpg_id"
-      prompt: "keyID for encrypting logs (lookup your keyID at keys.openpgp.org). Use long key. "
+      prompt: "Fingerprint (40 characters, or 16 character long keyID) of the key for encrypting logs (lookup at keys.openpgp.org) "
       default: ""
       private: no
 

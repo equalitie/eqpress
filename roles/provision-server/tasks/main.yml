@@ -82,11 +82,30 @@
     - provision
     - provision_template
 
-- name: install auto-provision GPG key
-  become: yes
-  ansible.builtin.shell:
-    cmd: "gpg --keyserver {{ provision_gpg_keyserver }} --recv-keys {{ auto_provision_gpg_id }}"
-  ignore_errors: yes
+# The keyserver is often down: it is only contacted when the key is missing
+# or expires within provision_gpg_refresh_days. A missing/expiring key is a
+# warning (monit_provision.sh keeps unencrypted archives root-only and
+# emails); a wrong or ambiguous key in root's keyring fails the play.
+- name: Check auto-provision GPG key (fetch only if missing or expiring)
+  become: true
+  ansible.builtin.script:
+    cmd: >-
+      eq_provision_gpg_key.sh {{ auto_provision_gpg_id | quote }}
+      {{ provision_gpg_keyserver | quote }} {{ provision_gpg_refresh_days | int }}
+    executable: /bin/bash
+  environment:
+    GNUPGHOME: /root/.gnupg
+  register: provision_gpg_key
+  changed_when: provision_gpg_key.rc == 10
+  failed_when: provision_gpg_key.rc not in [0, 10, 20]
+  tags:
+    - provision_gpg
+    - provision
+
+- name: Warn about the auto-provision GPG key
+  ansible.builtin.debug:
+    msg: "{{ provision_gpg_key.stdout_lines }}"
+  when: provision_gpg_key.rc == 20
   tags:
     - provision_gpg
     - provision
