@@ -42,6 +42,9 @@
     group: root
     mode: 0600
     state: touch
+    # only create when missing; do not bump timestamps every run
+    modification_time: preserve
+    access_time: preserve
 
 - name: create admin groups
   become: yes
@@ -93,6 +96,9 @@
   become: yes
   ansible.builtin.command:
     cmd: /usr/bin/ssh-keygen -A
+  register: ssh_keygen_all
+  # ssh-keygen -A is silent unless it had to create a missing host key
+  changed_when: "'generating new host keys' in ssh_keygen_all.stdout"
   when:
     - mysql_repl_role is defined
 
