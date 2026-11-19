@@ -162,6 +162,24 @@
     - nginx_config
     - nginx
 
+# Users for the password-protected admin pages (/webstats/, /perf/)
+# in the eqpress vhost. Created empty (nobody can log in) and never
+# overwritten, so users added by hand are kept:
+#   htpasswd /etc/nginx/restricted_pages.htpasswd <user>   (apache2-utils)
+- name: Create htpasswd file for restricted admin pages
+  become: true
+  ansible.builtin.copy:
+    content: ""
+    dest: /etc/nginx/restricted_pages.htpasswd
+    owner: root
+    group: "{{ web_groupname }}"
+    mode: "0640"
+    force: false
+  when: not auto_provision_host | default(false) | bool
+  tags:
+    - nginx
+    - nginx_config
+
 - name: template nginx eqpress config
   become: yes
   ansible.builtin.template:

@@ -56,10 +56,6 @@ server {
 	error_log /var/log/nginx/{{ inventory_hostname }}.error.log;
 	root {{ eqpress_root_dir }};
 
-## FIXME
-# 	auth_basic "Restricted";
-#	auth_basic_user_file "/etc/nginx/restricted_pages.htpasswd";
-
 	include /etc/nginx/eqpress-common/common_eqpress_ssl.conf;
 	include /etc/nginx/eqpress-common/common_location_ep.conf;
 
@@ -67,6 +63,27 @@ server {
 	# served; the console proxy is reached on the 127.0.0.1:80 vhost below.
 	# Same as the port 80 server. ^~ wins over the regex locations above.
 	location ^~ /console/ { deny all; }
+
+	# Admin pages: password protected. Users are added by hand to
+	# /etc/nginx/restricted_pages.htpasswd (empty file = nobody can log in).
+	# PHP is handled inside each block because ^~ skips the \.php$ location.
+	location ^~ /webstats/ {
+		auth_basic "Restricted";
+		auth_basic_user_file /etc/nginx/restricted_pages.htpasswd;
+		location ~ \.php$ {
+			include /etc/nginx/eqpress-common/common_fastcgi.conf;
+		}
+	}
+	location ^~ /perf/ {
+		auth_basic "Restricted";
+		auth_basic_user_file /etc/nginx/restricted_pages.htpasswd;
+		location ~ \.php$ {
+			include /etc/nginx/eqpress-common/common_fastcgi.conf;
+		}
+	}
+	# shared/ (e.g. shared mu-plugins) is only ever loaded from disk, never
+	# over HTTP. Same as the port 80 server.
+	location ^~ /shared/ { deny all; }
 
 	location / {
 		try_files $uri $uri/ /index.php?$args;
