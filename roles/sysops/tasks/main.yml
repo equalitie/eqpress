@@ -269,6 +269,7 @@
     - backup_to_slave.sh
     - wp_db_backup.sh
     - backup_with_tarsnap.sh
+    - site_snapshot_tool.sh
   tags:
     - sysops
     - sbin
