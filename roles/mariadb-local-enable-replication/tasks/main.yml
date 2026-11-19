@@ -97,6 +97,38 @@
 
 # We only go in this block when building replica
 - block:
+    # Space check first, while nothing is stopped yet. Binlogs and relay logs
+    # are left out because mariabackup does not copy them.
+    - name: measure the database size on master
+      become: true
+      ansible.builtin.command:
+        cmd: du -sb --exclude=mysql_bin.* --exclude=relay_bin.* {{ mariadb_datadir }}
+      register: resync_db_size
+      changed_when: false
+      check_mode: false
+      when:
+        - mysql_repl_role == 'master'
+
+    - name: check there is enough disk space for the resync
+      become: true
+      vars:
+        db_bytes: "{{ (ansible_play_batch | map('extract', hostvars) | selectattr('resync_db_size', 'defined')
+                       | selectattr('resync_db_size.stdout', 'defined') | map(attribute='resync_db_size.stdout')
+                       | first).split()[0] }}"
+      ansible.builtin.script:
+        cmd: >-
+          eq_resync_space_check.sh
+          {% if mysql_repl_role == 'master' %}
+          {{ db_bytes }}:/tmp/mariadb_backup
+          {{ db_bytes }}:/tmp/mariadb_master-snapshot.tar.bz2
+          {% else %}
+          {{ db_bytes }}:/tmp/mariadb_master-snapshot.tar.bz2
+          {{ db_bytes }}:/var/lib/mariadb_master_snapshot
+          {{ db_bytes }}:{{ mariadb_datadir }}
+          {% endif %}
+      changed_when: false
+      check_mode: false
+
     - name: stop the mysql server on the slave
       become: yes
       ansible.builtin.systemd:
