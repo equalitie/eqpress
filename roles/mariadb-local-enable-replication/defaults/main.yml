@@ -2,3 +2,9 @@
 mariadb_datadir: /var/lib/mysql
 mariadb_unix_socket: /run/mysqld/mysqld.sock
 ansible_rename_replica_ident: "2.11"
+# Work folder for a slave resync (master backup and the archive sent to the
+# slave). It needs room for about 2x the database on the master and 1x on
+# the slave, so keep it on the big data disk, not /tmp (often small, or RAM).
+# If /var/lib/mysql is its own mount, point this to a folder on that disk
+# that is outside the datadir.
+mariadb_resync_dir: "{{ mariadb_datadir | dirname }}/mariadb_resync"
