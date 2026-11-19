@@ -124,15 +124,47 @@
     - provision
     - ansible_inventory
 
-- name: install Wordpress latest.tar.gz
-  become: yes
+# /home/wordpress/latest.tar.gz is the WordPress every new site gets.
+# wordpress_source_version (defaults/main.yml):
+#   "latest"  - follow wordpress.org/latest (replaced only when it changed)
+#   "6.8.3"   - pin that release (e.g. to go back when latest is bad)
+#   "manual"  - never download; keep the file that is there
+- name: Check wordpress_source_version
+  ansible.builtin.assert:
+    that:
+      - wordpress_source_version is match('^(latest|manual|[0-9]+(\.[0-9]+)+)$')
+    fail_msg: >-
+      wordpress_source_version must be "latest", "manual" or a release number
+      such as "6.8.3", not "{{ wordpress_source_version }}"
+    quiet: true
+  tags:
+    - provision
+    - wordpress_source
+
+- name: Create /home/wordpress for the WordPress archive
+  become: true
+  ansible.builtin.file:
+    path: /home/wordpress
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+    - provision
+    - wordpress_source
+
+- name: Install WordPress {{ wordpress_source_version }} as /home/wordpress/latest.tar.gz
+  become: true
+  vars:
+    wp_archive: "{{ (wordpress_source_version == 'latest') | ternary('latest', 'wordpress-' ~ wordpress_source_version) }}.tar.gz"
   ansible.builtin.get_url:
-    url: https://wordpress.org/latest.tar.gz
+    url: "https://wordpress.org/{{ wp_archive }}"
+    checksum: "sha1:https://wordpress.org/{{ wp_archive }}.sha1"
     dest: /home/wordpress/latest.tar.gz
-    owner: wordpress
-    group: wordpress
-    mode: '0644'
-    backup: yes
+    owner: root
+    group: root
+    mode: "0644"
+  when: wordpress_source_version != 'manual'
   tags:
     - provision
     - wordpress_source

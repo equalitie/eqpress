@@ -9,5 +9,10 @@ provision_gpg_keyserver: "hkps://keyserver.ubuntu.com"
 nodejs_repo: "https://deb.nodesource.com/node_22.x"
 nodejs_gpg_key_url: "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key"
 
+# WordPress given to new sites (/home/wordpress/latest.tar.gz):
+# "latest", a release such as "6.8.3" (pin / roll back), or "manual" (never
+# download, keep the file that is there). Override in group_vars/provision.
+wordpress_source_version: "latest"
+
 rampass_repo: 'https://github.com/RamJett/rampass.git'
 rampass_version: 'development'
