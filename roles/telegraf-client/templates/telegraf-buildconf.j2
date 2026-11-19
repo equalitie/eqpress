@@ -126,15 +126,23 @@ function get_ping($edge_ip_file) {
   $output = FALSE;
   if (file_exists($edge_ip_file)) {
     $file_content = file_get_contents($edge_ip_file);
-    preg_match_all('/set_real_ip_from\s+([\d.]+)/', $file_content, $matches);
-    if (!empty($matches[1])) {
-      $ip_addresses = $matches[1];
+    // Single edge addresses only. A range (e.g. /24) would otherwise be
+    // pinged at its network address, which never answers and looks like an
+    // edge with 100% loss. "/32" is a single address and is kept.
+    preg_match_all('/set_real_ip_from\s+(\d+\.\d+\.\d+\.\d+)(?:\/(\d+))?\s*;/', $file_content, $matches, PREG_SET_ORDER);
+    foreach ($matches as $m) {
+      if (!isset($m[2]) || $m[2] === '' || $m[2] === '32') {
+        $ip_addresses[] = $m[1];
+      }
     }
   }
-  $all_ips = array_merge($ip_addresses, $static_ips);
+  // Each address once (the edge list can contain duplicates)
+  $all_ips = array_values(array_unique(array_merge($ip_addresses, $static_ips)));
   if (!empty($all_ips)) {
     $output = "[[inputs.ping]]\n  urls = ";
     $output .= "[\n  \"" . implode("\",\n  \"", $all_ips) . "\"\n  ]\n";
+    // Once a minute per address is enough for loss/latency graphs
+    $output .= "  interval = \"60s\"\n";
     $output .= "  ping_interval = 2.0\n";
   }
   return $output;
