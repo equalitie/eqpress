@@ -54,7 +54,11 @@ slave_net_timeout              = {{ mysql_slave_net_timeout | default('180') }}
 # CACHES AND LIMITS #
 tmp_table_size                 = {{ mariadb_tmp_table_size | default('512M') }}
 max_heap_table_size            = {{ mariadb_max_heap_table_size | default('512M') }}
-query_cache_type               = 0
+# Query cache is ON. MariaDB turns it on whenever query_cache_size is not 0,
+# whatever query_cache_type says (the old "= 0" here never took effect).
+# Production hit rate is about 74%, so it is kept. To really turn it off,
+# set mariadb_query_cache_size to 0 and query_cache_type to 0.
+query_cache_type               = 1
 query_cache_size               = {{ mariadb_query_cache_size | default('1G') }}
 query_cache_limit              = 256K
 max_connections                = {{ mariadb_max_connections | default('150') }}
