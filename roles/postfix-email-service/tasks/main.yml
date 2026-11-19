@@ -8,45 +8,46 @@
   tags:
     - postfix
 
-- name: Install common packages
-  become: yes
+- name: Install Postfix and mail tools
+  become: true
   ansible.builtin.apt:
     name:
+      # clamav: not used by Postfix; admins run clamscan by hand on sites
       - clamav
-      - mailutils 
+      - mailutils
       - libsasl2-modules
       - postfix
     state: present
   tags:
     - postfix
 
-- name: template postfix mail.cf
-  become: yes
+- name: Install Postfix main.cf variants
+  become: true
   ansible.builtin.template:
     src: "etc/postfix/{{ item }}.j2"
     dest: "/etc/postfix/{{ item }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop:
-   - main.cf-eqpress
-   - main.cf-mandrill
-   - main.cf-sendgrid
+    - main.cf-eqpress
+    - main.cf-mandrill
+    - main.cf-sendgrid
   tags:
     - postfix
   notify:
     - "restart postfix"
 
-- name: stat /etc/postfix/main.cf
-  become: yes
+- name: Check /etc/postfix/main.cf
+  become: true
   ansible.builtin.stat:
     path: /etc/postfix/main.cf
   register: postfix_main_cf
   tags:
     - postfix
 
-- name: move default main.cf if exists and not symlink
-  become: yes
+- name: Keep the distribution main.cf as main.cf.dist
+  become: true
   ansible.builtin.command:
     cmd: mv /etc/postfix/main.cf /etc/postfix/main.cf.dist
     creates: /etc/postfix/main.cf.dist
@@ -58,15 +59,15 @@
   notify:
     - "restart postfix"
 
-- name: Symlink to postfix mail.cf
-  become: yes
+- name: Link main.cf to the selected mail service
+  become: true
   ansible.builtin.file:
     src: "/etc/postfix/main.cf-{{ mail_service }}"
     dest: /etc/postfix/main.cf
     owner: root
     group: root
     state: link
-    force: yes
+    force: true
   tags:
     - postfix
   notify:
