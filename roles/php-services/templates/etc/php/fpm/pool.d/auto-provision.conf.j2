@@ -12,6 +12,9 @@ pm.min_spare_servers = 2
 pm.max_spare_servers = 2
 pm.process_idle_timeout = 10s
 pm.max_requests = 32
+; status page for telegraf (inputs.phpfpm reads every socket in /var/run/php);
+; only reachable through the socket, nginx sends only .php requests here
+pm.status_path = /phpfpmstatus
 slowlog = /var/log/php-fpm-slow.log
 php_admin_value[memory_limit] = 256M
 env[TMP] = /var/tmp
