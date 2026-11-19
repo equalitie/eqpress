@@ -370,8 +370,8 @@ function do_wpadmin_ssl( $domain, $ssl_state ) {
 	$backup_wp_config = $wp_dir . '/.wpc_backup';
 	if ( is_file( $wp_dir . '/wp-config.php' ) )
 		$wp_config_file = $wp_dir . '/wp-config.php';
-	else if ( is_file( $wp_dir . '../wp-config.php' ) )
-		$wp_config_file = $wp_dir . '../wp-config.php';
+	else if ( is_file( $wp_dir . '/../wp-config.php' ) )
+		$wp_config_file = $wp_dir . '/../wp-config.php';
 	else
 		process_errors( "eqpress-console-proxy: wpadmin_ssl error. " .  $wp_dir . "/wp-config.php not found. Domain is $domain.", true );
 	
@@ -409,8 +409,8 @@ function do_editor( $domain, $edits ) {
 	$backup_wp_config = $wp_dir . '/.wpc_backup';
 	if ( is_file( $wp_dir . '/wp-config.php' ) )
 		$wp_config_file = $wp_dir . '/wp-config.php';
-	else if ( is_file( $wp_dir . '../wp-config.php' ) )
-		$wp_config_file = $wp_dir . '../wp-config.php';
+	else if ( is_file( $wp_dir . '/../wp-config.php' ) )
+		$wp_config_file = $wp_dir . '/../wp-config.php';
 	else
 		process_errors( "eqpress-console-proxy: admin-editor error. " .  $wp_dir . "/wp-config.php not found. Domain is $domain.", true );
 	

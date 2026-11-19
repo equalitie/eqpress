@@ -1,6 +1,6 @@
 ---
-- name: create eqpress directories
-  become: yes
+- name: Create eqpress directories
+  become: true
   ansible.builtin.file:
     path: "{{ eqpress_root_dir }}/{{ item.dir }}"
     state: directory
@@ -37,11 +37,12 @@
     - { dir: 'shared', owner: 'root', group: 'root', mode: '0755' }
     - { dir: 'shared/mu-plugins', owner: 'root', group: 'root', mode: '0755' }
   tags:
+    - eqpress_root
     - console_plugin
     - adminer
 
-- name: webstat index script template
-  become: yes
+- name: Install webstats page
+  become: true
   ansible.builtin.template:
     src: webstats/index.php.j2
     dest: "{{ eqpress_root_dir }}/webstats/index.php"
@@ -49,15 +50,17 @@
     # holds the webstats DB password: readable by PHP (web user) only
     group: "{{ web_groupname }}"
     mode: "0640"
+  tags:
+    - eqpress_root
 
-- name: copy console files 
-  become: yes
+- name: Install console plugin files
+  become: true
   ansible.builtin.copy:
     src: "console/{{ item }}"
     dest: "{{ eqpress_root_dir }}/console/{{ item }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop:
     - plugin/eqpress-console/eqpress-console.php
     - plugin/eqpress-console/css/style.css
@@ -70,10 +73,11 @@
     - plugin/eqpress-console/js/countdown-int.js
     - plugin/eqpress-console/js/countdown.js
   tags:
+    - eqpress_root
     - console_plugin
 
-- name: console templates
-  become: yes
+- name: Install console templates
+  become: true
   ansible.builtin.template:
     src: "console/{{ item.file }}.j2"
     dest: "{{ eqpress_root_dir }}/console/{{ item.file }}"
@@ -88,46 +92,52 @@
   loop_control:
     label: "{{ item.file }}"
   tags:
+    - eqpress_root
     - console_plugin
 
-- name: catchall templates
-  become: yes
+- name: Install catchall page
+  become: true
   ansible.builtin.template:
     src: "catchall/{{ item }}.j2"
     dest: "{{ eqpress_root_dir }}/catchall/{{ item }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop:
     - index.html
+  tags:
+    - eqpress_root
 
-- name: copy perf files
-  become: yes
+- name: Install perf files
+  become: true
   ansible.builtin.copy:
     src: "perf/{{ item }}"
     dest: "{{ eqpress_root_dir }}/perf/{{ item }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop:
     - opcache.php
+  tags:
+    - eqpress_root
 
-- name: copy cache-purge files
-  become: yes
+- name: Install cache-purge plugin files
+  become: true
   ansible.builtin.copy:
     src: "cache-purge/{{ item }}"
     dest: "{{ eqpress_root_dir }}/cache-purge/{{ item }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop:
     - nginx-helper.php
     - nginx-helper/purger.php
   tags:
+    - eqpress_root
     - console_plugin
 
-- name: remove old adminer files and dir, pre 5.2
-  become: yes
+- name: Remove old Adminer files (pre 5.2)
+  become: true
   ansible.builtin.file:
     path: "{{ eqpress_root_dir }}/adminer/{{ item }}"
     state: absent
@@ -135,6 +145,7 @@
     - plugins
     - adminer.css
   tags:
+    - eqpress_root
     - adminer
 
 # Read-only: tell the admin when a newer Adminer release exists, so the pin
@@ -152,6 +163,7 @@
   changed_when: false
   check_mode: false
   tags:
+    - eqpress_root
     - adminer
 
 - name: Report newer Adminer release
@@ -166,62 +178,68 @@
     - adminer_latest.json.tag_name | default('') | length > 0
     - adminer_latest.json.tag_name | regex_replace('^v', '') != adminer_version
   tags:
+    - eqpress_root
     - adminer
 
-- name: download and install adminer
-  become: yes
+- name: Install Adminer
+  become: true
   ansible.builtin.get_url:
     url: "{{ adminer_download }}"
     checksum: "sha256:{{ adminer_sha256 }}"
     dest: "{{ eqpress_root_dir }}/adminer/adminer.php"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   tags:
+    - eqpress_root
     - adminer
 
-- name: install adminer plugins
-  become: yes
+- name: Install Adminer plugins
+  become: true
   ansible.builtin.get_url:
     url: "{{ adminer_plugins_url }}/{{ item.file }}"
     checksum: "sha256:{{ item.sha256 }}"
     dest: "{{ eqpress_root_dir }}/adminer/adminer-plugins/{{ item.file }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop: "{{ adminer_plugins }}"
   loop_control:
     label: "{{ item.file }}"
   tags:
+    - eqpress_root
     - adminer
 
 # Earlier versions saved the dark switcher plugin under a misspelled name
-- name: remove misspelled adminer plugin file
-  become: yes
+- name: Remove misspelled Adminer plugin file
+  become: true
   ansible.builtin.file:
     path: "{{ eqpress_root_dir }}/adminer/adminer-plugins/dark-swtcher.php"
     state: absent
   tags:
+    - eqpress_root
     - adminer
 
-- name: install adminer-plugins.php
-  become: yes
+- name: Install Adminer plugin config
+  become: true
   ansible.builtin.copy:
     src: adminer/adminer-plugins.php
     dest: "{{ eqpress_root_dir }}/adminer/adminer-plugins.php"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   tags:
+    - eqpress_root
     - adminer
 
-- name: install adminer index
-  become: yes
+- name: Install Adminer index
+  become: true
   ansible.builtin.copy:
     src: adminer/index.php
     dest: "{{ eqpress_root_dir }}/adminer/index.php"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   tags:
+    - eqpress_root
     - adminer
