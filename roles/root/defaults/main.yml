@@ -1,6 +1,22 @@
 ---
-adminer_download: "https://www.adminer.org/latest-mysql.php"
-adminer_dump_json_url: "https://raw.github.com/vrana/adminer/master/plugins/dump-json.php"
-adminer_dump_date_url: "https://raw.github.com/vrana/adminer/master/plugins/dump-date.php"
-adminer_database_hide_url: "https://raw.github.com/vrana/adminer/master/plugins/database-hide.php"
-adminer_dark_switcher_url: "https://raw.githubusercontent.com/vrana/adminer/master/plugins/dark-switcher.php"
+# Adminer (served to customers at https://<domain>/adminer/), pinned to a
+# release and verified by SHA-256. Plugins come from the same release tag.
+#
+# To update (a run prints "NEW ADMINER RELEASE ..." when one exists):
+#   1. set adminer_version to the new release
+#      (https://github.com/vrana/adminer/releases)
+#   2. adminer_sha256: the sha256 of adminer-<version>-mysql.php shown on
+#      the release page
+#   3. plugin checksums:
+#        for p in dump-json dump-date database-hide dark-switcher; do
+#          printf '%s ' $p; curl -sL https://raw.githubusercontent.com/vrana/adminer/v<version>/plugins/$p.php | sha256sum
+#        done
+adminer_version: "6.3.0"
+adminer_sha256: "33af3816a08213ae7579f8416e66d7d70054d6bcd70516d4ad3124f4b8b5c1e0"
+adminer_download: "https://github.com/vrana/adminer/releases/download/v{{ adminer_version }}/adminer-{{ adminer_version }}-mysql.php"
+adminer_plugins_url: "https://raw.githubusercontent.com/vrana/adminer/v{{ adminer_version }}/plugins"
+adminer_plugins:
+  - { file: "dump-json.php", sha256: "6f89fcc33075d9ec478a78f0327caa5d7123d5434c3e9e67b697b4ccce922b01" }
+  - { file: "dump-date.php", sha256: "334c37405bbe8c2baa8747b6a852bb2cbed6db2b080da8949c46ede5b580f04f" }
+  - { file: "database-hide.php", sha256: "a411644942b2a327f51b08cd5a7d19eb77f836af127981bff4995744c6b012bb" }
+  - { file: "dark-switcher.php", sha256: "9a787eb7f4f9002df88458e2ef150b2d712ebf8df222bd73e2f092ca537e5a27" }

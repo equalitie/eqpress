@@ -133,10 +133,42 @@
   tags:
     - adminer
 
+# Read-only: tell the admin when a newer Adminer release exists, so the pin
+# in defaults/main.yml gets bumped. Skipped quietly if GitHub is unreachable.
+- name: Check for a newer Adminer release
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/vrana/adminer/releases/latest
+    return_content: true
+    timeout: 10
+  register: adminer_latest
+  failed_when: false
+  changed_when: false
+  check_mode: false
+  tags:
+    - adminer
+
+- name: Report newer Adminer release
+  ansible.builtin.debug:
+    msg: >-
+      NEW ADMINER RELEASE {{ adminer_latest.json.tag_name }} available
+      (pinned {{ adminer_version }}). Update adminer_version and checksums in
+      roles/root/defaults/main.yml.
+  run_once: true
+  when:
+    - adminer_latest.status | default(0) == 200
+    - adminer_latest.json.tag_name | default('') | length > 0
+    - adminer_latest.json.tag_name | regex_replace('^v', '') != adminer_version
+  tags:
+    - adminer
+
 - name: download and install adminer
   become: yes
   ansible.builtin.get_url:
     url: "{{ adminer_download }}"
+    checksum: "sha256:{{ adminer_sha256 }}"
     dest: "{{ eqpress_root_dir }}/adminer/adminer.php"
     owner: root
     group: root
@@ -147,16 +179,24 @@
 - name: install adminer plugins
   become: yes
   ansible.builtin.get_url:
-    url: "{{ item.url }}"
-    dest: "{{ eqpress_root_dir }}/adminer/adminer-plugins/{{ item.plugin }}"
+    url: "{{ adminer_plugins_url }}/{{ item.file }}"
+    checksum: "sha256:{{ item.sha256 }}"
+    dest: "{{ eqpress_root_dir }}/adminer/adminer-plugins/{{ item.file }}"
     owner: root
     group: root
     mode: 0644
-  loop:
-    - { url: "{{ adminer_dump_json_url }}", plugin: "dump-json.php" }
-    - { url: "{{ adminer_dump_date_url }}", plugin: "dump-date.php" }
-    - { url: "{{ adminer_database_hide_url }}", plugin: "database-hide.php" }
-    - { url: "{{ adminer_dark_switcher_url }}", plugin: "dark-swtcher.php" }
+  loop: "{{ adminer_plugins }}"
+  loop_control:
+    label: "{{ item.file }}"
+  tags:
+    - adminer
+
+# Earlier versions saved the dark switcher plugin under a misspelled name
+- name: remove misspelled adminer plugin file
+  become: yes
+  ansible.builtin.file:
+    path: "{{ eqpress_root_dir }}/adminer/adminer-plugins/dark-swtcher.php"
+    state: absent
   tags:
     - adminer
 
