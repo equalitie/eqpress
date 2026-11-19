@@ -1,17 +1,26 @@
 #!/bin/bash
-echo -n "Do you wish to turn me into the master? [yes/no]: "
-read master
-if [ "$master" = "yes" ]; then
-	ip addr add {{ hostvars[mysql_repl_master].ansible_default_ipv4.address }}/24 brd + dev eth0
-	ping -c5 {{ hostvars[mysql_repl_master].ansible_default_ipv4.gateway }}
-else
-	echo -n "Do you wish to turn me into a slave? [yes/no]: "
-	read slave
-	if [ "$slave" = "yes" ]; then
-		ip addr del {{ hostvars[mysql_repl_master].ansible_default_ipv4.address }}/24 dev eth0
-	else
-		echo I am what I was. Nothing has changed.
-	fi
-fi
-echo If you are a master then you should stop the mysql slave process.
-echo If you have been turned back into a slave then you should start the mysql slave process or restart mysql.
+echo "master_or_slave.sh is deprecated and here as reference only"
+exit 1
+
+# ---------------------------------------------------------------------------
+# Reference only, never runs. Kept in {% raw %} so Ansible does not fill in
+# the master's facts (which fails when the master is not in the play).
+# The original script moved the master's IP onto this slave:
+# {% raw %}
+#echo -n "Do you wish to turn me into the master? [yes/no]: "
+#read master
+#if [ "$master" = "yes" ]; then
+#	ip addr add {{ hostvars[mysql_repl_master].ansible_default_ipv4.address }}/24 brd + dev eth0
+#	ping -c5 {{ hostvars[mysql_repl_master].ansible_default_ipv4.gateway }}
+#else
+#	echo -n "Do you wish to turn me into a slave? [yes/no]: "
+#	read slave
+#	if [ "$slave" = "yes" ]; then
+#		ip addr del {{ hostvars[mysql_repl_master].ansible_default_ipv4.address }}/24 dev eth0
+#	else
+#		echo I am what I was. Nothing has changed.
+#	fi
+#fi
+#echo If you are a master then you should stop the mysql slave process.
+#echo If you have been turned back into a slave then you should start the mysql slave process or restart mysql.
+# {% endraw %}
