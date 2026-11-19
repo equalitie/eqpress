@@ -64,7 +64,7 @@
     priv: "{{ eq_pwpusher_db }}.*:ALL"
     state: present
     login_unix_socket: "{{ mariadb_unix_socket }}"
-  no_log: no
+  no_log: true
   tags:
     - provision
     - rampass
