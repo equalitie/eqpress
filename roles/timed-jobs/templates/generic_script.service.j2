@@ -3,7 +3,7 @@
 Description={{ item.generic_script_description }}
 
 [Service]
-Type=simple
+Type=oneshot
 ExecStart={{ item.generic_script }}
 StandardOutput=null
 StandardError=journal

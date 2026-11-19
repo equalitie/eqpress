@@ -10,7 +10,7 @@
 # treated as untrusted.
 #
 export PATH=/bin:/usr/bin:/usr/local/sbin
-LOCK_EXIT=0
+rc=0
 LOCKS={{ eqpress_root_dir }}/console/lockdown/lock
 UNLOCKS={{ eqpress_root_dir }}/console/lockdown/unlock
 
@@ -31,38 +31,59 @@ take_request() {
 	return 0
 }
 
+# Run one step of a request; on failure say so and mark the run failed,
+# but keep going with the remaining steps.
+step() {
+	"$@" && return 0
+	echo "Error: $* failed"
+	rc=1
+	return 1
+}
+
 if cd "$LOCKS"; then
 	for DOMAIN in *; do
 		[ -f "$DOMAIN" ] || continue
-		LOCK_EXIT=1
-		take_request "$DOMAIN" || continue
-		chcustown "$DOMAIN"	# change ownership to customer's username
-		chepown "/var/www/$DOMAIN" # make all eqpress console files owned by root
-		chwebown "/var/www/$DOMAIN/wordpress/wp-content/uploads" # make uploads writable by web server user
-		chwebown "/var/www/$DOMAIN/wordpress/.sessions" # make PHP sessions dir writable by web server user
-		touch "/var/www/$DOMAIN/wordpress/php-errors.log"
-		chwebown "/var/www/$DOMAIN/wordpress/php-errors.log" # php error log writable by php web server user
+		take_request "$DOMAIN" || { rc=1; continue; }
+		before=$rc; rc=0
+		step chcustown "$DOMAIN"	# change ownership to customer's username
+		step chepown "/var/www/$DOMAIN" # make all eqpress console files owned by root
+		step chwebown "/var/www/$DOMAIN/wordpress/wp-content/uploads" # make uploads writable by web server user
+		step chwebown "/var/www/$DOMAIN/wordpress/.sessions" # make PHP sessions dir writable by web server user
+		step touch "/var/www/$DOMAIN/wordpress/php-errors.log"
+		step chwebown "/var/www/$DOMAIN/wordpress/php-errors.log" # php error log writable by php web server user
 		if [ -d "/var/www/$DOMAIN/wordpress/wp-content/blogs.dir" ]; then
-			chwebown "/var/www/$DOMAIN/wordpress/wp-content/blogs.dir" # make multisite upload dir writable by web server user
+			step chwebown "/var/www/$DOMAIN/wordpress/wp-content/blogs.dir" # make multisite upload dir writable by web server user
 		fi
-		echo "$DOMAIN has been locked down"
+		if [ "$rc" -eq 0 ]; then
+			echo "$DOMAIN has been locked down"
+		else
+			echo "Error: lockdown of $DOMAIN did not fully complete"
+		fi
+		[ "$before" -eq 1 ] && rc=1
 	done
 else
 	echo "Error: Could not change into $LOCKS"
+	rc=1
 fi
 
 if cd "$UNLOCKS"; then
 	for DOMAIN in *; do
 		[ -f "$DOMAIN" ] || continue
-		LOCK_EXIT=1
-		take_request "$DOMAIN" || continue
-		chwebown "/var/www/$DOMAIN/wordpress" # make everything writable by web server user
-		chepown "/var/www/$DOMAIN" # make eqpress console files owned by root
-		echo "$DOMAIN has been unlocked"
+		take_request "$DOMAIN" || { rc=1; continue; }
+		before=$rc; rc=0
+		step chwebown "/var/www/$DOMAIN/wordpress" # make everything writable by web server user
+		step chepown "/var/www/$DOMAIN" # make eqpress console files owned by root
+		if [ "$rc" -eq 0 ]; then
+			echo "$DOMAIN has been unlocked"
+		else
+			echo "Error: unlock of $DOMAIN did not fully complete"
+		fi
+		[ "$before" -eq 1 ] && rc=1
 	done
 else
 	echo "Error: Could not change into $UNLOCKS"
+	rc=1
 fi
 
-# Non-zero when something was processed (kept from the monit days)
-exit $LOCK_EXIT
+# 0 = all requests (if any) done; 1 = at least one failed (unit shows failed)
+exit $rc

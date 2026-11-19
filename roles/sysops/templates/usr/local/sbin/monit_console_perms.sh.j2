@@ -14,24 +14,28 @@ CONFS={{ eqpress_root_dir }}/console/perms
 
 cd "$CONFS" || { echo "Error: Could not change into $CONFS"; exit 1; }
 
-processed=0
+rc=0
 for DOMAIN in *; do
 	[ -f "$DOMAIN" ] || continue
-	processed=1
 	rm -f -- "$DOMAIN"
 	if [[ ! "$DOMAIN" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
 		echo "Error: invalid domain name '$DOMAIN', request ignored"
 		logger -t eqpress-console "perms: ignored request with invalid name '$DOMAIN'"
+		rc=1
 		continue
 	fi
 	if [ -d "/var/www/$DOMAIN/wordpress" ]; then
-		chwebown "/var/www/$DOMAIN/wordpress/"
-		chepown "/var/www/$DOMAIN"
-		echo "Changed permissions for: $DOMAIN"
+		if chwebown "/var/www/$DOMAIN/wordpress/" && chepown "/var/www/$DOMAIN"; then
+			echo "Changed permissions for: $DOMAIN"
+		else
+			echo "Error: could not change permissions for $DOMAIN"
+			rc=1
+		fi
 	else
 		echo "Error: $DOMAIN is not installed"
+		rc=1
 	fi
 done
 
-# Non-zero when something was processed (kept from the monit days)
-exit $processed
+# 0 = all requests (if any) done; 1 = at least one failed (unit shows failed)
+exit $rc
