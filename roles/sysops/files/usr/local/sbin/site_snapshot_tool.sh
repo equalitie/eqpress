@@ -20,11 +20,51 @@ export PATH=/usr/bin:/bin:/usr/local/sbin:/usr/local/bin
 SITES=/var/www
 DEFAULT_OUT=/root/site_snapshots
 
+help() {
+  local me
+  me=$(basename "$0")
+  cat <<EOF
+$me - list, export and clean up site git snapshots made by site_snapshot.sh
+
+Usage:
+  $me list    <site>
+  $me export  <site> <tag|latest> [output_dir]
+  $me cleanup <site|all> [days] [--yes]
+  $me help
+
+Commands:
+  list     Show the site's snapshots (tag and date, oldest first) and the
+           database dumps in its folder (<db>.sql.gz, <db>.sql.1.gz).
+  export   Write one snapshot as <output_dir>/<site>-<tag>.tar.gz
+           (default dir: $DEFAULT_OUT). It unpacks to wordpress/ and holds
+           that moment's files, wp-config.php and database dump
+           (wordpress/<db_name>.sql). The live site is not changed.
+  cleanup  Remove snapshots older than <days> (default 365) and free the
+           space. Without --yes it is a dry run. The newest snapshot is
+           always kept. Files still on the site are never lost, only
+           history from before the cutoff.
+
+<site> is the folder name under $SITES (usually the domain):
+  ls $SITES                                     all sites
+  ls -d $SITES/*/snapshot | cut -d/ -f4         sites with snapshots
+
+Snapshots are only made for sites with a .dosnapshot file:
+  touch $SITES/<site>/.dosnapshot
+
+Examples:
+  $me list example.org
+  $me export example.org latest
+  $me export example.org 2026-11-18-110013UTC /root/restore
+  $me cleanup example.org             (dry run)
+  $me cleanup example.org 180 --yes
+  $me cleanup all --yes
+
+Must be run as root (except help).
+EOF
+}
+
 usage() {
-  echo "Usage:"
-  echo "  $0 list   <site>"
-  echo "  $0 export <site> <tag|latest> [output_dir]   (default dir: $DEFAULT_OUT)"
-  echo "  $0 cleanup <site|all> [days] [--yes]         (default days: 365, dry run without --yes)"
+  help >&2
   exit 1
 }
 
@@ -212,6 +252,12 @@ cmd_cleanup() {
     cleanup_site "$target" "$days" "$apply"
   fi
 }
+
+case "$1" in
+  help|-h|--help) help; exit 0 ;;
+  list|export|cleanup) ;;
+  *) usage ;;
+esac
 
 if [[ $EUID -ne 0 ]]; then
   die "must be run as root"
