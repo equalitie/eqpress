@@ -58,6 +58,10 @@ $timestamp = date('Ymd_His');
 $archiveRoot = "/var/www/archive/{$domain}";
 $archiveFile = "{$archiveRoot}/{$domain}-{$timestamp}.tar.gz";
 $phpVersion = $phpOverride ?? trim(shell_exec("php -r 'echo PHP_MAJOR_VERSION . \".\" . PHP_MINOR_VERSION;'"));
+if (!preg_match('/^\d+\.\d+$/', $phpVersion)) {
+  fwrite(STDERR, "Invalid PHP version '{$phpVersion}'.\n");
+  exit(1);
+}
 $phpFpmPool = "/etc/php/{$phpVersion}/fpm/pool.d/{$domain}_pool.conf";
 
 purge_site($domain);
@@ -100,18 +104,41 @@ function archive_site($webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $db
     if (!is_dir($archiveRoot)) mkdir($archiveRoot, 0750, true);
   });
 
+  // Stop before anything is deleted if the backup fails
   action("Dumping MySQL database", function () use ($dbName, $archiveRoot) {
     $dumpFile = "$archiveRoot/db.sql.gz";
-    system("mysqldump -u root {$dbName} | gzip -9 > {$dumpFile}");
+    $cmd = 'mysqldump -u root ' . escapeshellarg($dbName) . ' | gzip -9 > ' . escapeshellarg($dumpFile);
+    system('bash -o pipefail -c ' . escapeshellarg($cmd), $rc);
+    if ($rc !== 0) {
+      fwrite(STDERR, "Aborting: database dump failed, nothing was deleted.\n");
+      exit(1);
+    }
   });
 
   action("Creating site archive", function () use ($webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $archiveFile) {
     $files = array_filter([$nginxAvailable, $nginxEnabled, $phpFpmPool], 'file_exists');
-    $cmd = "tar --exclude='*.log' --exclude='*.wpress' --exclude='*/tmp/*' --exclude='*/cache/*' -czf {$archiveFile} ";
+    $cmd = "tar --exclude='*.log' --exclude='*.wpress' --exclude='*/tmp/*' --exclude='*/cache/*' -czf " . escapeshellarg($archiveFile) . ' ';
     $cmd .= implode(' ', array_map('escapeshellarg', $files));
     $cmd .= ' ' . escapeshellarg($webRoot);
-    system($cmd);
+    system($cmd, $rc);
+    if ($rc !== 0) {
+      fwrite(STDERR, "Aborting: site archive failed, nothing was deleted.\n");
+      exit(1);
+    }
   });
+}
+
+// Run mysql with credentials from a temporary 0600 option file, so the
+// password never appears on the command line (visible in ps).
+function mysql_as($user, $pass, $sql)
+{
+  $optFile = tempnam(sys_get_temp_dir(), 'purge_site_');
+  chmod($optFile, 0600);
+  $esc = fn($v) => '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $v) . '"';
+  file_put_contents($optFile, "[client]\nuser=" . $esc($user) . "\npassword=" . $esc($pass) . "\n");
+  $out = shell_exec('mysql --defaults-extra-file=' . escapeshellarg($optFile) . ' -e ' . escapeshellarg($sql) . ' 2>&1');
+  unlink($optFile);
+  return (string) $out;
 }
 
 function prompt_confirm($message)
@@ -144,23 +171,38 @@ function purge_site($domain)
     exit(1);
   }
 
-  $grants = shell_exec("mysql -u root -e \"SHOW GRANTS FOR '{$dbUser}'@'localhost'\"");
+  // wp-config.php is editable by the site: only plain names are used in
+  // commands run as root (no override, not even with --force-db).
+  foreach (['DB_NAME' => $dbName, 'DB_USER' => $dbUser] as $key => $value) {
+    if (!preg_match('/^[A-Za-z0-9_-]{1,64}$/', $value)) {
+      fwrite(STDERR, "Aborting: {$key} '{$value}' in {$wpConfig} is not a plain name.\n");
+      exit(1);
+    }
+  }
+
+  $grants = (string) shell_exec('mysql -u root -e ' . escapeshellarg("SHOW GRANTS FOR '{$dbUser}'@'localhost'") . ' 2>&1');
   if (!str_contains($grants, $dbName) && !$forceDB) {
     fwrite(STDERR, "Aborting: DB user does not appear to own DB. Use --force-db to override.\n");
     exit(1);
   }
 
-  $canLogin = shell_exec("mysql -u {$dbUser} -p'{$dbPass}' -e 'USE {$dbName}; SELECT 1;' 2>&1");
+  $canLogin = mysql_as($dbUser, $dbPass, "USE `{$dbName}`; SELECT 1;");
   if (!str_contains($canLogin, '1') && !$forceDB) {
     fwrite(STDERR, "Aborting: Cannot log in to '{$dbName}' as '{$dbUser}'. Use --force-db to override.\n");
     exit(1);
   }
+
+  // Only delete the Linux account if it is this site's own SFTP account
+  $sftpUser = trim((string) shell_exec('/usr/local/sbin/eq_site_sftp_user ' . escapeshellarg($domain) . ' 2>/dev/null'));
+  $deleteSystemUser = ($sftpUser !== '' && $sftpUser === $dbUser);
+  $sysUserNote = $deleteSystemUser ? $dbUser : "none ('{$dbUser}' is not the SFTP account of {$domain}, kept)";
 
   echo <<<EOT
 You are about to PERMANENTLY delete the following:
 - Web root: {$webRoot}
 - MySQL database: {$dbName}
 - MySQL user: {$dbUser}
+- System user: {$sysUserNote}
 - Nginx config: {$nginxAvailable}, {$nginxEnabled}
 - PHP-FPM pool config: {$phpFpmPool}
 EOT;
@@ -186,9 +228,13 @@ EOT;
 
   archive_site($webRoot, $nginxAvailable, $nginxEnabled, $phpFpmPool, $dbName, $archiveFile, $archiveRoot);
 
-  action("Dropping MySQL database", fn() => system("mysqladmin --force -u root drop {$dbName}"));
-  action("Dropping MySQL user", fn() => system("mysql -u root -e \"DROP USER '{$dbUser}'@'localhost'\""));
-  action("Deleting system user", fn() => system("userdel {$dbUser}"));
+  action("Dropping MySQL database", fn() => system('mysqladmin --force -u root drop ' . escapeshellarg($dbName)));
+  action("Dropping MySQL user", fn() => system('mysql -u root -e ' . escapeshellarg("DROP USER '{$dbUser}'@'localhost'")));
+  if ($deleteSystemUser) {
+    action("Deleting system user", fn() => system('userdel ' . escapeshellarg($dbUser)));
+  } else {
+    echo "[INFO] Not deleting system user '{$dbUser}': not the SFTP account of {$domain}.\n";
+  }
   action("Deleting nginx config", function () use ($nginxAvailable, $nginxEnabled) {
     @unlink($nginxAvailable);
     @unlink($nginxEnabled);
@@ -198,9 +244,9 @@ EOT;
       @unlink($phpFpmPool);
     }
   });
-  action("Deleting webroot", fn() => system("rm -rf {$webRoot}"));
+  action("Deleting webroot", fn() => system('rm -rf -- ' . escapeshellarg($webRoot)));
   action("Reloading nginx", fn() => system("nginx -s reload"));
-  action("Reloading PHP-FPM", fn() => system("systemctl reload php{$phpVersion}-fpm"));
+  action("Reloading PHP-FPM", fn() => system('systemctl reload ' . escapeshellarg("php{$phpVersion}-fpm")));
 
   echo "Site '{$domain}' purged successfully.\n";
   exit(0);
