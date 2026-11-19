@@ -46,8 +46,9 @@
     src: webstats/index.php.j2
     dest: "{{ eqpress_root_dir }}/webstats/index.php"
     owner: root
-    group: root
-    mode: 0644
+    # holds the webstats DB password: readable by PHP (web user) only
+    group: "{{ web_groupname }}"
+    mode: "0640"
 
 - name: copy console files 
   become: yes
@@ -74,15 +75,18 @@
 - name: console templates
   become: yes
   ansible.builtin.template:
-    src: "console/{{ item }}.j2"
-    dest: "{{ eqpress_root_dir }}/console/{{ item }}"
+    src: "console/{{ item.file }}.j2"
+    dest: "{{ eqpress_root_dir }}/console/{{ item.file }}"
     owner: root
-    group: root
-    mode: 0644
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
   loop:
-    - plugin/eqpress.php
-    - plugin/eqpress-console/inc/eqpress-console-text.php
-    - proxy/eqpress-console-proxy.php
+    - { file: plugin/eqpress.php, group: root, mode: "0644" }
+    - { file: plugin/eqpress-console/inc/eqpress-console-text.php, group: root, mode: "0644" }
+    # the proxy holds the webstats DB password: readable by PHP (web user) only
+    - { file: proxy/eqpress-console-proxy.php, group: "{{ web_groupname }}", mode: "0640" }
+  loop_control:
+    label: "{{ item.file }}"
   tags:
     - console_plugin
 
