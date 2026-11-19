@@ -1,28 +1,51 @@
 #!/bin/bash
-# { ansible_managed }}
+# {{ ansible_managed }}
+#
+# press_setperms /var/www/<site>
+#
+# Reset a site to the "unlocked" permissions:
+#   - everything owned by {{ web_user }}:{{ web_groupname }}, directories 775, files 664
+#   - the site home itself root:root 755
+#   - database dumps in the site home (*.sql*.gz) root:sftponly 0640,
+#     the same as site_snapshot.sh creates them
+#   - the git snapshot repo (snapshot/) root only, so site_snapshot.sh (root)
+#     keeps working
+#   - eqpress must-use plugins root:root, directories 755, files 644
+#
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin
 
-# Change owner and group recurive to {{ web_user }}:{{ web_groupname }}
-ionice -c 3 chown -R {{ web_user }}:{{ web_groupname }} "$1"
+SITE=${1%/}
+if [[ ! "$SITE" =~ ^/var/www/[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || [ ! -d "$SITE" ]; then
+	echo "Usage: $(basename "$0") /var/www/<site>"
+	exit 1
+fi
+shopt -s nullglob
 
-# Change the root directory owner to root:root
-chown root:root "$1"
+# Change owner and group recursive to {{ web_user }}:{{ web_groupname }}
+ionice -c 3 chown -R {{ web_user }}:{{ web_groupname }} "$SITE"
+# Change directory mode to 775 and file mode to 664
+ionice -c 3 find "$SITE" -type d -print0 | xargs -0 -r chmod 775
+ionice -c 3 find "$SITE" -type f -print0 | xargs -0 -r chmod 664
 
-chown root:root "$1/*.gz"
+# Site home owned by root, mode 755
+chown root:root "$SITE"
+chmod 755 "$SITE"
 
-# Change directory mode to 775
-ionice -c 3 find "$1" -type d -print0 | xargs -0 -r chmod 775
+# Database dumps: root:sftponly 0640
+for f in "$SITE"/*.sql*.gz; do
+	chown root:sftponly "$f"
+	chmod 0640 "$f"
+done
 
-# Change file mode to 664
-ionice -c 3 find "$1" -type f -print0 | xargs -0 -r chmod 664
+# Git snapshot repo: root only
+if [ -d "$SITE/snapshot" ]; then
+	chown -R root:root "$SITE/snapshot"
+	chmod 750 "$SITE/snapshot"
+fi
 
-# Change the root directory mode to 755
-chmod 755 "$1"
-
-# Change owner of must use press plugins to root:root
-ionice -c 3 chown -R root:root $1/wordpress/wp-content/mu-plugins/*press*
-
-# Change must use press plugin directory mode to 755
-ionice -c 3 find $1/wordpress/wp-content/mu-plugins/*press* -type d -print0 | xargs -0 -r chmod 755
-
-# Change must use press plugin files to 644
-ionice -c 3 find $1/wordpress/wp-content/mu-plugins/*press* -type f -print0 | xargs -0 -r chmod 644
+# Must use press plugins: root:root, directories 755, files 644
+for p in "$SITE"/wordpress/wp-content/mu-plugins/*press*; do
+	ionice -c 3 chown -R root:root "$p"
+	ionice -c 3 find "$p" -type d -print0 | xargs -0 -r chmod 755
+	ionice -c 3 find "$p" -type f -print0 | xargs -0 -r chmod 644
+done
