@@ -1,4 +1,16 @@
 #!/bin/bash
+# {{ ansible_managed }}
+#
+# monit_provision.sh
+#
+# Run as root every 10s by the systemd timer mon_provision (timed-jobs) on
+# the provision server. Picks up new sites that the provision web app puts in
+# provision/pending/<domain>, runs their provision.yml with ansible-playbook,
+# then archives the request (encrypted) in provision/processed.
+#
+# pending/ is writable by the web server user, so site names are checked
+# before use. Failed runs are emailed to the monitoring address.
+#
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 export HOME=/root
 
@@ -8,44 +20,117 @@ prov=${basedir}/provision
 pending=${prov}/pending
 processing=${prov}/processing
 processed=${prov}/processed
+rejected=${prov}/rejected
+unencrypted=${prov}/unencrypted
+EMAIL="{{ monitoring_email }}"
+GPG_ID="{{ auto_provision_gpg_id }}"
 
-sites=`find ${pending}/* -type d -exec basename {} \; 2> /dev/null`
-if [ -n "$sites" ]; then
-    #
-    # wait a second just in case provision process is still mid-write
-    sleep 5
-    for site in ${sites}; do
-        mv ${pending}/${site} ${processing} || ( echo Failed to move ${site}; exit 1 )
-    done
+# Same rules as is_valid_domain() in the provision app: at least two labels,
+# each letters/digits/hyphens, not starting or ending with a hyphen.
+valid_domain() {
+	local d=$1 label labels
+	[[ "$d" == *.* && "$d" != .* && "$d" != *. && "$d" != *..* ]] || return 1
+	IFS=. read -ra labels <<< "$d"
+	for label in "${labels[@]}"; do
+		[[ "$label" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]] || return 1
+	done
+	return 0
+}
 
-    # Not needed if we use installed ansible
-    #cd ${ansible}
-    #source ./hacking/env-setup -q
+say() {
+	echo "$*"
+	logger -t eqpress-provision "$*"
+}
 
-    for site in ${sites}; do
-        cd ${processing}/${site}
-        ansible-playbook provision.yml -i ${ansible}/hosts
-        #
-        # delete duplicate directories
-        if [ -d ${processed}/${site} ]; then
-            echo ${site} already existed in ${processed}
-            rm -rf ${processed}/${site}
-        fi
-        #
-        # rename duplicate site archives
-        if [ -f ${processed}/${site}.tar.gz.gpg ]; then
-            echo ${site} encrypted copy of ${site} already existed in ${processed}
-            mv ${processed}/${site}.tar.gz.gpg ${processed}/${site}.tar.gz.gpg-$(date +%Y%m%d%H%M%S)
-        fi
-        mv ${processing}/${site} ${processed}
-        cd ${processed}
-        tar cfz ${site}.tar.gz ./${site}
-        rm -rf ${site}
-        gpg -e -r {{ auto_provision_gpg_id }} --trust-model always ${site}.tar.gz
-        rm -f ${site}.tar.gz
-    done
+shopt -s nullglob
+sites=()
+for d in "$pending"/*/; do
+	sites+=("$(basename "$d")")
+done
+[ "${sites[*]}" = "" ] && exit 0
 
-   # Why did we exit with 1 here ? exit 1
-#else
-    exit 0
-fi
+# wait in case the provision app is still writing
+sleep 5
+
+ready=()
+for site in "${sites[@]}"; do
+	if ! valid_domain "$site"; then
+		mkdir -p "$rejected" && chmod 700 "$rejected"
+		mv -- "$pending/$site" "$rejected/$site-$(date +%Y%m%d%H%M%S)"
+		say "Rejected pending site with invalid name '$site' (moved to $rejected)"
+		continue
+	fi
+	if [ -e "$processing/$site" ]; then
+		say "Skipping $site: $processing/$site already exists"
+		continue
+	fi
+	if ! mv -- "$pending/$site" "$processing/"; then
+		say "Failed to move $site to $processing, skipping"
+		continue
+	fi
+	ready+=("$site")
+done
+
+rc=0
+for site in "${ready[@]}"; do
+	if ! cd "$processing/$site"; then
+		say "Cannot change into $processing/$site, skipping"
+		rc=1
+		continue
+	fi
+
+	if ! ansible-playbook provision.yml -i "$ansible/hosts"; then
+		rc=1
+		say "Provisioning FAILED for $site"
+		printf 'ansible-playbook provision.yml for %s failed on %s.\n\nThe output is in the journal:\n  journalctl -u mon_provision --since "-1 hour"\n\nThe request is archived in %s/%s.tar.gz.gpg\n' \
+			"$site" "$(hostname)" "$processed" "$site" \
+			| mail -s "PROVISIONING FAILED: $site on $(hostname)" -- "$EMAIL"
+	fi
+
+	# delete duplicate directories
+	if [ -d "$processed/$site" ]; then
+		say "$site already existed in $processed, replacing"
+		rm -rf -- "${processed:?}/$site"
+	fi
+	# rename duplicate site archives
+	if [ -f "$processed/$site.tar.gz.gpg" ]; then
+		say "encrypted copy of $site already existed in $processed, renaming"
+		mv -- "$processed/$site.tar.gz.gpg" "$processed/$site.tar.gz.gpg-$(date +%Y%m%d%H%M%S)"
+	fi
+
+	if ! mv -- "$processing/$site" "$processed/"; then
+		say "Failed to move $site to $processed"
+		rc=1
+		continue
+	fi
+	cd "$processed" || { rc=1; continue; }
+	if tar cfz "$site.tar.gz" "./$site"; then
+		rm -rf -- "./$site"
+	else
+		say "tar failed for $site, keeping $processed/$site"
+		rc=1
+		continue
+	fi
+	# Only remove the plain archive once the encrypted copy exists.
+	# processed/ is downloadable, so if encryption fails the plain archive
+	# (it contains passwords) is moved to a root-only folder instead.
+	if gpg --batch -e -r "$GPG_ID" --trust-model always "$site.tar.gz"; then
+		rm -f -- "$site.tar.gz"
+	else
+		rc=1
+		mkdir -p "$unencrypted" && chmod 700 "$unencrypted"
+		kept="$unencrypted/$site.tar.gz-$(date +%Y%m%d%H%M%S)"
+		if mv -- "$site.tar.gz" "$kept" && chmod 600 "$kept"; then
+			say "gpg encryption failed for $site, unencrypted archive moved to $kept"
+		else
+			rm -f -- "$site.tar.gz"
+			say "gpg encryption failed for $site and the archive could not be moved; removed it"
+			kept="(removed)"
+		fi
+		printf 'gpg encryption of the provisioning archive for %s failed on %s.\n\nThe unencrypted archive (contains passwords) was kept out of processed/ at:\n  %s\n\nEncrypt it by hand or remove it.\n' \
+			"$site" "$(hostname)" "$kept" \
+			| mail -s "PROVISION ARCHIVE NOT ENCRYPTED: $site on $(hostname)" -- "$EMAIL"
+	fi
+done
+
+exit $rc
