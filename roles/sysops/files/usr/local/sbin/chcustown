@@ -1,30 +1,35 @@
 #!/bin/bash
 #
-# Change the ownership and permssions for a WordPress docroot.
-# Used by the lockdown option in eqpress console. If the user
-# does not exist then user the wordpress user.
+# chcustown <domain>
+#
+# Lock down a WordPress docroot: owned by the site's SFTP user, group
+# wordpress, directories 755, files 644. Used as root by the eqpress console
+# lockdown (monit_console_lockdown.sh) and by hand.
+#
+# The owner is only the site's own SFTP account (checked by
+# eq_site_sftp_user); otherwise the wordpress user is used.
 #
 export PATH=/bin:/usr/bin:/usr/local/bin:/usr/sbin:/sbin:/usr/local/sbin
 
 DOMAIN=$1
-DOCROOT=/var/www/${DOMAIN}/wordpress
-
-if [ -d ${DOCROOT} ]; then
-	USER_INFO=($(grep DB_USER ${DOCROOT}/wp-config.php |tr "'" '\n'))
-	USER=${USER_INFO[3]}
-
-	if ! grep ${USER} /etc/passwd > /dev/null; then
-		USER=wordpress
-	fi
-
-	ionice -c 3 chown -R ${USER}:wordpress ${DOCROOT}
-
-	# Change file mode of directories to 755
-	ionice -c 3 find "${DOCROOT}" -type d -print0 | xargs -0 -r chmod 755
-
-	# Change file mode of files to 644
-	ionice -c 3 find "${DOCROOT}" -type f -print0 | xargs -0 -r chmod 644
-	echo ${DOMAIN} has been locked down.
-else
-	echo ${DOCROOT} does not exist. Lockdown failed.
+if [[ ! "$DOMAIN" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+	echo "Invalid domain name '$DOMAIN'. Lockdown failed."
+	exit 1
 fi
+DOCROOT=/var/www/${DOMAIN}/wordpress
+if [ ! -d "$DOCROOT" ]; then
+	echo "${DOCROOT} does not exist. Lockdown failed."
+	exit 1
+fi
+
+if ! OWNER=$(eq_site_sftp_user "$DOMAIN" 2>/dev/null); then
+	OWNER=wordpress
+	logger -t eqpress-console "chcustown: no valid SFTP user for $DOMAIN, using wordpress"
+fi
+
+ionice -c 3 chown -R "${OWNER}:wordpress" "$DOCROOT"
+# Change file mode of directories to 755
+ionice -c 3 find "$DOCROOT" -type d -print0 | xargs -0 -r chmod 755
+# Change file mode of files to 644
+ionice -c 3 find "$DOCROOT" -type f -print0 | xargs -0 -r chmod 644
+echo "${DOMAIN} has been locked down (owner ${OWNER})."

@@ -4,6 +4,7 @@
   ansible.builtin.apt:
     name:
       - git
+      - jq
       - rsyslog
     state: present
   tags:
@@ -154,6 +155,7 @@
     mode: "0755"
   loop:
     - chcustown
+    - eq_site_sftp_user
     - chepown
     - chwebown
     - check-mem.pl

@@ -1,28 +1,47 @@
 #!/bin/bash
+# {{ ansible_managed }}
+#
+# chpass.sh [site]
+#
+# Set a new random SFTP password for a site's SFTP account and print a
+# rampass link to it:  |<user>|"<rampass url>"|
+#
+# Only the site's own SFTP account can be changed (checked by
+# eq_site_sftp_user). The rampass link is created first; the password is
+# only changed once the link exists, so a new password is never lost.
+#
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-if [ -z $1 ]; then
-	echo  -n "Site you want to change the password for: "
-	read SITE
+
+if [ -z "$1" ]; then
+	echo -n "Site you want to change the password for: "
+	read -r SITE
 else
 	SITE=$1
 fi
-DOCROOT=/var/www/${SITE}/wordpress
-if [ ! -d ${DOCROOT} ]; then
-	echo ${DOCROOT} does not exist on this node.
-	exit 1
-fi
-USER_INFO=($(grep DB_USER ${DOCROOT}/wp-config.php |tr "'" '\n'))
-USER=${USER_INFO[3]}
-if ! grep ${USER} /etc/passwd > /dev/null; then
-	echo ${USER} does not exist.
-	echo Maybe ${SITE} is wrong?
-	echo Maybe ${DOCROOT} is wrong?
+
+if ! USER=$(eq_site_sftp_user "$SITE"); then
+	echo "Maybe ${SITE} is wrong?"
 	exit 1
 fi
 
-SFTP_PASSWORD=`< /dev/urandom tr -dc A-Za-z0-9 | head -c23`
-echo "${USER}:${SFTP_PASSWORD}" | chpasswd
+for cmd in curl jq chpasswd; do
+	command -v "$cmd" >/dev/null || { echo "Error: $cmd is not installed, password not changed"; exit 1; }
+done
 
-# RAMPASS
-  RAMPASS_SFTP=`curl -k -s -XPOST -H "Content-Type: application/json" {{ rampass_url }}/api --data "{\"secret\":\"${SFTP_PASSWORD}\",\"time\":30,\"units\":\"days\",\"views\":7}" | jq ".data.url"`
-  echo -n "|${USER}|${RAMPASS_SFTP}|"
+SFTP_PASSWORD=$(tr -dc A-Za-z0-9 < /dev/urandom | head -c23)
+
+# RAMPASS: build the JSON with jq so it is always valid
+PAYLOAD=$(jq -n --arg secret "$SFTP_PASSWORD" '{secret: $secret, time: 30, units: "days", views: 7}')
+RESPONSE=$(curl -k -s -XPOST -H "Content-Type: application/json" "{{ rampass_url }}/api" --data "$PAYLOAD")
+RAMPASS_SFTP=$(printf '%s' "$RESPONSE" | jq ".data.url" 2>/dev/null)
+if [[ ! "$RAMPASS_SFTP" =~ ^\"https?:// ]]; then
+	echo "Error: could not create rampass link, password not changed"
+	exit 1
+fi
+
+if ! echo "${USER}:${SFTP_PASSWORD}" | chpasswd; then
+	echo "Error: chpasswd failed for ${USER}, password not changed (ignore the rampass link)"
+	exit 1
+fi
+
+echo -n "|${USER}|${RAMPASS_SFTP}|"

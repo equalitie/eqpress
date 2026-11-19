@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# eq_site_sftp_user <domain>
+#
+# Print the SFTP account of a site, or exit 1 if it cannot be trusted.
+#
+# The name comes from DB_USER in the site's wp-config.php (provisioning uses
+# the same name for both). wp-config.php can be edited by the site, so the
+# account must also be what provisioning creates for that site:
+# primary group sftponly and home /var/www/<domain>. This stops a site from
+# pointing scripts that run as root at root, an admin or another site's user.
+#
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+SFTPGROUP=sftponly
+DOMAIN=$1
+
+fail() {
+	echo "eq_site_sftp_user: $*" >&2
+	exit 1
+}
+
+[[ "$DOMAIN" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || fail "invalid domain name '$DOMAIN'"
+CONFIG=/var/www/$DOMAIN/wordpress/wp-config.php
+[ -f "$CONFIG" ] || fail "$CONFIG does not exist"
+
+USER_INFO=($(grep DB_USER "$CONFIG" | tr "'" '\n'))
+SFTP_USER=${USER_INFO[3]}
+[[ "$SFTP_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || fail "invalid DB_USER '$SFTP_USER' in $CONFIG"
+
+PWENT=$(getent passwd "$SFTP_USER") || fail "user '$SFTP_USER' does not exist"
+USER_HOME=$(echo "$PWENT" | cut -d: -f6)
+USER_GROUP=$(id -gn "$SFTP_USER")
+if [ "$USER_GROUP" != "$SFTPGROUP" ] || [ "$USER_HOME" != "/var/www/$DOMAIN" ]; then
+	fail "user '$SFTP_USER' is not the SFTP account of $DOMAIN (group $USER_GROUP, home $USER_HOME)"
+fi
+
+echo "$SFTP_USER"
