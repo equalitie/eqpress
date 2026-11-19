@@ -117,3 +117,31 @@
     mode: "0600"
   tags:
     - postfix
+
+# Old copies of main.cf (Ansible backups, manual .bak files, ...) may still
+# hold the relay password inline (smtp_sasl_password_maps = static:...) and
+# be world readable. Find them by content and make them root only. The live
+# main.cf-* files no longer contain static: logins, so only old copies match.
+- name: Find old Postfix configs that still contain an inline relay password
+  become: true
+  ansible.builtin.find:
+    paths: /etc/postfix
+    file_type: file
+    contains: '^\s*smtp_sasl_password_maps\s*=\s*static:'
+    read_whole_file: false
+  register: postfix_old_configs
+  tags:
+    - postfix
+
+- name: Make old Postfix configs with inline passwords root only
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ postfix_old_configs.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags:
+    - postfix
