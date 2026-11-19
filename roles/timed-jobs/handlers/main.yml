@@ -1,62 +1,62 @@
 ---
 - name: systemd_daemon_reload
-  become: yes
-  ansible.builtin.systemd:
-    daemon_reload: yes
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
 
 - name: restart cron
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: cron
     state: restarted
 
 - name: enable_timer_edgespermit
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: edgespermit.timer
-    enabled: yes
+    enabled: true
     state: restarted
 
 - name: enable_timer_mon_provision
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: mon_provision.timer
-    enabled: yes
+    enabled: true
     state: restarted
 
 - name: enable_timer_mon_connections
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: mon_connections.timer
-    enabled: yes
+    enabled: true
     state: restarted
 
 - name: enable_timer_mon_check-mailq
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: mon_check-mailq.timer
-    enabled: yes
+    enabled: true
     state: restarted
 
 - name: enable_timer_mon_press-console-perms
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: mon_press-console-perms.timer
-    enabled: yes
+    enabled: true
     state: restarted
 
 - name: enable_timer_mon_press-console-lockdown
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: mon_press-console-lockdown.timer
-    enabled: yes
+    enabled: true
     state: restarted
 
 - name: enable_timer_mon_press-reset-password
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     name: mon_press-reset-password.timer
-    enabled: yes
+    enabled: true
     state: restarted
 
 - name: noop
