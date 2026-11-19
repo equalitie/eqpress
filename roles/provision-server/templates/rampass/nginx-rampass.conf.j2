@@ -1,8 +1,6 @@
 server {
     listen 80;
-    listen [::]:80;
     listen 443 ssl; 
-    listen [::]:443 ssl;
     http2 on;
 
     # Note: For now we just work behind a proxy so use self-signed
