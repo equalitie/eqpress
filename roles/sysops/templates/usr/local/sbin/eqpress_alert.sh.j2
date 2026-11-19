@@ -1,0 +1,48 @@
+#!/bin/bash
+# {{ ansible_managed }}
+#
+# eqpress_alert.sh <check> <ok|problem> <message...>
+#
+# Used by monitoring scripts run from timers/cron. Emails the monitoring
+# address only when a check changes state (ok -> problem, problem -> ok),
+# so a check that runs every minute sends one email, not one per minute.
+# Last state per check is kept in $STATE_DIR.
+#
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
+
+STATE_DIR=/var/lib/eqpress-monitor
+EMAIL="{{ monitoring_email }}"
+
+check=$1
+state=$2
+shift 2 2>/dev/null
+msg="$*"
+
+if [[ ! "$check" =~ ^[a-z0-9_-]+$ ]] || [[ "$state" != "ok" && "$state" != "problem" ]]; then
+	echo "Usage: $(basename "$0") <check> <ok|problem> <message...>" >&2
+	exit 2
+fi
+
+mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
+state_file=$STATE_DIR/$check.state
+previous=$(cat "$state_file" 2>/dev/null || echo ok)
+
+# No change, nothing to send
+[ "$previous" = "$state" ] && exit 0
+
+host=$(hostname -f 2>/dev/null || hostname)
+if [ "$state" = "problem" ]; then
+	subject="PROBLEM: $check on $host"
+else
+	subject="OK: $check on $host"
+fi
+
+# Only record the new state once the email is handed to mail, so a failed
+# send is retried on the next run.
+if printf '%s\n\n%s\n' "$msg" "$(date '+%F %T %Z')" | mail -s "$subject" -- "$EMAIL"; then
+	echo "$state" > "$state_file"
+	logger -t eqpress-monitor "$subject: $msg"
+else
+	logger -t eqpress-monitor "failed to send alert '$subject'"
+	exit 1
+fi
