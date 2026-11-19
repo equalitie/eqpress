@@ -28,7 +28,8 @@ HostKeyAlgorithms +ssh-rsa
 PubkeyAcceptedKeyTypes +ssh-rsa
 ## END
 
-PasswordAuthentication yes
+# Passwords only for SFTP customers (see Match Group sftponly below)
+PasswordAuthentication no
 PermitEmptyPasswords no
 
 KbdInteractiveAuthentication no
@@ -165,6 +166,7 @@ Subsystem       sftp    internal-sftp
 
 # These lines must appear at the *end* of sshd_config
 Match Group sftponly
+        PasswordAuthentication yes
         ChrootDirectory %h
         ForceCommand internal-sftp
         AllowTcpForwarding no
