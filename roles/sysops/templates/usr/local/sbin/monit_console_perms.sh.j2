@@ -1,27 +1,37 @@
 #!/bin/bash
+# {{ ansible_managed }}
+#
+# monit_console_perms.sh
+#
+# Run as root every 60s by the systemd timer mon_press-console-perms
+# (timed-jobs). For each request file {{ eqpress_root_dir }}/console/perms/<domain>
+# written by the eqpress console, reset that site's ownership to the web
+# server user. The folder is writable by the web server user, so request
+# names are treated as untrusted.
+#
 export PATH=/bin:/usr/bin:/usr/local/sbin
 CONFS={{ eqpress_root_dir }}/console/perms
-if [ -d $CONFS ]; then
-	cd $CONFS
-	CF=`/usr/bin/find . -type f -exec /usr/bin/basename {} \;`
-	if [ "$CF" != "" ]; then
-		for DOMAIN in $CF; do
-			if [ "$DOMAIN" != "" ]; then
-				rm $DOMAIN
-				if [ -d /var/www/$DOMAIN ]; then
-					chwebown /var/www/$DOMAIN/wordpress/
-					chepown /var/www/$DOMAIN
-					echo "Changed permissions for: $DOMAIN"
-				else
-					echo "Error: $DOMAIN is not installed"
-				fi
-			fi
-		done
-		exit 1
-	else
-		exit 0
+
+cd "$CONFS" || { echo "Error: Could not change into $CONFS"; exit 1; }
+
+processed=0
+for DOMAIN in *; do
+	[ -f "$DOMAIN" ] || continue
+	processed=1
+	rm -f -- "$DOMAIN"
+	if [[ ! "$DOMAIN" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+		echo "Error: invalid domain name '$DOMAIN', request ignored"
+		logger -t eqpress-console "perms: ignored request with invalid name '$DOMAIN'"
+		continue
 	fi
-else
-	echo "Error: Could not change into $CONFS"
-	exit 1
-fi
+	if [ -d "/var/www/$DOMAIN/wordpress" ]; then
+		chwebown "/var/www/$DOMAIN/wordpress/"
+		chepown "/var/www/$DOMAIN"
+		echo "Changed permissions for: $DOMAIN"
+	else
+		echo "Error: $DOMAIN is not installed"
+	fi
+done
+
+# Non-zero when something was processed (kept from the monit days)
+exit $processed

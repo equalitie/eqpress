@@ -1,56 +1,68 @@
 #!/bin/bash
+# {{ ansible_managed }}
+#
+# monit_console_lockdown.sh
+#
+# Run as root every 60s by the systemd timer mon_press-console-lockdown
+# (timed-jobs). Processes lock and unlock requests that the eqpress console
+# writes to {{ eqpress_root_dir }}/console/lockdown/{lock,unlock}/<domain>.
+# Those folders are writable by the web server user, so request names are
+# treated as untrusted.
+#
 export PATH=/bin:/usr/bin:/usr/local/sbin
 LOCK_EXIT=0
 LOCKS={{ eqpress_root_dir }}/console/lockdown/lock
 UNLOCKS={{ eqpress_root_dir }}/console/lockdown/unlock
-if cd $LOCKS; then
-	CF=`/usr/bin/find . -type f -exec /usr/bin/basename {} \;`
-	if [ "$CF" != "" ]; then
-		for DOMAIN in $CF; do
-			if [ "$DOMAIN" != "" ]; then
-				rm $DOMAIN
-				if [ -d /var/www/${DOMAIN} ]; then
-					chcustown ${DOMAIN}	# change ownership to customer's username	
-					chepown /var/www/${DOMAIN} # make all eqpress console files owned by root
-					chwebown /var/www/$DOMAIN/wordpress/wp-content/uploads # make uploads writable by web server user
-					chwebown /var/www/$DOMAIN/wordpress/.sessions # make PHP sessions dir writable by web server user
-					touch /var/www/${DOMAIN}/wordpress/php-errors.log
-					chwebown /var/www/$DOMAIN/wordpress/php-errors.log # php error log writable by php web server user
 
-					if [ -d /var/www/${DOMAIN}/wp-content/blogs.dir ]; then
-						chwebown /var/www/${DOMAIN}/wp-content/blogs.dir # make multisite upload dir writable by web server user
-					fi
-					echo "$DOMAIN has been locked down"
-				else
-					echo "Error: $DOMAIN is not installed"
-				fi
-			fi
-		done
-		LOCK_EXIT=1
+# Remove the request and check it names an installed site.
+# Prints nothing and returns 0 when the domain is usable.
+take_request() {
+	local domain=$1
+	rm -f -- "$domain"
+	if [[ ! "$domain" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+		echo "Error: invalid domain name '$domain', request ignored"
+		logger -t eqpress-console "lockdown: ignored request with invalid name '$domain'"
+		return 1
 	fi
+	if [ ! -d "/var/www/$domain/wordpress" ]; then
+		echo "Error: $domain is not installed"
+		return 1
+	fi
+	return 0
+}
+
+if cd "$LOCKS"; then
+	for DOMAIN in *; do
+		[ -f "$DOMAIN" ] || continue
+		LOCK_EXIT=1
+		take_request "$DOMAIN" || continue
+		chcustown "$DOMAIN"	# change ownership to customer's username
+		chepown "/var/www/$DOMAIN" # make all eqpress console files owned by root
+		chwebown "/var/www/$DOMAIN/wordpress/wp-content/uploads" # make uploads writable by web server user
+		chwebown "/var/www/$DOMAIN/wordpress/.sessions" # make PHP sessions dir writable by web server user
+		touch "/var/www/$DOMAIN/wordpress/php-errors.log"
+		chwebown "/var/www/$DOMAIN/wordpress/php-errors.log" # php error log writable by php web server user
+		if [ -d "/var/www/$DOMAIN/wordpress/wp-content/blogs.dir" ]; then
+			chwebown "/var/www/$DOMAIN/wordpress/wp-content/blogs.dir" # make multisite upload dir writable by web server user
+		fi
+		echo "$DOMAIN has been locked down"
+	done
 else
 	echo "Error: Could not change into $LOCKS"
 fi
 
-if cd $UNLOCKS; then
-	CF=`/usr/bin/find . -type f -exec /usr/bin/basename {} \;`
-	if [ "$CF" != "" ]; then
-		for DOMAIN in $CF; do
-			if [ "$DOMAIN" != "" ]; then
-				rm $DOMAIN
-				if [ -d /var/www/$DOMAIN ]; then
-					chwebown /var/www/$DOMAIN/wordpress # make everything writable by web server user
-					chepown /var/www/$DOMAIN # make eqpress console files owned by root
-					echo "$DOMAIN has been unlocked"
-				else
-					echo "Error: $DOMAIN is not installed"
-				fi
-			fi
-		done
+if cd "$UNLOCKS"; then
+	for DOMAIN in *; do
+		[ -f "$DOMAIN" ] || continue
 		LOCK_EXIT=1
-	fi
+		take_request "$DOMAIN" || continue
+		chwebown "/var/www/$DOMAIN/wordpress" # make everything writable by web server user
+		chepown "/var/www/$DOMAIN" # make eqpress console files owned by root
+		echo "$DOMAIN has been unlocked"
+	done
 else
 	echo "Error: Could not change into $UNLOCKS"
 fi
 
+# Non-zero when something was processed (kept from the monit days)
 exit $LOCK_EXIT
