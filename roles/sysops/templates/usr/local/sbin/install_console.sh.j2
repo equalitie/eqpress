@@ -1,56 +1,74 @@
-#!/bin/sh
+#!/bin/bash
+# {{ ansible_managed }}
 #
-# install_console.sh
+# install_console.sh <domain|all>
 #
-# Installation script for press console.
-# Specify the domain to install as first argument.
+# Install (or refresh) the eqpress console must-use plugin from
+# {{ eqpress_root_dir }}/console/plugin into a site's wp-content/mu-plugins.
+# Used by provisioning and deploy_must_use_plugins.sh.
+#
+# mu-plugins keeps the site's lock state (same owner as its wordpress/
+# folder), and eqpress plugin files are made root owned (chepown).
 #
 export PATH=/usr/local/sbin:/bin:/usr/bin
 
+SOURCE={{ eqpress_root_dir }}/console/plugin
+SITES=/var/www
+WEB_USER={{ web_user }}
+
 mu_install() {
-	SITE=$1
-	MU_DIR=/var/www/${SITE}/wordpress/wp-content/mu-plugins
-	if [ ! -d ${MU_DIR} ]; then
-		echo mu-plugins directory DOES NOT exist for ${SITE} therefore creating it.
-		mkdir ${MU_DIR}
+	local site=$1 docroot mu_dir owner
+	docroot=$SITES/$site/wordpress
+	mu_dir=$docroot/wp-content/mu-plugins
+	if [ ! -d "$mu_dir" ]; then
+		echo "mu-plugins directory DOES NOT exist for ${site} therefore creating it."
+		mkdir -p "$mu_dir" || return 1
 	fi
-	cp -r {{ eqpress_root_dir }}/console/plugin/* ${MU_DIR}/
-	chwebown /var/www/${SITE}/wordpress/wp-content/mu-plugins
+	cp -r "$SOURCE"/. "$mu_dir"/ || return 1
+
+	owner=$(stat -c %U "$docroot")
+	if [ "$owner" = "$WEB_USER" ]; then
+		# unlocked site: writable by the web server user, as before
+		chwebown "$mu_dir"
+	else
+		# locked down (or not yet handed over): same owner as wordpress/
+		chown -R --reference="$docroot" "$mu_dir"
+		find "$mu_dir" -type d -print0 | xargs -0 -r chmod 755
+		find "$mu_dir" -type f -print0 | xargs -0 -r chmod 644
+	fi
+	chepown "$SITES/$site"
 }
 
-get_site() {
-	for f in `ls -1 /var/www`; do
-		site=`basename $f`
-		if [ -d /var/www/${site} ]; then
-			mu_install ${site}
-			echo $site - Success!
+install_all() {
+	local docroot site
+	for docroot in "$SITES"/*/wordpress; do
+		[ -f "$docroot/wp-config.php" ] || continue
+		site=$(basename "${docroot%/wordpress}")
+		if mu_install "$site"; then
+			echo "$site - Success!"
 		else
-			echo $site - Not a directory. Installation failed.
+			echo "$site - Installation failed."
 		fi
 	done
 }
 
 if [ -n "$1" ]; then
 	if [ "$1" = "all" ]; then
-		get_site
-		exit
-	fi
-
-	if [ -d /var/www/$1 ]; then
-		site=$1
-		mu_install ${site}
+		install_all
 		exit 0
-	else
-		echo "$1 not a valid domain (e.g. example.com). Should exist under /var/www."
-		exit 1
 	fi
-else
-	echo "No site specified. Should be a domain name like example.com and exist under /var/www"
+	if [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] && [ -d "$SITES/$1/wordpress" ]; then
+		mu_install "$1"
+		exit $?
+	fi
+	echo "$1 not a valid domain (e.g. example.com). Should exist under $SITES with a wordpress folder."
+	exit 1
 fi
 
+echo "No site specified. Should be a domain name like example.com and exist under $SITES"
 echo -n "About to install console for every site. You sure? [y/n] "
-read ask
-if [ $ask = 'y' ]; then
-	get_site
+read -r ask
+if [ "$ask" = "y" ]; then
+	install_all
 fi
 exit 0

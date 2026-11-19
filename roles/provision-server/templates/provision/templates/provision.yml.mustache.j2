@@ -109,6 +109,12 @@
     become: yes
     command: /usr/local/sbin/chwebown /var/www/{{ domain }}/wordpress
 
+  # chwebown above makes everything www-data writable, including the eqpress
+  # must-use plugins; give those (and the site home) back to root.
+  - name: Make eqpress must-use plugins root owned for {{ domain }}
+    become: yes
+    command: /usr/local/sbin/chepown /var/www/{{ domain }}
+
   - name: Add SFTP user for {{ domain }}
     become: yes
     user: name={{ sftp_user }} group=sftponly groups=www-data shell=/bin/false home=/var/www/{{ domain }} createhome=no
