@@ -52,24 +52,51 @@ error_log('webstats execution time: ' . round( $elapsed, 5 ) . " seconds" );
  */
 function db_insert_stats( $domain, $stats ) {
 	global $dbh;
-	$hits = $stats['hits'];
-	$visits = $stats['visits'];
-	$visitors = $stats['visitors'];
-	$bytes_transfered = $stats['bytes_transfered'];
+	$hits = (int) $stats['hits'];
+	$visits = (int) $stats['visits'];
+	$visitors = (int) $stats['visitors'];
+	$bytes_transfered = (int) $stats['bytes_transfered'];
 	$yesterday = time() - ( 60 * 60 * 24 );
 	$yymmdd = date( 'Y-m-d', $yesterday );
-	$q_select_id = "SELECT ID FROM domains WHERE domain LIKE '$domain'";
-	$result = $dbh->query( $q_select_id );
-	$domain_id = $result->fetch_all();
-	if ( empty( $domain_id ) ) {
-		$q_insert_domain = "INSERT INTO domains (`ID`, `domain`) VALUES (NULL, '$domain')";
-		$result = $dbh->query( $q_insert_domain );
-		$result = $dbh->query( $q_select_id );
-		$domain_id = $result->fetch_all();
+
+	// Prepared statements and an exact match: the domain comes from a log
+	// file name, and LIKE would treat "_" as a wildcard.
+	try {
+		$d_id = get_domain_id( $domain );
+		if ( $d_id === null ) {
+			$stmt = $dbh->prepare( "INSERT INTO domains (`ID`, `domain`) VALUES (NULL, ?)" );
+			$stmt->bind_param( 's', $domain );
+			$stmt->execute();
+			$stmt->close();
+			$d_id = get_domain_id( $domain );
+		}
+		if ( $d_id === null ) {
+			error_log( "webstats: could not find or add domain '$domain'" );
+			return;
+		}
+		$stmt = $dbh->prepare( "INSERT INTO stats (`ID`, `date`, `domain_id`, `hits`, `visits`, `unique_visitors`, `bytes_transfered`) VALUES (NULL, ?, ?, ?, ?, ?, ?)" );
+		$stmt->bind_param( 'siiiii', $yymmdd, $d_id, $hits, $visits, $visitors, $bytes_transfered );
+		$stmt->execute();
+		$stmt->close();
+	} catch ( Exception $e ) {
+		// keep going with the other domains
+		echo "webstats: failed for $domain: " . $e->getMessage() . PHP_EOL;
+		error_log( "webstats: failed for $domain: " . $e->getMessage() );
 	}
-	$d_id = $domain_id[0][0];
-	$q_insert_stats = "INSERT INTO stats (`ID`, `date`, `domain_id`, `hits`, `visits`, `unique_visitors`, `bytes_transfered`) VALUES (NULL, '$yymmdd', '$d_id', '$hits', '$visits', '$visitors', '$bytes_transfered')";
-	$result = $dbh->query( $q_insert_stats );
+}
+
+/**
+ * ID of a domain in the domains table, or null if it is not there.
+ *
+ */
+function get_domain_id( $domain ) {
+	global $dbh;
+	$stmt = $dbh->prepare( "SELECT ID FROM domains WHERE domain = ? LIMIT 1" );
+	$stmt->bind_param( 's', $domain );
+	$stmt->execute();
+	$row = $stmt->get_result()->fetch_row();
+	$stmt->close();
+	return $row ? (int) $row[0] : null;
 }
 
 ?>
