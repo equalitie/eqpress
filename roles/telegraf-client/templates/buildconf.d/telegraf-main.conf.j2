@@ -56,6 +56,10 @@
   data_format = "influx"
 {% if mysql_telegraf_user is defined %}
 [[inputs.mysql]]
+  # Many per-table/per-index queries (needed) across all sites: at the 10s
+  # agent interval collection did not finish in time ("Collection took
+  # longer than expected"), so collect MySQL metrics once a minute.
+  interval = "60s"
   servers = ["{{ mysql_telegraf_user.username }}:{{ mysql_telegraf_user.password }}@unix({{ mariadb_unix_socket }})/"]
   metric_version = 2
   name_suffix = "_v2"
@@ -108,6 +112,9 @@
 [[inputs.docker]]
   endpoint = "unix:///var/run/docker.sock"
   #perdevice = false
+  # perdevice = false so perdevice_include is used (the old default "true"
+  # ignores it and is deprecated, removed in telegraf 1.35). Same metrics.
+  perdevice = false
   perdevice_include = ["cpu", "blkio", "network"]
   gather_services = false
   timeout = "5s"
