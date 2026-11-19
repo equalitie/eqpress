@@ -358,6 +358,8 @@
   become: yes
   ansible.builtin.get_url:
     url: "{{ wp_cli_download }}"
+    # wp-cli publishes a .sha512 next to each build; refuse a file that does not match
+    checksum: "sha512:{{ wp_cli_download }}.sha512"
     dest: /usr/local/sbin/wp
     owner: root
     group: root
