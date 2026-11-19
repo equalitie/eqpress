@@ -43,6 +43,7 @@
     dest: "{{ ansible_user_dir }}/docker/eqpress_nginx/compose.yaml"
     src: nginx-compose.yaml.j2
     mode: '0640'
+  register: nginx_compose_file
   tags:
     - nginx
     - nginx_docker
@@ -53,18 +54,70 @@
     dest: "{{ ansible_user_dir }}/docker/eqpress_nginx/Dockerfile"
     src: Dockerfile.j2
     mode: '0640'
+  register: nginx_dockerfile
   tags:
     - nginx
     - nginx_docker
     - nginx_docker_template
 
+# docker compose only builds an image when none exists, so a bump of
+# nginx_docker_version (or the purge module) would never reach the running
+# container. Rebuild and recreate when the Dockerfile/compose file changed,
+# or when the running nginx is not the wanted version (also catches a run
+# that failed after writing the Dockerfile but before rebuilding).
+- name: Check running nginx version in the container
+  ansible.builtin.command:
+    argv: [docker, exec, "{{ nginx_container_name }}", nginx, -v]
+  register: nginx_running_version
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: Decide whether the nginx image must be rebuilt
+  ansible.builtin.set_fact:
+    nginx_needs_build: >-
+      {{ nginx_dockerfile is changed
+         or nginx_compose_file is changed
+         or nginx_running_version.rc != 0
+         or ('nginx/' ~ nginx_docker_version) not in (nginx_running_version.stderr ~ nginx_running_version.stdout) }}
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: Report nginx rebuild
+  ansible.builtin.debug:
+    msg: >-
+      Rebuilding nginx image and recreating the container: wanted
+      nginx/{{ nginx_docker_version }}, running
+      '{{ (nginx_running_version.stderr ~ nginx_running_version.stdout) | trim | default('none', true) }}'
+  when: nginx_needs_build | bool
+  tags:
+    - nginx
+    - nginx_docker
+
 # NOTE: docker_compose_v2 is using the docker compose plugin
-# ie; docker compose up
+# ie; docker compose up (with --build when a rebuild is needed)
 - name: install and bring up nginx container with docker compose
   community.docker.docker_compose_v2:
     project_src: "{{ ansible_user_dir }}/docker/eqpress_nginx"
     state: present
+    build: "{{ 'always' if nginx_needs_build | bool else 'policy' }}"
   register: docker_compose_results
+  tags:
+    - nginx
+    - nginx_docker
+
+- name: Verify the container runs the wanted nginx version
+  ansible.builtin.command:
+    argv: [docker, exec, "{{ nginx_container_name }}", nginx, -v]
+  register: nginx_new_version
+  changed_when: false
+  check_mode: false
+  failed_when: ('nginx/' ~ nginx_docker_version) not in (nginx_new_version.stderr ~ nginx_new_version.stdout)
+  when: not ansible_check_mode
   tags:
     - nginx
     - nginx_docker
