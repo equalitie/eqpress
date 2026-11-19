@@ -1,18 +1,32 @@
 #!/bin/bash
+# {{ ansible_managed }}
+#
+# check_for_large_files.sh
+#
+# Run every 6 hours by cron on the slave (timed-jobs, eqpress_system_checks).
+# Emails a diff whenever the list of files over LIMIT_KB under /var/www
+# changes (new big files, removed ones, or size changes).
+#
 export PATH=/usr/local/bin:/usr/local/sbin:/bin:/usr/bin:/sbin:/usr/sbin
-f0=/var/tmp/bigfiles.0
-f1=/var/tmp/bigfiles.1
-touch ${f0}
-touch ${f1}
-# change the internal field separator to a newline to capture the ouput in a single line
-IFS='
-'
-for big in `find /var/www -type f -size +50000k -exec ls -lh {} \; | awk '{ print $9 " - " $5 }'`; do
-	echo ${big} >> ${f0}
-done
 
-dif=`diff -u ${f0} ${f1}`
-if [ ! -z "$dif" ]; then
-	echo "$dif" | mail -s "Big files exist on $(hostname)" {{ monitoring_email }} 
+LIMIT_KB=50000
+STATE_DIR=/var/lib/eqpress-monitor
+current=$STATE_DIR/bigfiles.current
+previous=$STATE_DIR/bigfiles.previous
+
+mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
+# State files from the old version of this script
+rm -f /var/tmp/bigfiles.0 /var/tmp/bigfiles.1
+
+# "<path> - <size>", sorted so the diff only shows real changes
+find /var/www -type f -size +"$LIMIT_KB"k -print0 2>/dev/null \
+	| while IFS= read -r -d '' f; do
+		printf '%s - %s\n' "$f" "$(du -h -- "$f" | cut -f1)"
+	done | sort > "$current"
+
+[ -f "$previous" ] || : > "$previous"
+dif=$(diff -u "$previous" "$current")
+if [ -n "$dif" ]; then
+	echo "$dif" | mail -s "Big files exist on $(hostname)" -- {{ monitoring_email }}
 fi
-mv ${f0} ${f1}
+mv "$current" "$previous"

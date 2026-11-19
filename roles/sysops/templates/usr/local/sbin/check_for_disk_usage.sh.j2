@@ -1,8 +1,22 @@
 #!/bin/bash
+# {{ ansible_managed }}
+#
+# check_for_disk_usage.sh
+#
+# Run every 4 hours by cron on master and slave (timed-jobs,
+# eqpress_system_checks). Emails on every run while the root filesystem is
+# over LIMIT percent full.
+#
 export PATH=/usr/local/bin:/usr/local/sbin:/bin:/usr/bin:/sbin:/usr/sbin
-# Old way no longer works
-# disku=`df -h|head -2|tail -1|awk '{print $5}'|sed -e 's/%//'`
-disku=`df -h|grep -e '/$'|awk '{print $5}'|sed -e 's/%//'`
-if [ "$disku" -gt 95 ]; then
-	df -h | mail -s "Disk is low on $(hostname)" {{ monitoring_email }} 
+
+LIMIT=95
+
+used=$(df --output=pcent / 2>/dev/null | tail -1 | tr -dc '0-9')
+if [ -z "$used" ]; then
+	echo "Error: could not read disk usage for /"
+	exit 2
+fi
+
+if [ "$used" -gt "$LIMIT" ]; then
+	df -h | mail -s "Disk is low on $(hostname): / is ${used}% full" -- {{ monitoring_email }}
 fi
