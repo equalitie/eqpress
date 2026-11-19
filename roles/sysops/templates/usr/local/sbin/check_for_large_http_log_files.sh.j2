@@ -1,15 +1,31 @@
 #!/bin/bash
+# {{ ansible_managed }}
+#
+# check_for_large_http_log_files.sh
+#
+# Run hourly by cron on the master (timed-jobs, eqpress_system_checks).
+# Alerts via eqpress_alert.sh when an nginx log that is still being written
+# (modified in the last hour) is over LIMIT_KB, and again when none are left.
+#
 export PATH=/usr/local/bin:/usr/local/sbin:/bin:/usr/bin:/sbin:/usr/sbin
-f0=/var/tmp/biglogfiles.0
-f1=/var/tmp/biglogfiles.1
-touch ${f0}
-touch ${f1}
-IFS=$'\n'
-for big in `find /var/log/nginx/*.log -type f -size +30000k -mmin 1 -exec ls -lh {} \; | awk '{ print $9 }'`; do
-	echo ${big} >> ${f0}
-done
-dif=`diff -u ${f0} ${f1}`
-if [ ! -z "$dif" ]; then
-	cat ${f0} | mail -s "Big nginx log files exist on $(hostname)" {{ monitoring_email }} 
+
+LIMIT_KB=30000
+LOG_DIR=/var/log/nginx
+host=$(hostname)
+
+# State files from the old version of this script
+rm -f /var/tmp/biglogfiles.0 /var/tmp/biglogfiles.1
+
+big=()
+while IFS= read -r -d '' f; do
+	big+=("$f")
+done < <(find "$LOG_DIR" -maxdepth 1 -type f -name '*.log' -size +"$LIMIT_KB"k -mmin -60 -print0 2>/dev/null)
+
+if [ "${big[*]}" != "" ]; then
+	list=$(for f in "${big[@]}"; do printf '  %s  %s\n' "$(du -h -- "$f" | cut -f1)" "$f"; done)
+	eqpress_alert.sh nginx-logs problem "Active nginx log files over ${LIMIT_KB} KB on ${host}:
+${list}"
+else
+	eqpress_alert.sh nginx-logs ok "No active nginx log files over ${LIMIT_KB} KB on ${host}"
 fi
-mv ${f0} ${f1}
+exit 0
