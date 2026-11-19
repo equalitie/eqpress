@@ -62,3 +62,48 @@
     - postfix
   notify:
     - "restart postfix"
+
+# Relay logins live in a root-only map, not in the world-readable main.cf
+# (after main.cf exists: postmap refuses to run without it).
+# (main.cf must stay readable: PHP mail() runs sendmail as the web user).
+- name: Install SMTP relay logins
+  become: true
+  ansible.builtin.template:
+    src: etc/postfix/sasl_passwd.j2
+    dest: /etc/postfix/sasl_passwd
+    owner: root
+    group: root
+    mode: "0600"
+  register: postfix_sasl_passwd
+  tags:
+    - postfix
+  notify:
+    - "restart postfix"
+
+- name: Check for the relay login map database
+  become: true
+  ansible.builtin.stat:
+    path: /etc/postfix/sasl_passwd.db
+  register: postfix_sasl_db
+  tags:
+    - postfix
+
+- name: Build the relay login map database
+  become: true
+  ansible.builtin.command:
+    argv: [postmap, "hash:/etc/postfix/sasl_passwd"]
+  when: postfix_sasl_passwd is changed or not postfix_sasl_db.stat.exists
+  tags:
+    - postfix
+  notify:
+    - "restart postfix"
+
+- name: Keep the relay login map database root only
+  become: true
+  ansible.builtin.file:
+    path: /etc/postfix/sasl_passwd.db
+    owner: root
+    group: root
+    mode: "0600"
+  tags:
+    - postfix

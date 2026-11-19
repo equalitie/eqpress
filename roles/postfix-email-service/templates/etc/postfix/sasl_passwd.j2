@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+#
+# SMTP relay logins for smtp_sasl_password_maps, one per relayhost (the key
+# must match relayhost in main.cf exactly). Postfix reads this while still
+# root, so this file and sasl_passwd.db stay root only (0600).
+[{{ eqpress_mail_server }}]:587 {{ eqpress_mail_username }}:{{ eqpress_mail_password }}
+[smtp.mandrillapp.com]:587 {{ mandrill_username }}:{{ mandrill_password }}
+[smtp.sendgrid.net]:587 {{ sendgrid_username }}:{{ sendgrid_password }}
