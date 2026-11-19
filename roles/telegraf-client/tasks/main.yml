@@ -108,7 +108,8 @@
         name: "telegraf-sumproc"
         minute: "*/1"
         user: root
-        job: "/bin/bash -c 'cat /dev/null > /etc/telegraf/data/sumproc.influx ; for p in mariadb php-fpm nginx ; do /usr/local/sbin/telegraf-sumproc.sh -p $p >> /etc/telegraf/data/sumproc.influx ; done'"
+        # build in a temp file and rename, so telegraf never reads a half-written file
+        job: "/bin/bash -c 'f=/etc/telegraf/data/sumproc.influx; t=$f.tmp; : > $t; for p in mariadb php-fpm nginx ; do /usr/local/sbin/telegraf-sumproc.sh -p $p >> $t ; done; mv -f $t $f'"
         cron_file: "telegraf-sumproc"
 
     - name: Add cron for telegraf-press_du.sh
@@ -116,7 +117,8 @@
         name: "telegraf-press_du"
         minute: "*/5"
         user: root
-        job: "/bin/bash -c '/usr/local/sbin/telegraf-press_du.sh > /etc/telegraf/data/press_du.json'"
+        # the script writes a temp file and renames it into place
+        job: "/usr/local/sbin/telegraf-press_du.sh /etc/telegraf/data/press_du.json"
         cron_file: "telegraf-press_du"
 
     - name: Add telegraf user to the web group

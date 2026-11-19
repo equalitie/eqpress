@@ -1,43 +1,62 @@
 #!/bin/bash
 # {{ ansible_managed }}
-
 {% raw %}
-
-# Get disk usage for multiple directories
-#[[inputs.exec]]
-#  commands = [ "/bin/cat /etc/telegraf/eqpress_du.json" ]
-#  timeout = "20s"
-#  name_override = "du"
-#  name_suffix = ""
-#  data_format = "json"
-#  tag_keys = [ "path" ]
-#  interval = "5m"
-
-# /etc/cron.d/eqpress_du
 #
-# */5 * * * *    root   /bin/bash /usr/local/sbin/telegraf/eqpress_du.sh > /etc/telegraf/eqpress_du.json
+# telegraf-press_du.sh [output_file]
 #
+# Disk usage in KB, as JSON for telegraf [[inputs.file]] (name "du", tag
+# "path"), of:
+#   /root, /home, /var/log
+#   /var/lib/mysql and each database folder in it (find a runaway database)
+#   /var/www and each site folder in it
+#
+# Run every 5 minutes by cron as root. With output_file the JSON is written to
+# a temporary file and renamed into place, so telegraf (reading every 10s)
+# never sees a half-written file. Missing folders are skipped. du runs at the
+# lowest CPU and disk priority.
+#
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-if [ "`id -u`" -ne 0 ]; then
-       	echo "Please run me as root!" >>/dev/stderr
+if [ "$(id -u)" -ne 0 ]; then
+	echo "Please run me as root!" >&2
 	exit 1
-else
-
-        echo "["
-#du -ks "$@" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
-#du -ks "/var/www/" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
-        du -ks "/root" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
-        echo ","
-        du -ks "/var/lib/mysql" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
-        echo ","
-        du -ks "/home" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
-        echo ","
-        du -ks "/var/log" | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
-        echo ","
-        find /var/www -maxdepth 1 -type d -exec du -sk {} \; | awk '{if (NR!=1) {printf ",\n"};printf "  { \"directory_size_kilobytes\": "$1", \"path\": \""$2"\" }";}'
-        echo
-        echo "]"
-
-        exit 0
 fi
+command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
+
+out=$1
+
+measure() {
+	ionice -c3 nice -n 19 du -k "$@" 2>/dev/null
+}
+
+json=$(
+	{
+		for d in /root /home /var/log; do
+			[ -d "$d" ] && measure -s "$d"
+		done
+		# -d 1: the folder itself plus each folder directly in it, in one pass
+		for d in /var/lib/mysql /var/www; do
+			[ -d "$d" ] && measure -d 1 "$d"
+		done
+	} | while IFS=$'\t' read -r kb path; do
+		[[ "$kb" =~ ^[0-9]+$ ]] || continue
+		jq -cn --arg path "$path" --argjson kb "$kb" '{directory_size_kilobytes: $kb, path: $path}'
+	done | jq -s .
+)
+
+if [ -z "$out" ]; then
+	echo "$json"
+	exit 0
+fi
+
+tmp="$out.tmp.$$"
+if printf '%s\n' "$json" > "$tmp" && jq -e 'type == "array"' "$tmp" >/dev/null; then
+	chmod 0644 "$tmp"
+	mv -f "$tmp" "$out"
+else
+	rm -f "$tmp"
+	echo "telegraf-press_du.sh: could not write $out" >&2
+	exit 1
+fi
+exit 0
 {% endraw %}
