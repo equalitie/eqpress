@@ -3,20 +3,93 @@
 #
 # check_for_disk_usage.sh
 #
-# Run every 4 hours by cron on master and slave (timed-jobs,
-# eqpress_system_checks). Emails on every run while the root filesystem is
-# over LIMIT percent full.
+# Run every 5 minutes by cron on master and slave (timed-jobs,
+# eqpress_system_checks). Checks the filesystems holding /, /var/lib/mysql
+# and /var/www (each mount once) and emails the monitoring address:
+#   WARNING  - once, when the fullest one reaches WARN percent
+#   CRITICAL - on EVERY run while it is at CRIT percent or more, so repeated
+#              emails mean it needs action now (a runaway database can fill
+#              the disk in about 30 minutes)
+#   OK       - once, when it is back below WARN
+# The emails list the largest database and site folders from telegraf's
+# press_du.json (updated every 5 minutes), when it is there.
 #
 export PATH=/usr/local/bin:/usr/local/sbin:/bin:/usr/bin:/sbin:/usr/sbin
 
-LIMIT=95
+WARN=92
+CRIT=95
+PATHS="/ /var/lib/mysql /var/www"
+DU_JSON=/etc/telegraf/data/press_du.json
+EMAIL="{{ monitoring_email }}"
+STATE_DIR=/var/lib/eqpress-monitor
+STATE_FILE=$STATE_DIR/disk_usage.state
 
-used=$(df --output=pcent / 2>/dev/null | tail -1 | tr -dc '0-9')
-if [ -z "$used" ]; then
-	echo "Error: could not read disk usage for /"
+host=$(hostname -f 2>/dev/null || hostname)
+
+# Highest use% of the mounts holding PATHS, and a df -h report of them
+max=0
+mounts=()
+for p in $PATHS; do
+	[ -e "$p" ] || continue
+	line=$(df -P "$p" 2>/dev/null | tail -1) || continue
+	mount=$(awk '{print $NF}' <<<"$line")
+	used=$(awk '{print $(NF-1)}' <<<"$line" | tr -dc '0-9')
+	[[ "$used" =~ ^[0-9]+$ ]] || continue
+	[[ " ${mounts[*]} " == *" $mount "* ]] && continue
+	mounts+=("$mount")
+	[ "$used" -gt "$max" ] && max=$used
+done
+
+if [ "${#mounts[@]}" -eq 0 ]; then
+	echo "check_for_disk_usage.sh: could not read disk usage" >&2
 	exit 2
 fi
 
-if [ "$used" -gt "$LIMIT" ]; then
-	df -h | mail -s "Disk is low on $(hostname): / is ${used}% full" -- {{ monitoring_email }}
+if [ "$max" -ge "$CRIT" ]; then
+	level=critical
+elif [ "$max" -ge "$WARN" ]; then
+	level=warning
+else
+	level=ok
 fi
+
+mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
+previous=$(cat "$STATE_FILE" 2>/dev/null || echo ok)
+
+# Email on every critical run, otherwise only when the level changes
+if [ "$level" != critical ] && [ "$level" = "$previous" ]; then
+	exit 0
+fi
+
+case $level in
+	critical) subject="CRITICAL: disk on $host is ${max}% full" ;;
+	warning)  subject="WARNING: disk on $host is ${max}% full" ;;
+	ok)       subject="OK: disk on $host back to ${max}% full" ;;
+esac
+
+body=$(
+	echo "Warning at ${WARN}%, critical (repeats every 5 minutes) at ${CRIT}%."
+	echo
+	df -hP "${mounts[@]}"
+	if [ "$level" != ok ] && [ -s "$DU_JSON" ] && command -v jq >/dev/null; then
+		echo
+		echo "Largest database and site folders ($(date -r "$DU_JSON" '+%F %T')):"
+		jq -r '[.[] | select(.path | test("^/var/(lib/mysql|www)/"))]
+			| sort_by(-.directory_size_kilobytes) | .[:10][]
+			| "\(.directory_size_kilobytes / 1048576 * 10 | floor / 10) GB\t\(.path)"' \
+			"$DU_JSON" 2>/dev/null
+	fi
+	echo
+	date '+%F %T %Z'
+)
+
+# Only record the new level once the email is handed to mail, so a failed
+# send is retried on the next run.
+if printf '%s\n' "$body" | mail -s "$subject" -- "$EMAIL"; then
+	echo "$level" > "$STATE_FILE"
+	logger -t eqpress-monitor "$subject"
+else
+	logger -t eqpress-monitor "failed to send alert '$subject'"
+	exit 1
+fi
+exit 0
