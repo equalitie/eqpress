@@ -1,6 +1,6 @@
 ---
 - name: install nodejs repo
-  become: yes
+  become: true
   ansible.builtin.deb822_repository:
     name: nodejs
     types: deb
@@ -14,13 +14,13 @@
     - nodejs
 
 - name: install required packages
-  become: yes
+  become: true
   ansible.builtin.apt:
     name:
       - nodejs
       - composer
     state: present
-    update_cache: yes
+    update_cache: true
   tags:
     - provision
     - rampass
@@ -28,10 +28,10 @@
     - composer
 
 - name: create rampass user
-  become: yes
+  become: true
   ansible.builtin.user:
     name: rampass
-    create_home: yes
+    create_home: true
     group: "{{ web_groupname }}"
     password: '!'
     shell: /usr/sbin/nologin
@@ -46,7 +46,7 @@
 # ep_pwpusher_pw:
 
 - name: create rampass mysql database
-  become: yes
+  become: true
   community.mysql.mysql_db:
     name: "{{ eq_pwpusher_db }}"
     state: present
@@ -56,7 +56,7 @@
     - rampass
 
 - name: create rampass mysql users
-  become: yes
+  become: true
   community.mysql.mysql_user:
     name: "{{ eq_pwpusher_user }}"
     host: localhost
@@ -70,47 +70,47 @@
     - rampass
 
 - name: rampass directory to owner rampass
-  become: yes
+  become: true
   ansible.builtin.file:
     state: directory
     path: "{{ eqpress_base_dir }}/rampass"
     owner: rampass
     group: "{{ web_groupname }}"
-    recurse: yes
+    recurse: true
   tags:
     - provision
     - rampass
 
 - name: clone rampass
-  become: yes
+  become: true
   become_user: rampass
   ansible.builtin.git:
     repo: "{{ rampass_repo }}"
     dest: "{{ eqpress_base_dir }}/rampass/rampass"
-    bare: no
+    bare: false
     version: "{{ rampass_version }}"
-    force: yes
-    accept_hostkey: yes
+    force: true
+    accept_hostkey: true
   tags:
     - provision
     - rampass
 
 # Note: We do not want to overwrite because we have salt key in here
 - name: .env install from template [do not overwrite]
-  become: yes
+  become: true
   ansible.builtin.template:
     src: rampass/env.j2
     dest: "{{ eqpress_base_dir }}/rampass/rampass/.env"
     owner: rampass
     group: "{{ web_groupname }}"
     mode: "0640"
-    force: no
+    force: false
   tags:
     - provision
     - rampass
 
 - name: run composer update
-  become: yes
+  become: true
   become_user: rampass
   community.general.composer:
     command: "update"
@@ -122,7 +122,7 @@
     - composer
 
 - name: run command for new install
-  become: yes
+  become: true
   become_user: rampass
   ansible.builtin.command:
     cmd: "{{ item }}"
@@ -140,7 +140,7 @@
     - rampass
 
 - name: secure rampass directory
-  become: yes
+  become: true
   ansible.builtin.file:
     state: directory
     path: "{{ eqpress_base_dir }}/rampass/{{ item.name }}"
@@ -155,7 +155,7 @@
     - rampass
 
 - name: fix .env owner
-  become: yes
+  become: true
   ansible.builtin.file:
     path: "{{ eqpress_base_dir }}/rampass/rampass/.env"
     mode: "0640"
@@ -167,14 +167,14 @@
     - rampass
 
 - name: nginx sites-available for rampass
-  become: yes
+  become: true
   ansible.builtin.template:
     src: rampass/nginx-rampass.conf.j2
     dest: /etc/nginx/sites-available/rampass.conf
     owner: root
     group: root
-    mode: '0644'
-    force: yes
+    mode: "0644"
+    force: true
   notify:
     - reload_nginx
   tags:
@@ -182,7 +182,7 @@
     - rampass
 
 - name: nginx sites-enabled for rampass
-  become: yes
+  become: true
   ansible.builtin.file:
     src: /etc/nginx/sites-available/rampass.conf
     dest: /etc/nginx/sites-enabled/rampass.conf

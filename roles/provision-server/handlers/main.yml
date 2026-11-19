@@ -1,7 +1,7 @@
 ---
 - name: restart_nginx
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     state: restarted
     name: nginx
   register: restart_nginx
@@ -10,8 +10,8 @@
 
 
 - name: reload_nginx
-  become: yes
-  ansible.builtin.systemd:
+  become: true
+  ansible.builtin.systemd_service:
     state: reloaded
     name: nginx
   when: restart_nginx is not defined

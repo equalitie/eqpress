@@ -1,6 +1,6 @@
 ---
 - name: create provision directories
-  become: yes
+  become: true
   ansible.builtin.file:
     path: "{{ eqpress_root_dir }}/{{ item.dir }}"
     state: directory
@@ -24,23 +24,23 @@
     - ansible_inventory
 
 - name: catchall templates
-  become: yes
+  become: true
   ansible.builtin.template:
     src: "catchall/{{ item }}.j2"
     dest: "{{ eqpress_root_dir }}/catchall/{{ item }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   loop:
     - index.html
   tags:
     - provision
 
 - name: create a webserver writable "{{ auto_provision_log_file }}"
-  become: yes
+  become: true
   ansible.builtin.file:
     path: "{{ eqpress_root_dir }}/provision/{{ auto_provision_log_file }}"
-    mode: 0600
+    mode: "0600"
     owner: "{{ web_user }}"
     group: "{{ web_groupname }}"
     state: touch
@@ -48,11 +48,11 @@
     - provision
 
 - name: copy provision scripts
-  become: yes
+  become: true
   ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ eqpress_root_dir }}/{{ item }}"
-    mode: 0644
+    mode: "0644"
     owner: root
     group: root
   loop:
@@ -64,11 +64,11 @@
     - provision
 
 - name: install main provision code from template
-  become: yes
+  become: true
   ansible.builtin.template:
     src: "{{ item }}.j2"
     dest: "{{ eqpress_root_dir }}/{{ item }}"
-    mode: 0644
+    mode: "0644"
     owner: root
     group: root
   loop:
@@ -111,7 +111,7 @@
     - provision
 
 - name: install ansible
-  become: yes
+  become: true
   ansible.builtin.apt:
     name: ansible
     state: present
@@ -124,7 +124,7 @@
 - ansible.builtin.include_tasks: install-rampass.yml
   tags: always
 
-- name: get some varibles set from json string of nodes
+- name: get some variables set from json string of nodes
   ansible.builtin.set_fact:
     auto_provision_nodes_input: "{{ auto_provision_nodes | from_json }}"
   tags:
@@ -132,7 +132,7 @@
     - ansible_inventory
 
 - name: install ansible_inventory
-  become: yes
+  become: true
   ansible.builtin.template:
     dest: "{{ eqpress_root_dir }}/ansible/hosts"
     src: etc/ansible/hosts.j2
