@@ -46,15 +46,28 @@ function backup_wp_db
 {
   local my_dir=$1
   local my_wp=$my_dir/wordpress
-  cd $my_wp
-  command -v wp --allow-root >/dev/null 2>&1 || return 1
+  local owner
+  local root_flag=""
+  cd "$my_wp" || return 1
+  command -v wp >/dev/null 2>&1 || return 1
 
-  wp --allow-root db export --path=$my_wp --quiet $my_wp/$DBNAME.sql
-  return 0
+  # wp-cli runs wp-config.php (PHP). Run it as the user who owns that file
+  # (site user when locked down, www-data otherwise), never as root, so a
+  # changed wp-config.php cannot run code as root.
+  owner=$(stat -c %U "$my_wp/wp-config.php") || return 1
+  if [ "$owner" = "root" ]; then
+    root_flag="--allow-root"
+  fi
 
-  # use mysqldump
-  # mysqldump --add-drop-table -h localhost -u we_need_this -p $my_wp/$DBNAME.sql
-  # may need to add --no-tablespaces because of mysql changes
+  # Export to stdout; root writes the file, so the site user needs no write
+  # access. Only replace the dump if the export succeeded and is not empty.
+  if sudo -u "$owner" wp $root_flag db export - --path="$my_wp" --quiet > "$my_wp/$DBNAME.sql.new" \
+     && [ -s "$my_wp/$DBNAME.sql.new" ]; then
+    mv "$my_wp/$DBNAME.sql.new" "$my_wp/$DBNAME.sql"
+    return 0
+  fi
+  rm -f "$my_wp/$DBNAME.sql.new"
+  return 1
 }
  
 function git_snapshot
@@ -129,24 +142,36 @@ function do_snapshot
     if check_is_wordpress $site; then
       echo "Snapshot for $site"
       DBNAME=$(get_db_name $site)
+      # DBNAME comes from a file the site can edit; it is used in paths that
+      # root moves and chowns, so only allow plain database names.
+      if [[ ! "$DBNAME" =~ ^[A-Za-z0-9_]+$ ]]; then
+        echo "Invalid DB_NAME in $site/wordpress/wp-config.php, skipping"
+        return 1
+      fi
       if lock_site $site; then
+        local dump_ok=0
         if backup_wp_db $site; then
           echo "$DBNAME data exported"
+          dump_ok=1
         else
-          echo "$DBNAME data export failed"
+          echo "$DBNAME data export failed, keeping previous dumps"
         fi
 	# Only do git snapshot when .dosnapshot file found
 	if check_do_git $site; then
           git_snapshot $site
 	fi
-	# Save one day back of database dump
-	cd $site
-	mv $DBNAME.sql.gz $DBNAME.sql.1.gz 2>/dev/null && chown root:$SFTPGROUP $DBNAME.sql.1.gz && chmod 0640 $DBNAME.sql.1.gz
-        cd $site/wordpress
-        gzip $DBNAME.sql
-        mv $DBNAME.sql.gz ../
-        chown root:$SFTPGROUP ../$DBNAME.sql.gz
-	chmod 0640 ../$DBNAME.sql.gz
+	# Rotate only after a successful export, so a failed run never
+	# pushes out the last good dump. Keep one previous dump as .1.gz
+	if [ $dump_ok -eq 1 ]; then
+          cd $site/wordpress
+          gzip -f $DBNAME.sql
+          if [ -f ../$DBNAME.sql.gz ]; then
+            mv ../$DBNAME.sql.gz ../$DBNAME.sql.1.gz && chown root:$SFTPGROUP ../$DBNAME.sql.1.gz && chmod 0640 ../$DBNAME.sql.1.gz
+          fi
+          mv $DBNAME.sql.gz ../
+          chown root:$SFTPGROUP ../$DBNAME.sql.gz
+          chmod 0640 ../$DBNAME.sql.gz
+	fi
         unlock_site $site
       else
         echo "Site already locked"
