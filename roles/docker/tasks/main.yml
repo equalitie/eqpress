@@ -1,8 +1,8 @@
 ---
-- name: only install docker when using
+- name: Install Docker (only when nginx runs in Docker)
   block:
-    - name: remove any unofficial docker packages
-      become: yes
+    - name: Remove unofficial Docker packages
+      become: true
       ansible.builtin.apt:
         name:
           - docker.io
@@ -14,42 +14,72 @@
           - runc
         state: absent
 
-    - name: install docker repo
-      become: yes
+    - name: Install gpg for key verification
+      become: true
+      ansible.builtin.apt:
+        name: gpg
+        state: present
+
+    # Download to a temporary file and only trust it if the fingerprint
+    # matches Docker's published one.
+    - name: Download Docker apt signing key
+      become: true
+      ansible.builtin.get_url:
+        url: "{{ docker_gpg_key_url }}"
+        dest: "{{ docker_gpg_keyring }}.new"
+        mode: "0644"
+        force: true
+      changed_when: false
+
+    - name: Read Docker apt signing key fingerprint
+      ansible.builtin.command:
+        argv: [gpg, --show-keys, --with-colons, --fixed-list-mode, "{{ docker_gpg_keyring }}.new"]
+      register: docker_key_info
+      changed_when: false
+      check_mode: false
+
+    - name: Check Docker apt signing key fingerprint
+      ansible.builtin.assert:
+        that:
+          - docker_gpg_fingerprint in (docker_key_info.stdout_lines | select('match', '^fpr:') | map('split', ':') | map(attribute=9) | list)
+        fail_msg: "Docker apt key at {{ docker_gpg_key_url }} does not have the expected fingerprint {{ docker_gpg_fingerprint }}; not installing it."
+        quiet: true
+
+    - name: Install verified Docker apt signing key
+      become: true
+      ansible.builtin.copy:
+        src: "{{ docker_gpg_keyring }}.new"
+        dest: "{{ docker_gpg_keyring }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Remove temporary Docker key file
+      become: true
+      ansible.builtin.file:
+        path: "{{ docker_gpg_keyring }}.new"
+        state: absent
+      changed_when: false
+
+    # amd64 is hardcoded on purpose: we only run amd64 servers, and pinning it
+    # avoids images/packages for another architecture being used by mistake
+    # (this once happened with an image built on a non-amd64 workstation).
+    - name: Install Docker repo
+      become: true
       ansible.builtin.deb822_repository:
         name: docker
         types: deb
         uris: "{{ docker_repo }}"
-        suites: "{{ ansible_distribution_release }}"
+        suites: "{{ ansible_facts['distribution_release'] }}"
         architectures: amd64
         components: stable
-        signed_by: "{{ docker_gpg_key_url }}"
+        signed_by: "{{ docker_gpg_keyring }}"
 
-
-    #- name: get docker.asc
-    #  ansible.builtin.get_url:
-    #    url: '{{ docker_gpg_key_url }}'
-    #    dest: /tmp/docker.asc.key
-    #  register: get_docker_key
-
-    #- name: install docker.asc
-    #  become: yes
-    #  ansible.builtin.shell:
-    #    cmd: cat /tmp/docker.asc.key | gpg --dearmor | tee /usr/share/keyrings/docker.gpg
-    #  when: get_docker_key is defined and get_docker_key.changed
-
-    #- name: install docker repo
-    #  become: yes
-    #  ansible.builtin.apt_repository:
-    #    repo: 'deb [arch=amd64 signed-by=/usr/share/keyrings/docker.gpg] {{ docker_repo }} {{ ansible_distribution_release }} stable'
-    #    filename: docker
-    #    state: present
-    #    update_cache: yes
-
-    - name: install docker packages
-      become: yes
+    - name: Install Docker packages
+      become: true
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
         name:
           - docker-ce
           - docker-ce-cli
@@ -58,22 +88,25 @@
           - docker-compose-plugin
         state: present
 
-    - name: install dockerd daemon config
-      become: yes
+    - name: Install dockerd daemon config
+      become: true
       ansible.builtin.template:
         src: docker_daemon.json.j2
         dest: /etc/docker/daemon.json
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       notify:
-        - restart_docker
+        - reload_docker
 
   when:
-    - web_server_docker|bool == true
+    - web_server_docker | bool
   tags:
     - nginx
     - docker
 
-- name: flush handlers
+- name: Flush handlers
   ansible.builtin.meta: flush_handlers
+  tags:
+    - nginx
+    - docker

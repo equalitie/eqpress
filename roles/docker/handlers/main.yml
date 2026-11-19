@@ -1,0 +1,9 @@
+---
+# A reload (SIGHUP) applies live-restore without stopping containers, so nginx
+# keeps running. Settings that need a full restart (dns, log options) take
+# effect at Docker's next restart, which live-restore makes non-disruptive.
+- name: reload_docker
+  become: true
+  ansible.builtin.systemd_service:
+    name: docker
+    state: reloaded

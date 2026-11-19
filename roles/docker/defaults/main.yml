@@ -1,3 +1,8 @@
 ---
 docker_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
+# Docker's published apt signing key fingerprint
+# (https://docs.docker.com/engine/install/ubuntu/). The downloaded key is only
+# trusted if it matches.
+docker_gpg_fingerprint: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+docker_gpg_keyring: "/etc/apt/keyrings/docker.asc"
 docker_repo: "https://download.docker.com/linux/ubuntu"
