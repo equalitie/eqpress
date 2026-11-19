@@ -87,8 +87,15 @@
   urls = ["/var/run/php/*.sock:phpfpmstatus"]
   timeout = "2s"
 {{ telegraf_inputs_ping_placeholder }}
+{% if web_server_docker is defined and web_server_docker %}
+# nginx runs in Docker: nginx.service is only a placeholder with no process,
+# so match the nginx master process (visible from the host) instead.
+[[inputs.procstat]]
+  pattern = "nginx: master process"
+{% else %}
 [[inputs.procstat]]
   systemd_unit = "nginx.service"
+{% endif %}
 [[inputs.procstat]]
   systemd_unit = "ssh.service"
 [[inputs.procstat]]
