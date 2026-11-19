@@ -299,7 +299,8 @@
     dest: "/usr/local/sbin/{{ item }}"
     owner: root
     group: staff
-    mode: "0755"
+    # 0750: these hold the webstats DB password; only root's cron runs them
+    mode: "0750"
   loop:
     - api_webstats.php
     - webstats.php
