@@ -1,12 +1,40 @@
 #!/bin/bash
-export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+# {{ ansible_managed }}
+#
+# deploy_must_use_plugins.sh <site|all>
+#
+# Deploy (or refresh) the eqpress must-use plugins on one site or on every
+# site, by running the per-plugin installers that provisioning also uses:
+#   install_cache_purge.sh  - nginx cache purge
+#   install_console.sh      - press console (eqpress.php)
+#
+export PATH=/usr/local/sbin:/bin:/usr/bin
 
-for site in `ls -1d /var/www/*`; do
-    if [ -d "$site/wordpress" ]; then
-	    mu_dir=${site}/wordpress/wp-content/mu-plugins
-	    if [ ! -d ${mu_dir} ]; then
-		    mkdir ${mu_dir}
-	    fi
-        rsync -av {{ eqpress_root_dir }}/bruteprotect/* ${site}/wordpress/wp-content/mu-plugins
+usage() {
+	echo "Usage: $(basename "$0") <site|all>"
+	echo "  <site>  folder name under /var/www (e.g. example.org)"
+	echo "  all     every site under /var/www"
+	exit 1
+}
+
+[ $# -eq 1 ] || usage
+case "$1" in
+	-h|--help|help) usage ;;
+esac
+
+target=$1
+if [ "$target" != "all" ]; then
+	# plain folder name only, no paths
+	[[ "$target" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || { echo "Error: invalid site name '$target'"; exit 1; }
+	[ -d "/var/www/$target/wordpress" ] || { echo "Error: /var/www/$target/wordpress does not exist"; exit 1; }
+fi
+
+rc=0
+for installer in install_cache_purge.sh install_console.sh; do
+	echo "== $installer $target"
+	if ! "$installer" "$target"; then
+		echo "Error: $installer $target failed"
+		rc=1
 	fi
 done
+exit $rc
