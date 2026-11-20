@@ -227,17 +227,6 @@
   tags:
     - mysql
 
-- name: Copy webstats DB table structure to server
-  become: true
-  ansible.builtin.copy:
-    src: etc/mysql/webstats.sql
-    dest: /tmp/webstats.sql
-  when:
-   - mysql_repl_role is defined
-   - mysql_repl_role == 'master'
-  tags:
-    - mysql
-
 - name: Create webstats user
   become: true
   community.mysql.mysql_user:
@@ -269,13 +258,28 @@
   tags:
     - mysql
 
+# Only when the DB was just created: copy the table layout, import it and
+# remove the copy, so normal runs do not touch /tmp
 - name: Create webstats tables
   become: true
-  community.mysql.mysql_db:
-    name: "{{ mysql_webstats.db }}"
-    state: import
-    target: /tmp/webstats.sql
-    login_unix_socket: "{{ mariadb_unix_socket }}"
+  block:
+    - name: Copy webstats DB table structure to server
+      ansible.builtin.copy:
+        src: etc/mysql/webstats.sql
+        dest: /tmp/webstats.sql
+        mode: "0600"
+
+    - name: Import webstats tables
+      community.mysql.mysql_db:
+        name: "{{ mysql_webstats.db }}"
+        state: import
+        target: /tmp/webstats.sql
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+  always:
+    - name: Remove the webstats table structure copy
+      ansible.builtin.file:
+        path: /tmp/webstats.sql
+        state: absent
   when:
     - mysql_repl_role is defined
     - mysql_repl_role == 'master'
