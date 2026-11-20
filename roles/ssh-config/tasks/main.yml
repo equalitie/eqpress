@@ -206,6 +206,10 @@
           - { user1: "root", user2: "{{ ansible_facts['user_id'] }}" }
           - { user1: "{{ ansible_facts['user_id'] }}", user2: "{{ ansible_facts['user_id'] }}" }
           - { user1: "{{ ansible_facts['user_id'] }}", user2: "root" }
+      # The only provision.yml task that changes the press nodes; skip it
+      # with --skip-tags provision_keys_on_masters to leave them untouched.
+      tags:
+        - provision_keys_on_masters
 
   when: auto_provision_host | default(false) | bool
   tags:
