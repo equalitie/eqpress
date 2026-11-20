@@ -115,6 +115,8 @@
     owner: root
     group: root
     mode: "0600"
+  # In --check, postmap above does not run, so a new .db does not exist yet
+  when: not ansible_check_mode or postfix_sasl_db.stat.exists
   tags:
     - postfix
 
