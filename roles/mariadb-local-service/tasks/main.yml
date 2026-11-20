@@ -286,7 +286,10 @@
     name: "{{ mysql_telegraf_user.username }}"
     host: "{{ item }}"
     password: "{{ mysql_telegraf_user.password }}"
-    priv: "*.*:ALL,GRANT"
+    # Read-only monitoring: process list, binlog and slave status, table
+    # sizes and columns (SHOW VIEW, REFERENCES make them visible without
+    # reading data), performance_schema. Same metrics as ALL (tested).
+    priv: "*.*:PROCESS,REFERENCES,SHOW VIEW,BINLOG MONITOR,SLAVE MONITOR/performance_schema.*:SELECT"
     column_case_sensitive: yes
     state: present
     login_unix_socket: "{{ mariadb_unix_socket }}"
