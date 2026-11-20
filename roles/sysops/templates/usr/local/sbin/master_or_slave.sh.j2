@@ -10,13 +10,13 @@ exit 1
 #echo -n "Do you wish to turn me into the master? [yes/no]: "
 #read master
 #if [ "$master" = "yes" ]; then
-#	ip addr add {{ hostvars[mysql_repl_master].ansible_default_ipv4.address }}/24 brd + dev eth0
-#	ping -c5 {{ hostvars[mysql_repl_master].ansible_default_ipv4.gateway }}
+#	ip addr add {{ hostvars[mysql_repl_master].ansible_facts.default_ipv4.address }}/24 brd + dev eth0
+#	ping -c5 {{ hostvars[mysql_repl_master].ansible_facts.default_ipv4.gateway }}
 #else
 #	echo -n "Do you wish to turn me into a slave? [yes/no]: "
 #	read slave
 #	if [ "$slave" = "yes" ]; then
-#		ip addr del {{ hostvars[mysql_repl_master].ansible_default_ipv4.address }}/24 dev eth0
+#		ip addr del {{ hostvars[mysql_repl_master].ansible_facts.default_ipv4.address }}/24 dev eth0
 #	else
 #		echo I am what I was. Nothing has changed.
 #	fi

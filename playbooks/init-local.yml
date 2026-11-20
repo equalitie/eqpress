@@ -6,8 +6,8 @@
 #    - ansible.builtin.fail:
 #        msg: 'install must be on Ubuntu 22.04 or above'
 #      when:
-#        - ansible_distribution != 'Ubuntu'
-#        - ansible_distribution_version is version('22.04','<')
+#        - ansible_facts.distribution != 'Ubuntu'
+#        - ansible_facts.distribution_version is version('22.04','<')
 
   vars:
     is_local: true

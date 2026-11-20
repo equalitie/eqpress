@@ -70,7 +70,7 @@
          WP_HELP="$(/usr/local/sbin/wp --allow-root help)"
          echo "$WP_HELP" >> $FAQ ; echo $SEP >> $FAQ
       environment:
-        - FAQ: "{{ ansible_user_dir }}/TOOLS_FAQ"
+        - FAQ: "{{ ansible_facts.user_dir }}/TOOLS_FAQ"
         - SEP: "=============================================================================================="
       tags:
         - faq
