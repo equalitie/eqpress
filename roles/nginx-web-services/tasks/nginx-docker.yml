@@ -32,8 +32,8 @@
     mode: "0700"
     state: directory
   loop:
-    - { dir: '{{ ansible_facts['user_dir'] }}/docker', owner: '{{ ansible_facts['user_id'] }}', group: '{{ ansible_facts['user_gid'] }}' }
-    - { dir: '{{ ansible_facts['user_dir'] }}/docker/eqpress_nginx', owner: '{{ ansible_facts['user_id'] }}', group: '{{ ansible_facts['user_gid'] }}' }
+    - { dir: '{{ ansible_facts.user_dir }}/docker', owner: '{{ ansible_facts.user_id }}', group: '{{ ansible_facts.user_gid }}' }
+    - { dir: '{{ ansible_facts.user_dir }}/docker/eqpress_nginx', owner: '{{ ansible_facts.user_id }}', group: '{{ ansible_facts.user_gid }}' }
   tags:
     - nginx
     - nginx_docker
