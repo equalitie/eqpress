@@ -19,8 +19,13 @@ if ping -c 1 ${master} > /dev/null 2>&1; then
 	    --exclude '*.mp4' \
 	    --exclude '.sessions/' \
 	    ${rsyncuser}@${master}:/var/www /var
+    # Mirror the site configs, but keep this host's own eqpress vhost (its
+    # name and IP) and its own certificate setting
     rsync -ave "ssh -i /home/${rsyncuser}/.ssh/id_rsa" --rsync-path='/usr/bin/sudo /usr/bin/rsync' \
-            --delete ${rsyncuser}@${master}:/etc/nginx /etc
+            --delete \
+            --exclude '/nginx/sites-available/eqpress' \
+            --exclude '/nginx/eqpress-common/common_eqpress_ssl.conf' \
+            ${rsyncuser}@${master}:/etc/nginx /etc
     rsync -ave "ssh -i /home/${rsyncuser}/.ssh/id_rsa" --rsync-path='/usr/bin/sudo /usr/bin/rsync' \
             ${rsyncuser}@${master}:/etc/ssl /etc
 else
