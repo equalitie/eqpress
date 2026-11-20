@@ -1,11 +1,25 @@
 ---
 - name: systemd_daemon_reload
-  become: yes
-  ansible.builtin.systemd:
-    daemon_reload: yes
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
 
-- name: "restart mariadb"
-  become: yes
-  ansible.builtin.systemd:
+# "restart mariadb" restarts the slave first, so it is up and ready to
+# receive updates before the master restarts. Handlers run in this order
+# across all hosts; if the slave fails to start, any_errors_fatal stops the
+# play before the master is touched.
+- name: restart mariadb on slave
+  become: true
+  ansible.builtin.systemd_service:
     name: mariadb
     state: restarted
+  when: mysql_repl_role | default('') == 'slave'
+  listen: "restart mariadb"
+
+- name: restart mariadb on master
+  become: true
+  ansible.builtin.systemd_service:
+    name: mariadb
+    state: restarted
+  when: mysql_repl_role | default('') != 'slave'
+  listen: "restart mariadb"
