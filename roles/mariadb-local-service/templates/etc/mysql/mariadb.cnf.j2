@@ -41,9 +41,14 @@ max_connect_errors             = 100000
 
 # BINARY LOGGING #
 log_bin                        = {{ mariadb_datadir }}/mysql_bin
-sync_binlog                    = 0
+# 1 = binlog is on disk at commit, so a master crash cannot lose changes
+# the slave never receives (0 left that to the OS)
+sync_binlog                    = 1
 binlog_format                  = MIXED
+# Kept short (4h) because binlogs filled disks with big client databases.
+# Turning on mariadb_log_bin_compress shrinks them, so retention can go up.
 binlog_expire_logs_seconds     = {{ mysql_expire_logs_seconds | default('14400') }}
+log_bin_compress               = {{ 'ON' if mariadb_log_bin_compress | bool else 'OFF' }}
 
 # REPLICATION #
 read_only                      = {{ mysql_is_read_only | default(0) }}
