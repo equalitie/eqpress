@@ -51,6 +51,9 @@ At this point you should be able to get started
   # Check by running "ansible-galaxy collection list | grep community.docker"
   # You can install by "ansible-galaxy collection install community.docker"
 
+  # community.mysql must be version 3.5.0 or above (replication TLS options).
+  # Check by running "ansible-galaxy collection list | grep community.mysql"
+
   Change to your repository directory
 
   run:

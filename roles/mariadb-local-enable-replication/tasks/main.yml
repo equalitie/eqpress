@@ -17,6 +17,9 @@
     host: "{{ item }}"
     password: "{{ mysql_repl_creds.password }}"
     priv: "*.*:REPLICATION SLAVE"
+    # the slave always connects with TLS (master_ssl below); refuse plain text
+    tls_requires:
+      SSL:
     state: present
     login_unix_socket: "{{ mariadb_unix_socket }}"
   loop:
@@ -309,6 +312,9 @@
         master_log_file: "{{ mysql_binlog_file.stdout }}"
         master_log_pos: "{{ mysql_binlog_position.stdout }}"
         master_ssl: yes
+        # check the master's cert (CN = master hostname, signed by our CA).
+        # Only set on a resync; existing slaves keep their current setting.
+        primary_ssl_verify_server_cert: true
         master_ssl_ca: /etc/ssl/eqpress/root_CA.pem
         master_ssl_cert: "/etc/ssl/eqpress/{{ inventory_hostname }}.pem"
         master_ssl_key: "/etc/ssl/eqpress/{{ inventory_hostname }}.key"
