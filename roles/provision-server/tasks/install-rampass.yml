@@ -1,4 +1,30 @@
 ---
+# Servers set up before 2024-07 used apt_repository with NodeSource 20.x
+# (deb_nodesource_com_node_<ver>.list, older key). Remove those leftovers;
+# an entry for the same repo with another key makes apt fail.
+- name: find old NodeSource apt sources
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d
+    patterns: "deb_nodesource_com_node_*.list"
+  register: old_nodesource_lists
+  tags:
+    - provision
+    - rampass
+    - nodejs
+
+- name: remove old NodeSource apt sources
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ old_nodesource_lists.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags:
+    - provision
+    - rampass
+    - nodejs
+
 - name: install nodejs repo
   become: true
   ansible.builtin.deb822_repository:
@@ -13,18 +39,26 @@
     - rampass
     - nodejs
 
-- name: install required packages
+# latest: moves old servers off Node 20 and keeps Node 22 patched
+- name: install Node.js
   become: true
   ansible.builtin.apt:
-    name:
-      - nodejs
-      - composer
-    state: present
+    name: nodejs
+    state: latest
     update_cache: true
   tags:
     - provision
     - rampass
     - nodejs
+
+- name: install composer
+  become: true
+  ansible.builtin.apt:
+    name: composer
+    state: present
+  tags:
+    - provision
+    - rampass
     - composer
 
 - name: create rampass user
@@ -120,6 +154,34 @@
     - provision
     - rampass
     - composer
+
+# rampass (Vite 8) needs Node.js 22.12 or newer to build
+- name: check Node.js version
+  ansible.builtin.command: node --version
+  register: rampass_node_version
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - provision
+    - rampass
+    - nodejs
+
+- name: stop if Node.js is too old for rampass
+  ansible.builtin.assert:
+    that:
+      - rampass_node_version.rc == 0
+      - rampass_node_version.stdout | regex_replace('^v', '') is version('22.12.0', '>=')
+    fail_msg: >-
+      Node.js {{ rampass_node_version.stdout | default('') or 'not found' }} is too old or missing for rampass (needs 22.12+).
+      Check that the NodeSource repo ({{ nodejs_repo }}) is used: apt-cache policy nodejs
+    quiet: true
+  # in --check, a new server has no Node.js yet (its install is only simulated)
+  when: not (ansible_check_mode and rampass_node_version.rc != 0)
+  tags:
+    - provision
+    - rampass
+    - nodejs
 
 - name: run command for new install
   become: true
