@@ -84,7 +84,7 @@
     - (replica.Is_Replica is defined and not replica.Is_Replica) or (replica.Is_Slave is defined and not replica.Is_Slave) 
   delegate_facts: true
   delegate_to: "{{ item }}"
-  loop: "{{ play_hosts }}"
+  loop: "{{ ansible_play_batch }}"
   tags:
     - mysql
     - mysql_resync
@@ -205,7 +205,7 @@
         dest: "{{ mariadb_resync_dir }}/master-snapshot.tar.bz2"
         mode: push
       delegate_to: "{{ item }}"
-      loop: "{{ play_hosts }}"
+      loop: "{{ ansible_play_batch }}"
       when:
         - mysql_repl_role == 'slave'
         - item != inventory_hostname
