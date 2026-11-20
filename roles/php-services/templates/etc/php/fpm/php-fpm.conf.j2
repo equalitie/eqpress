@@ -103,6 +103,9 @@ error_log = /var/log/php{{ php_version }}-fpm.log
 ; Set open file descriptor rlimit for the master process.
 ; Default Value: system defined value
 ;rlimit_files = 1024
+; Raised from the system default of 1024. Pool workers inherit it from the
+; master, so it covers every site's pool without editing the pool files.
+rlimit_files = {{ php_fpm_rlimit_files }}
 
 ; Set max core size rlimit for the master process.
 ; Possible Values: 'unlimited' or an integer greater or equal to 0

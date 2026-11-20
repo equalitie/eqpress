@@ -1,1 +1,4 @@
 ---
+# Open-file limit for PHP-FPM (master and all pool workers). The system
+# default soft limit is 1024; the hard limit (524288) allows this.
+php_fpm_rlimit_files: 65536
