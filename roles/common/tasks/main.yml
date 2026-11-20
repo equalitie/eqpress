@@ -38,7 +38,7 @@
   ansible.builtin.copy:
     dest: /etc/cloud/cloud.cfg.d/99-eqpress-hostname.cfg
     content: |
-      # {{ ansible_managed }}
+      # Managed by Ansible (eqpress common role), do not edit
       preserve_hostname: true
     owner: root
     group: root
