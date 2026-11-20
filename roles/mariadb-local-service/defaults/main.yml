@@ -12,3 +12,6 @@ mariadb_max_connections: "250"
 # normal site traffic, 3x for database imports, so mysql_expire_logs_seconds
 # can be raised. Set to false in group_vars to turn it off for a cluster.
 mariadb_log_bin_compress: true
+# performance_schema: on for press nodes (telegraf wait/lock/statement
+# metrics), off on the provision server. Set false in group_vars to turn off.
+mariadb_performance_schema: "{{ not (auto_provision_host | default(false) | bool) }}"

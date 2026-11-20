@@ -25,7 +25,9 @@ tmpdir                         = /tmp
 basedir                        = /usr
 bind-address                   = {{ mysql_bind_address | default('0.0.0.0') }}
 server_id                      = {{ mysql_server_id | default(5) }}
-performance_schema             = 0
+# Feeds telegraf's wait, lock and statement metrics (about 100 MB of RAM).
+# Turn off per cluster with mariadb_performance_schema: false
+performance_schema             = {{ 'ON' if mariadb_performance_schema | bool else 'OFF' }}
 datadir                        = {{ mariadb_datadir }}
 lc-messages-dir                = /usr/share/mysql
 lc_messages                    = en_US
