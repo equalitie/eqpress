@@ -330,14 +330,76 @@
     - mysql
     - mysql_resync
 
-# Always run start slave on slave
-- name: Start slave
-  become: true
-  community.mysql.mysql_replication:
-    mode: "{{ startreplica | default('startreplica') }}"
+# Slave replication: leave it alone when both threads run. If either is
+# stopped (after a resync, a reboot or a crash), try to start it, give it
+# 30 seconds and report the result. A slave that will not start is reported
+# with MariaDB's error but does not fail the play; the replication check
+# alerts keep going.
+- name: Check slave replication
   when:
     - mysql_repl_role is defined
     - mysql_repl_role == 'slave'
   tags:
     - mysql
     - mysql_resync
+  vars:
+    repl_was_running: "{{ repl_before.Slave_IO_Running | default('No') == 'Yes' and
+                          repl_before.Slave_SQL_Running | default('No') == 'Yes' }}"
+    repl_is_running: "{{ repl_after.Slave_IO_Running | default('No') == 'Yes' and
+                         repl_after.Slave_SQL_Running | default('No') == 'Yes' }}"
+  block:
+    - name: Read slave replication status
+      become: true
+      community.mysql.mysql_replication:
+        mode: "{{ getreplica | default('getreplica') }}"
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+      register: repl_before
+      changed_when: false
+      check_mode: false
+
+    - name: Start slave replication when stopped
+      become: true
+      community.mysql.mysql_replication:
+        mode: "{{ startreplica | default('startreplica') }}"
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+      register: repl_start
+      when:
+        - not repl_was_running | bool
+        - not ansible_check_mode
+
+    - name: Report stopped slave replication (check mode)
+      ansible.builtin.debug:
+        msg: >-
+          Replication is stopped (IO thread {{ repl_before.Slave_IO_Running | default('?') }},
+          SQL thread {{ repl_before.Slave_SQL_Running | default('?') }});
+          a real run will try to start it.
+      when:
+        - not repl_was_running | bool
+        - ansible_check_mode
+
+    - name: Wait for slave replication to run
+      become: true
+      community.mysql.mysql_replication:
+        mode: "{{ getreplica | default('getreplica') }}"
+        login_unix_socket: "{{ mariadb_unix_socket }}"
+      register: repl_after
+      until: repl_is_running | bool
+      retries: 6
+      delay: 5
+      changed_when: false
+      failed_when: false
+      when: repl_start is not skipped
+
+    - name: Report slave replication
+      ansible.builtin.debug:
+        msg: >-
+          {%- if repl_is_running | bool -%}
+          Replication was stopped and is running again.
+          {%- else -%}
+          WARNING: replication is still not running
+          (IO thread {{ repl_after.Slave_IO_Running | default('?') }},
+          SQL thread {{ repl_after.Slave_SQL_Running | default('?') }}).
+          IO error: {{ repl_after.Last_IO_Error | default('') or 'none' }}.
+          SQL error: {{ repl_after.Last_SQL_Error | default('') or 'none' }}.
+          {%- endif %}
+      when: repl_start is not skipped
