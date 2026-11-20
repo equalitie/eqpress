@@ -12,7 +12,7 @@
 
 - name: Create the replication user on the master
   become: true
-  community.mysql.mysql_user:
+  mysql_user:
     name: "{{ mysql_repl_creds.username }}"
     host: "{{ item }}"
     password: "{{ mysql_repl_creds.password }}"
@@ -37,7 +37,7 @@
 # client files. The DROP USER on the master replicates to the slave.
 - name: Remove the unused mysqladmin user on master
   become: true
-  community.mysql.mysql_user:
+  mysql_user:
     name: "{{ mysql_admin_user.username | default('mysqladmin') }}"
     host_all: true
     state: absent
@@ -63,7 +63,7 @@
 
 - name: get replica replication status
   become: true
-  community.mysql.mysql_replication:
+  mysql_replication:
     mode: "{{ getreplica | default('getreplica') }}"
     login_unix_socket: "{{ mariadb_unix_socket }}"
   when:
@@ -303,7 +303,7 @@
         - mysql_repl_role == 'slave'
 
     - name: Configure replication on the replica
-      community.mysql.mysql_replication:
+      mysql_replication:
         mode: "{{ changeprimary | default('changeprimary') }}"
         master_host: "{{ mysql_repl_master }}"
         master_user: "{{ mysql_repl_creds.username }}"
@@ -350,7 +350,7 @@
   block:
     - name: Read slave replication status
       become: true
-      community.mysql.mysql_replication:
+      mysql_replication:
         mode: "{{ getreplica | default('getreplica') }}"
         login_unix_socket: "{{ mariadb_unix_socket }}"
       register: repl_before
@@ -359,7 +359,7 @@
 
     - name: Start slave replication when stopped
       become: true
-      community.mysql.mysql_replication:
+      mysql_replication:
         mode: "{{ startreplica | default('startreplica') }}"
         login_unix_socket: "{{ mariadb_unix_socket }}"
       register: repl_start
@@ -379,7 +379,7 @@
 
     - name: Wait for slave replication to run
       become: true
-      community.mysql.mysql_replication:
+      mysql_replication:
         mode: "{{ getreplica | default('getreplica') }}"
         login_unix_socket: "{{ mariadb_unix_socket }}"
       register: repl_after

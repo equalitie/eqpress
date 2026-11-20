@@ -119,7 +119,7 @@
 
     - name: Update mysql root password for all existing hosts no .my.cnf
       become: true
-      community.mysql.mysql_user:
+      mysql_user:
         login_user: root
         name: root
         login_unix_socket: "{{ mariadb_unix_socket }}"
@@ -129,7 +129,7 @@
 
     - name: Update mysql root password for all root accounts no .my.cnf
       become: true
-      community.mysql.mysql_user:
+      mysql_user:
         login_user: root
         login_password: "{{ mysql_root_db_pass }}"
         name: root
@@ -154,7 +154,7 @@
 
     - name: Update mysql root password for all root accounts yes .my.cnf when localhost no
       become: true
-      community.mysql.mysql_user:
+      mysql_user:
         name: root
         host: "{{ item }}"
         password: "{{ mysql_root_db_pass }}"
@@ -171,7 +171,7 @@
 
     - name: Update mysql root password for all root accounts yes .my.cnf when localhost yes
       become: true
-      community.mysql.mysql_user:
+      mysql_user:
         name: root
         host: "{{ item }}"
         password: "{{ mysql_root_db_pass }}"
@@ -207,7 +207,7 @@
 
 - name: ensure anonymous users are not in the database
   become: true
-  community.mysql.mysql_user:
+  mysql_user:
     name: ''
     host: "{{ item }}"
     state: absent
@@ -220,7 +220,7 @@
 
 - name: remove the test database
   become: true
-  community.mysql.mysql_db:
+  mysql_db:
     name: test
     state: absent
     login_unix_socket: "{{ mariadb_unix_socket }}"
@@ -229,7 +229,7 @@
 
 - name: Create webstats user
   become: true
-  community.mysql.mysql_user:
+  mysql_user:
     name: "{{ mysql_webstats.username }}"
     host: localhost
     password: "{{ mysql_webstats.password }}"
@@ -247,7 +247,7 @@
 
 - name: Create webstats DB
   become: true
-  community.mysql.mysql_db:
+  mysql_db:
     name: "{{ mysql_webstats.db }}"
     state: present
     login_unix_socket: "{{ mariadb_unix_socket }}"
@@ -270,7 +270,7 @@
         mode: "0600"
 
     - name: Import webstats tables
-      community.mysql.mysql_db:
+      mysql_db:
         name: "{{ mysql_webstats.db }}"
         state: import
         target: /tmp/webstats.sql
@@ -290,7 +290,7 @@
 
 - name: Create the mysql monitoring for telegraf
   become: true
-  community.mysql.mysql_user:
+  mysql_user:
     name: "{{ mysql_telegraf_user.username }}"
     host: "{{ item }}"
     password: "{{ mysql_telegraf_user.password }}"

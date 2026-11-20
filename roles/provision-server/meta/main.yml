@@ -1,0 +1,8 @@
+---
+# MySQL modules are used by short name (mysql_user, mysql_db, ...).
+# Ansible takes them from the first collection here that is installed:
+# ansible.mysql on newer controllers (no deprecation warnings), else
+# community.mysql (stock Ubuntu 24.04 apt ansible).
+collections:
+  - ansible.mysql
+  - community.mysql

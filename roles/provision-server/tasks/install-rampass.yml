@@ -47,7 +47,7 @@
 
 - name: create rampass mysql database
   become: true
-  community.mysql.mysql_db:
+  mysql_db:
     name: "{{ eq_pwpusher_db }}"
     state: present
     login_unix_socket: "{{ mariadb_unix_socket }}"
@@ -57,7 +57,7 @@
 
 - name: create rampass mysql users
   become: true
-  community.mysql.mysql_user:
+  mysql_user:
     name: "{{ eq_pwpusher_user }}"
     host: localhost
     password: "{{ eq_pwpusher_pw }}"
