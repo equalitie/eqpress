@@ -186,7 +186,7 @@
         key: "{{ lookup('file', '../config/ssh/id_rsa_' + item.0.user2 + '_' + inventory_hostname + '.pub') }}"
         # Key only works when the connection comes from this provision server
         key_options: 'from="{{ hostvars[inventory_hostname].public_ipv4_address }}"'
-      loop: "{{ ssh_users | product(ssh_hosts) }}"
+      loop: "{{ ssh_users | product(ssh_hosts | default([])) }}"
       vars:
         ssh_users:
           - { user1: "root", user2: "root" }
