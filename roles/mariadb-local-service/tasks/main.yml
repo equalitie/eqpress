@@ -242,7 +242,9 @@
     name: "{{ mysql_webstats.username }}"
     host: localhost
     password: "{{ mysql_webstats.password }}"
-    priv: "*.*:ALL"
+    # webstats.php, webstats_totals.php, webstats/index.php and the console
+    # proxy only read and add rows in the webstats DB
+    priv: "{{ mysql_webstats.db }}.*:SELECT,INSERT"
     state: present
     login_unix_socket: "{{ mariadb_unix_socket }}"
   when:
