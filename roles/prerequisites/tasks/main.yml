@@ -21,3 +21,19 @@
       - is_local is defined
     fail_msg: "FAILED - 'is_local' variable not set by the playbook"
     quiet: true
+
+# ansible.cfg sets remote_tmp = /tmp/ansible-$USER. Create root's ahead of
+# time (0700, as Ansible would) so tasks with become do not warn that it
+# was missing. Runs in --check too: an empty root-only folder in /tmp.
+- name: Create Ansible remote tmp folder for root
+  become: true
+  ansible.builtin.file:
+    path: /tmp/ansible-root
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  check_mode: false
+  when: not is_local | default(false) | bool
+  tags:
+    - always
