@@ -1,15 +1,28 @@
 ---
 # RSA is kept on purpose: backup_from_master.sh and the fetched key
 # filenames expect id_rsa. Moving to ed25519 needs a planned migration.
+- name: Check for SSH keys of root and admin user
+  become: true
+  ansible.builtin.stat:
+    path: "{{ item.home }}/.ssh/id_rsa"
+  loop:
+    - { user: root, home: /root }
+    - { user: "{{ ansible_facts['user_id'] }}", home: "{{ ansible_facts['user_dir'] }}" }
+  register: ssh_key_stat
+  tags:
+    - ssh
+
+# Only when missing: the user module warns on every run for existing keys
 - name: Generate SSH key for root and admin user
   become: true
   ansible.builtin.user:
-    name: "{{ item }}"
+    name: "{{ item.item.user }}"
     generate_ssh_key: true
     ssh_key_type: 'rsa'
-  loop:
-    - root
-    - "{{ ansible_facts['user_id'] }}"
+  loop: "{{ ssh_key_stat.results }}"
+  loop_control:
+    label: "{{ item.item.user }}"
+  when: not item.stat.exists
   tags:
     - ssh
 
