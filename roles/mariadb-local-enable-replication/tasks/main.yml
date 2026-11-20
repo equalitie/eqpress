@@ -29,41 +29,32 @@
   tags:
     - mysql
 
-- name: Create the mysqladmin user for replication monitoring on master
-  become: yes
+# The mysqladmin user (SUPER,PROCESS) came with the inherited playbooks for
+# monitoring scripts that no longer exist; nothing uses it. Remove it and its
+# client files. The DROP USER on the master replicates to the slave.
+- name: Remove the unused mysqladmin user on master
+  become: true
   community.mysql.mysql_user:
-    name: "{{ mysql_admin_user.username }}"
-    host: "{{ item }}"
-    password: "{{ mysql_admin_user.password }}"
-    priv: "*.*:SUPER,PROCESS"
-    state: present
+    name: "{{ mysql_admin_user.username | default('mysqladmin') }}"
+    host_all: true
+    state: absent
     login_unix_socket: "{{ mariadb_unix_socket }}"
-  loop:
-    - localhost
-    - "{{ inventory_hostname }}"
-    - "{{ hostvars[inventory_hostname].mysql_repl_slave }}"
-    - "{{ hostvars[mysql_repl_slave].public_ipv4_address }}"
   when:
-   - mysql_repl_role is defined
-   - mysql_repl_role == 'master'
-  no_log: no
+    - mysql_repl_role is defined
+    - mysql_repl_role == 'master'
   tags:
     - mysql
 
-- name: Copy .my.cnf-mysqladmin file
-  become: yes
-  ansible.builtin.template:
-    src: users/.my.cnf-mysqladmin.j2
-    dest: "{{ item.dir }}/.my.cnf-mysqladmin"
-    mode: 0600
-    owner: "{{ item.owner }}"
-    group: "{{ item.group }}"
+- name: Remove the unused .my.cnf-mysqladmin files
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}/.my.cnf-mysqladmin"
+    state: absent
   loop:
-    - { dir: '/root', owner: 'root', group: 'root' }
-    - { dir: '{{ ansible_user_dir }}', owner: '{{ ansible_user_id }}', group: '{{ ansible_user_gid }}' }
+    - /root
+    - "{{ ansible_facts['user_dir'] }}"
   when:
     - mysql_repl_role is defined
-    - (mysql_repl_role == 'master' or mysql_repl_role == 'slave')
   tags:
     - mysql
 

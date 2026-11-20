@@ -26,9 +26,6 @@ mysql_innodb_log_file_size: "{{ mysql_innodb_log_file_size }}"
 mysql_repl_creds:
   username: "{{ mysql_repl_creds_user }}"
   password: '{{ rand_result.results[1].stdout }}'
-mysql_admin_user:
-    username: "{{ mysql_admin_user_name }}"
-    password: '{{ rand_result.results[2].stdout }}'
 mysql_webstats:
     db: "{{ mysql_webstats_db }}"
     username: "{{ mysql_webstats_user }}"

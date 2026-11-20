@@ -1,6 +1,5 @@
 ---
 mysql_repl_creds_user: "repl"
-mysql_admin_user_name: "mysqladmin"
 mysql_webstats_db: "press_webstats"
 mysql_webstats_user: "press_webstats"
 eqpress_base_dir: "/opt/eqpress"
