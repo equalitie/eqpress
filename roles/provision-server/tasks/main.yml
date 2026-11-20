@@ -105,7 +105,8 @@
 - name: Warn about the auto-provision GPG key
   ansible.builtin.debug:
     msg: "{{ provision_gpg_key.stdout_lines }}"
-  when: provision_gpg_key.rc == 20
+  # the script is skipped in --check, so there is no rc then
+  when: provision_gpg_key.rc | default(0) == 20
   tags:
     - provision_gpg
     - provision
