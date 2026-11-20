@@ -30,6 +30,8 @@
         mode: "0644"
         force: true
       changed_when: false
+      # also in --check, so the fingerprint can be checked
+      check_mode: false
 
     - name: Read Docker apt signing key fingerprint
       ansible.builtin.command:
@@ -61,6 +63,7 @@
         path: "{{ docker_gpg_keyring }}.new"
         state: absent
       changed_when: false
+      check_mode: false
 
     # amd64 is hardcoded on purpose: we only run amd64 servers, and pinning it
     # avoids images/packages for another architecture being used by mistake

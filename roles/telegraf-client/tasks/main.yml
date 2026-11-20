@@ -15,6 +15,8 @@
         mode: "0644"
         force: true
       changed_when: false
+      # also in --check, so the fingerprint can be checked
+      check_mode: false
 
     - name: Read InfluxData apt signing key fingerprint
       ansible.builtin.command:
@@ -44,6 +46,7 @@
         path: "{{ telegraf_influxdata_keyring }}.new"
         state: absent
       changed_when: false
+      check_mode: false
 
     - name: Install InfluxData repo
       ansible.builtin.deb822_repository:
