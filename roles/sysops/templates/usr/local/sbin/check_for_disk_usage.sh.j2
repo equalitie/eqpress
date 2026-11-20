@@ -40,7 +40,7 @@ for p in $PATHS; do
 	[ "$used" -gt "$max" ] && max=$used
 done
 
-if [ "${#mounts[@]}" -eq 0 ]; then
+if [ -z "${mounts[*]}" ]; then
 	echo "check_for_disk_usage.sh: could not read disk usage" >&2
 	exit 2
 fi
