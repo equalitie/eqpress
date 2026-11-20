@@ -191,6 +191,8 @@
 
 - name: .my.cnf to users home
   become: yes
+  # holds the root password: report a change, never print the content
+  diff: false
   ansible.builtin.template:
     src: users/.my.cnf.j2
     dest: "{{ item.dir }}/.my.cnf"
@@ -250,7 +252,7 @@
   when:
     - mysql_repl_role is defined
     - mysql_repl_role == 'master'
-  no_log: no
+  no_log: true
   tags:
     - mysql
 
